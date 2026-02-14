@@ -1,8 +1,10 @@
 node_modules/
 dist/
+.next/
 .idea/
 .claude/
 logs/
+webmcp/
 *.js.map
 .DS_Store
 .env
