@@ -21,16 +21,27 @@ interface TabState {
   errorCode?: AgentErrorCode;
 }
 
-// Per-tab state
-const tabStates = new Map<number, TabState>();
+// In-memory cache (fast access during active analysis)
+const tabCache = new Map<number, TabState>();
 
-function getTabState(tabId: number): TabState {
-  let state = tabStates.get(tabId);
-  if (!state) {
-    state = { analyzing: false, pageType: null, lastAnalysis: null };
-    tabStates.set(tabId, state);
-  }
+const DEFAULT_STATE: TabState = { analyzing: false, pageType: null, lastAnalysis: null };
+
+/** Get tab state from memory cache, falling back to chrome.storage.session */
+async function getTabState(tabId: number): Promise<TabState> {
+  const cached = tabCache.get(tabId);
+  if (cached) return cached;
+
+  const key = `tab_${tabId}`;
+  const result = await chrome.storage.session.get(key);
+  const state: TabState = result[key] ?? { ...DEFAULT_STATE };
+  tabCache.set(tabId, state);
   return state;
+}
+
+/** Persist tab state to chrome.storage.session (survives SW restarts) */
+async function saveTabState(tabId: number, state: TabState): Promise<void> {
+  tabCache.set(tabId, state);
+  await chrome.storage.session.set({ [`tab_${tabId}`]: state });
 }
 
 /** Get stored settings */
@@ -52,10 +63,11 @@ async function trackUsage(tokens?: number): Promise<void> {
 
 /** Run the full analysis pipeline for a tab */
 async function analyzeTab(tabId: number, snapshot: PageSnapshot): Promise<void> {
-  const state = getTabState(tabId);
+  const state = await getTabState(tabId);
   state.analyzing = true;
   state.error = undefined;
   state.errorCode = undefined;
+  await saveTabState(tabId, state);
 
   // Notify content script that analysis started
   chrome.tabs.sendMessage(tabId, { type: 'ANALYSIS_STARTED' as const }).catch(() => {});
@@ -66,6 +78,7 @@ async function analyzeTab(tabId: number, snapshot: PageSnapshot): Promise<void> 
     state.analyzing = false;
     state.error = 'API key not configured';
     state.errorCode = 'auth';
+    await saveTabState(tabId, state);
     chrome.tabs.sendMessage(tabId, {
       type: 'ANALYSIS_ERROR' as const,
       error: state.error,
@@ -81,6 +94,7 @@ async function analyzeTab(tabId: number, snapshot: PageSnapshot): Promise<void> 
   if (!result.success) {
     state.error = result.error;
     state.errorCode = result.errorCode;
+    await saveTabState(tabId, state);
     chrome.tabs.sendMessage(tabId, {
       type: 'ANALYSIS_ERROR' as const,
       error: result.error,
@@ -95,6 +109,7 @@ async function analyzeTab(tabId: number, snapshot: PageSnapshot): Promise<void> 
 
   if (result.analysis) {
     state.lastAnalysis = result.analysis;
+    await saveTabState(tabId, state);
 
     // Send result to content script for overlay rendering
     chrome.tabs.sendMessage(tabId, {
@@ -112,6 +127,7 @@ async function analyzeTab(tabId: number, snapshot: PageSnapshot): Promise<void> 
   } else {
     // Non-commercial page
     state.lastAnalysis = null;
+    await saveTabState(tabId, state);
     chrome.action.setBadgeText({ text: '', tabId });
   }
 
@@ -131,9 +147,19 @@ chrome.runtime.onMessage.addListener(
 
     if (message.type === 'TRIGGER_ANALYSIS') {
       // Popup or command requests analysis on active tab
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
         const activeTabId = tabs[0]?.id;
         if (!activeTabId) return;
+
+        // Inject content script programmatically (no <all_urls> needed)
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: activeTabId },
+            files: ['dist/content.js'],
+          });
+        } catch {
+          // Already injected or restricted page (chrome://, etc.)
+        }
 
         // Ask content script to capture the page
         chrome.tabs.sendMessage(activeTabId, {
@@ -162,8 +188,8 @@ chrome.runtime.onMessage.addListener(
         return true;
       }
 
-      getSettings().then(({ apiKey }) => {
-        const state = getTabState(queryTabId);
+      getSettings().then(async ({ apiKey }) => {
+        const state = await getTabState(queryTabId);
         sendResponse({
           type: 'STATUS_RESPONSE',
           data: {
@@ -200,5 +226,6 @@ chrome.commands.onCommand.addListener((command) => {
 
 // Clean up when tab closes
 chrome.tabs.onRemoved.addListener((tabId) => {
-  tabStates.delete(tabId);
+  tabCache.delete(tabId);
+  chrome.storage.session.remove(`tab_${tabId}`);
 });

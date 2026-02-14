@@ -10,6 +10,7 @@ const API_URL = 'https://api.anthropic.com/v1/messages';
 const ANTHROPIC_VERSION = '2023-06-01';
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1_000;
+const FETCH_TIMEOUT_MS = 30_000;
 
 export type { AgentErrorCode };
 
@@ -85,13 +86,17 @@ async function fetchWithRetry(
 
     let response: Response;
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
       response = await fetch(API_URL, {
         method: 'POST',
         headers: buildHeaders(apiKey),
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
     } catch (err: unknown) {
-      // Network-level failure (offline, DNS, etc.)
+      // Network-level failure (offline, DNS, timeout, etc.)
       const message =
         err instanceof Error ? err.message : 'Unknown network error';
       throw new AgentError('network', message);
@@ -144,7 +149,7 @@ export async function callClaude(
 ): Promise<string> {
   const payload = {
     model,
-    max_tokens: 1024,
+    max_tokens: 4096,
     system: systemPrompt,
     messages: [{ role: 'user', content: userMessage }],
   };

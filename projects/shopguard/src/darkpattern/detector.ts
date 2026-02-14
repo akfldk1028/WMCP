@@ -218,19 +218,18 @@ export function analyzeDarkPatterns(
 
   const allPatterns = [...textPatterns, ...checkboxPatterns, ...cookiePatterns];
 
-  // Calculate risk score (0 = safe, 100 = very risky)
+  // Calculate penalty from risk weights
   const totalPenalty = allPatterns.reduce(
     (sum, p) => sum + RISK_WEIGHTS[p.risk],
     0,
   );
-  const riskScore = clamp(totalPenalty);
 
-  // Trust score is inverse of risk
-  const trustScore = 100 - riskScore;
+  // riskScore: 0 = safe, 100 = very risky (true risk, not inverted)
+  const riskScore = clamp(totalPenalty);
 
   return {
     patterns: allPatterns,
-    riskScore: trustScore,
-    grade: scoreToGrade(trustScore),
+    riskScore,
+    grade: scoreToGrade(100 - riskScore),
   };
 }

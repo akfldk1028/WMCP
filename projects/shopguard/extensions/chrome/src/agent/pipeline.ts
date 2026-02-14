@@ -59,10 +59,11 @@ function buildAnalysis(
   );
 
   // Combined trust score (weights: review 50%, price 30%, dark pattern 20%)
+  // riskScore is 0-100 (higher=riskier), calculateTrustScore expects trust (higher=better)
   const overall = calculateTrustScore(
     reviewResult.overallScore,
     priceResult.trustScore,
-    darkPatternResult.riskScore,
+    100 - darkPatternResult.riskScore,
   );
 
   return {
