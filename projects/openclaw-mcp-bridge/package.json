@@ -1,0 +1,27 @@
+{
+  "name": "@wmcp/openclaw-mcp-bridge",
+  "version": "0.1.0",
+  "description": "MCP server that bridges OpenClaw agents to WebMCP tools exposed on websites",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "openclaw-mcp-bridge": "dist/cli.js"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli.js",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["mcp", "openclaw", "webmcp", "bridge", "ai-agent"],
+  "license": "MIT",
+  "dependencies": {
+    "@wmcp/mcp-bridge": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "typescript": "^5.5.0"
+  }
+}

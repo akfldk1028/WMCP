@@ -1,0 +1,72 @@
+{
+  "name": "WebMCP Project Deploy Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "deploy"
+      },
+      "name": "Webhook (Git Push)",
+      "type": "n8n-nodes-base.webhook",
+      "position": [200, 300],
+      "notes": "Triggered by GitHub webhook on push to main"
+    },
+    {
+      "parameters": {
+        "command": "cd /path/to/project && pnpm install && pnpm build"
+      },
+      "name": "Build Project",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [400, 300],
+      "notes": "Build the specific project that was pushed"
+    },
+    {
+      "parameters": {
+        "command": "cd /path/to/project && pnpm test"
+      },
+      "name": "Run Tests",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{$json.exitCode}}", "operation": "equal", "value2": 0 }]
+        }
+      },
+      "name": "Tests Passed?",
+      "type": "n8n-nodes-base.if",
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "command": "vercel --prod /path/to/project"
+      },
+      "name": "Deploy to Vercel",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [1000, 200],
+      "notes": "Deploy scanner/dashboard to Vercel"
+    },
+    {
+      "parameters": {
+        "command": "npm publish /path/to/mcp2web-cli"
+      },
+      "name": "Publish CLI to npm",
+      "type": "n8n-nodes-base.executeCommand",
+      "position": [1000, 400],
+      "notes": "Publish mcp2web CLI to npm registry"
+    }
+  ],
+  "connections": {
+    "Webhook (Git Push)": { "main": [[ { "node": "Build Project", "type": "main", "index": 0 } ]] },
+    "Build Project": { "main": [[ { "node": "Run Tests", "type": "main", "index": 0 } ]] },
+    "Run Tests": { "main": [[ { "node": "Tests Passed?", "type": "main", "index": 0 } ]] },
+    "Tests Passed?": {
+      "main": [[
+        { "node": "Deploy to Vercel", "type": "main", "index": 0 },
+        { "node": "Publish CLI to npm", "type": "main", "index": 0 }
+      ]]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}

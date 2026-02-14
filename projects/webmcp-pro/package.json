@@ -1,0 +1,19 @@
+{
+  "name": "@wmcp/mcp-gateway",
+  "version": "0.2.0",
+  "description": "MCP middleware gateway with security, rate limiting, analytics, and tool discovery for any MCP server",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["mcp", "gateway", "middleware", "security", "rate-limiting", "analytics", "webmcp", "openclaw"],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

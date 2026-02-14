@@ -1,0 +1,31 @@
+{
+  "name": "n8n-nodes-mcp-tools",
+  "version": "0.2.0",
+  "description": "n8n community nodes for discovering and calling MCP/WebMCP tools on any website or MCP server",
+  "keywords": ["n8n-community-node-package", "mcp", "webmcp", "ai-agent", "browser-tools", "openclaw"],
+  "license": "MIT",
+  "main": "dist/nodes/WebMcpTool/WebMcpTool.node.js",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "nodes": [
+      "dist/nodes/WebMcpTool/WebMcpTool.node.js",
+      "dist/nodes/WebMcpScan/WebMcpScan.node.js"
+    ],
+    "credentials": [
+      "dist/credentials/WebMcpApi.credentials.js"
+    ]
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "n8n-workflow": "^1.0.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "^1.0.0"
+  }
+}

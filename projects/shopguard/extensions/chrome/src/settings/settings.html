@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>ShopGuard Settings</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      background: #0f0f1a;
+      color: #e0e0e0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 12px;
+      margin-bottom: 28px;
+    }
+    .section {
+      margin-bottom: 24px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #bbb;
+      font-size: 13px;
+    }
+    input[type="password"], select {
+      width: 100%;
+      padding: 10px 12px;
+      background: #1a1a2e;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="password"]:focus, select:focus {
+      border-color: #6366f1;
+    }
+    .hint {
+      font-size: 11px;
+      color: #555;
+      margin-top: 4px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary {
+      background: #6366f1;
+      color: #fff;
+    }
+    .status {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+    }
+    .status.success {
+      display: block;
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .status.error {
+      display: block;
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .status.loading {
+      display: block;
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    .divider {
+      border: none;
+      border-top: 1px solid #222;
+      margin: 28px 0;
+    }
+    .usage-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .usage-card {
+      background: #1a1a2e;
+      padding: 14px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .usage-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .usage-label {
+      font-size: 11px;
+      color: #666;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>ShopGuard Settings</h1>
+  <p class="subtitle">AI Shopping Protection v0.1.0</p>
+
+  <div class="section">
+    <label for="apiKey">Anthropic API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off">
+    <p class="hint">Your API key is stored locally and never shared. Get one at console.anthropic.com</p>
+  </div>
+
+  <div class="section">
+    <label for="model">Analysis Model</label>
+    <select id="model">
+      <option value="claude-sonnet-4-5-20250929">Claude Sonnet 4.5 (Recommended)</option>
+      <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (Faster, cheaper)</option>
+    </select>
+  </div>
+
+  <div class="section">
+    <button class="btn-primary" id="saveBtn">Save & Verify</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <label>Usage</label>
+    <div class="usage-grid">
+      <div class="usage-card">
+        <div class="usage-value" id="analysisCount">0</div>
+        <div class="usage-label">Analyses</div>
+      </div>
+      <div class="usage-card">
+        <div class="usage-value" id="totalTokens">0</div>
+        <div class="usage-label">Total Tokens</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../dist/settings.js"></script>
+</body>
+</html>

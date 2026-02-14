@@ -1,0 +1,17 @@
+{
+  "name": "@wmcp/price-shield",
+  "version": "0.1.0",
+  "description": "AI agent that detects hidden fees, dynamic pricing, and protects you from price manipulation",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["webmcp", "chrome-extension", "price-protection", "hidden-fees", "dynamic-pricing", "consumer-protection", "ai-agent", "agentic-commerce"],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chrome": "^0.0.287",
+    "typescript": "^5.5.0"
+  }
+}

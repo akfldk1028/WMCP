@@ -1,0 +1,70 @@
+{
+  "name": "WebMCP Content Auto-Publish",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "days", "daysInterval": 3 }]
+        }
+      },
+      "name": "Every 3 Days",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "method": "POST",
+        "headers": {
+          "x-api-key": "={{$env.ANTHROPIC_API_KEY}}",
+          "content-type": "application/json",
+          "anthropic-version": "2023-06-01"
+        },
+        "body": {
+          "model": "claude-sonnet-4-5-20250929",
+          "max_tokens": 2000,
+          "messages": [{
+            "role": "user",
+            "content": "Write a concise, practical Korean blog post about WebMCP. Topic: {{$json.topic}}. Include code examples. Target: Korean web developers."
+          }]
+        }
+      },
+      "name": "Generate Blog Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [400, 300],
+      "notes": "Use Claude API to generate Korean WebMCP content"
+    },
+    {
+      "parameters": {
+        "resource": "page",
+        "operation": "create",
+        "parentPageId": "YOUR_NOTION_PAGE_ID",
+        "title": "={{$json.title}}",
+        "content": "={{$json.content}}"
+      },
+      "name": "Publish to Notion Blog",
+      "type": "n8n-nodes-base.notion",
+      "position": [600, 200]
+    },
+    {
+      "parameters": {
+        "resource": "post",
+        "text": "={{$json.socialSnippet}}"
+      },
+      "name": "Post to Social (LinkedIn/X)",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [600, 400],
+      "notes": "Post snippet to social media APIs"
+    }
+  ],
+  "connections": {
+    "Every 3 Days": { "main": [[ { "node": "Generate Blog Content", "type": "main", "index": 0 } ]] },
+    "Generate Blog Content": {
+      "main": [[
+        { "node": "Publish to Notion Blog", "type": "main", "index": 0 },
+        { "node": "Post to Social (LinkedIn/X)", "type": "main", "index": 0 }
+      ]]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}

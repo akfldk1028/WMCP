@@ -1,0 +1,11 @@
+{
+  "name": "wmcp-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WebMCP demo site - showcase Declarative + Imperative APIs for consulting",
+  "type": "module",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build needed'"
+  }
+}

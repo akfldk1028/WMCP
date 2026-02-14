@@ -1,0 +1,85 @@
+{
+  "name": "WebMCP Ecosystem Monitor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "days", "daysInterval": 1 }]
+        }
+      },
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "urls": [
+          "https://github.com/webmachinelearning/webmcp/commits/main",
+          "https://chromestatus.com/feature/webmcp",
+          "https://www.npmjs.com/package/@mcp-b/global"
+        ]
+      },
+      "name": "Check Spec Updates",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [400, 200],
+      "notes": "Monitor spec repo, Chrome status, npm packages"
+    },
+    {
+      "parameters": {
+        "urls": [
+          "https://wmcp.dev",
+          "https://mcp-b.ai",
+          "https://wordlift.io/blog/"
+        ]
+      },
+      "name": "Monitor Competitors",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [400, 400],
+      "notes": "Track competitor websites for changes"
+    },
+    {
+      "parameters": {
+        "url": "https://hn.algolia.com/api/v1/search_by_date?query=webmcp&tags=story",
+        "method": "GET"
+      },
+      "name": "Check HN/Reddit",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [400, 600],
+      "notes": "Monitor tech community discussions"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{$json.hasChanges}}", "value2": true }]
+        }
+      },
+      "name": "Filter Changes",
+      "type": "n8n-nodes-base.if",
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "channel": "#wmcp-alerts",
+        "text": "={{$json.summary}}"
+      },
+      "name": "Alert (Slack/Discord)",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [800, 300],
+      "notes": "Send webhook notification"
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [[
+        { "node": "Check Spec Updates", "type": "main", "index": 0 },
+        { "node": "Monitor Competitors", "type": "main", "index": 0 },
+        { "node": "Check HN/Reddit", "type": "main", "index": 0 }
+      ]]
+    },
+    "Check Spec Updates": { "main": [[ { "node": "Filter Changes", "type": "main", "index": 0 } ]] },
+    "Monitor Competitors": { "main": [[ { "node": "Filter Changes", "type": "main", "index": 0 } ]] },
+    "Check HN/Reddit": { "main": [[ { "node": "Filter Changes", "type": "main", "index": 0 } ]] },
+    "Filter Changes": { "main": [[ { "node": "Alert (Slack/Discord)", "type": "main", "index": 0 } ]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

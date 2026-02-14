@@ -1,0 +1,85 @@
+{
+  "name": "WebMCP Lead Generation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "weeks", "weeksInterval": 1 }]
+        }
+      },
+      "name": "Weekly Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://www.google.com/search?q=site:*.kr+ecommerce+OR+shopping+OR+travel",
+        "options": {}
+      },
+      "name": "Search Korean eCommerce Sites",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [400, 200],
+      "notes": "Replace with actual scraping logic or use Apify/SerpAPI"
+    },
+    {
+      "parameters": {
+        "url": "={{$json.siteUrl}}",
+        "options": { "timeout": 15000 }
+      },
+      "name": "Scan Site for Forms",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [600, 200],
+      "notes": "Fetch HTML, look for forms without toolname attributes"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{$json.hasWebMCP}}", "value2": false }]
+        }
+      },
+      "name": "Filter: No WebMCP",
+      "type": "n8n-nodes-base.if",
+      "position": [800, 200],
+      "notes": "Only proceed if site does NOT have WebMCP yet"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "YOUR_SHEET_ID",
+        "range": "Leads!A:E",
+        "columns": "Site URL, Form Count, Contact Email, Score, Date"
+      },
+      "name": "Save to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [1000, 200],
+      "notes": "Log potential leads with readiness scores"
+    },
+    {
+      "parameters": {
+        "resource": "page",
+        "operation": "create",
+        "databaseId": "YOUR_NOTION_DB_ID",
+        "properties": {
+          "Name": { "type": "title", "text": "={{$json.siteUrl}}" },
+          "Score": { "type": "number", "number": "={{$json.score}}" },
+          "Status": { "type": "select", "select": "New Lead" }
+        }
+      },
+      "name": "Add to Notion CRM",
+      "type": "n8n-nodes-base.notion",
+      "position": [1000, 400],
+      "notes": "Optional: Track in Notion database"
+    }
+  ],
+  "connections": {
+    "Weekly Trigger": { "main": [[ { "node": "Search Korean eCommerce Sites", "type": "main", "index": 0 } ]] },
+    "Search Korean eCommerce Sites": { "main": [[ { "node": "Scan Site for Forms", "type": "main", "index": 0 } ]] },
+    "Scan Site for Forms": { "main": [[ { "node": "Filter: No WebMCP", "type": "main", "index": 0 } ]] },
+    "Filter: No WebMCP": {
+      "main": [
+        [ { "node": "Save to Google Sheet", "type": "main", "index": 0 }, { "node": "Add to Notion CRM", "type": "main", "index": 0 } ]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}

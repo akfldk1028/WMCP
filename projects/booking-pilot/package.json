@@ -1,0 +1,16 @@
+{
+  "name": "@wmcp/booking-pilot",
+  "version": "0.1.0",
+  "description": "AI travel agent that optimizes bookings using WebMCP - finds best deals on flights and hotels",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["webmcp", "travel", "booking", "flights", "hotels", "price-comparison", "ai-agent", "agentic-commerce"],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

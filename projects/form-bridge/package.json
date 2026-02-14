@@ -1,0 +1,17 @@
+{
+  "name": "@wmcp/form-bridge",
+  "version": "0.1.0",
+  "description": "Chrome extension - Make any website's forms accessible to AI agents via WebMCP",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && node scripts/copy-static.js",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["webmcp", "chrome-extension", "forms", "ai-agent", "accessibility"],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chrome": "^0.0.287",
+    "typescript": "^5.5.0"
+  }
+}

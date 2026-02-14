@@ -1,0 +1,17 @@
+{
+  "name": "@wmcp/site-guard",
+  "version": "0.1.0",
+  "description": "AI agent that reads ToS/contracts before you click Agree - finds harmful clauses and dark patterns",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["webmcp", "chrome-extension", "tos", "terms-of-service", "dark-patterns", "consumer-protection", "ai-agent"],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chrome": "^0.0.287",
+    "typescript": "^5.5.0"
+  }
+}

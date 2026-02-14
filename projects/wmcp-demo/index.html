@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebMCP Demo - AI Agent Ready Website</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #fafafa; color: #1a1a1a; }
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+        h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+        h2 { font-size: 1.3rem; margin: 2rem 0 1rem; padding-top: 1rem; border-top: 1px solid #eee; }
+        .subtitle { color: #666; margin-bottom: 2rem; }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-dec { background: #e6f7ff; color: #0070f3; }
+        .badge-imp { background: #f6ffed; color: #389e0d; }
+        .demo-card { background: white; border: 1px solid #e0e0e0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .demo-card h3 { margin-bottom: 0.5rem; }
+        .demo-card p { color: #666; margin-bottom: 1rem; font-size: 0.9rem; }
+        form { display: flex; flex-direction: column; gap: 0.75rem; }
+        input, select { padding: 0.6rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
+        button { padding: 0.6rem 1.2rem; background: #0070f3; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+        button:hover { background: #005bb5; }
+        .code-block { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 13px; margin-top: 1rem; }
+        .status-bar { background: #fff3cd; border: 1px solid #ffc107; padding: 0.75rem; border-radius: 8px; margin-bottom: 2rem; font-size: 0.9rem; }
+        #tool-log { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem; margin-top: 1rem; min-height: 100px; font-family: monospace; font-size: 13px; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebMCP Demo</h1>
+        <p class="subtitle">AI 에이전트가 웹사이트와 대화하는 방법 - Declarative & Imperative API</p>
+
+        <div class="status-bar" id="status">
+            Checking WebMCP support...
+        </div>
+
+        <!-- ===== DEMO 1: Declarative API ===== -->
+        <h2><span class="badge badge-dec">Declarative</span> 상품 검색</h2>
+        <div class="demo-card">
+            <h3>Product Search</h3>
+            <p>HTML &lt;form&gt;에 toolname, tooldescription 속성만 추가. JS 코드 불필요.</p>
+
+            <form action="/api/search" method="POST"
+                  toolname="search-products"
+                  tooldescription="Search for products by keyword, category, and price range"
+                  toolautosubmit>
+                <input name="query" type="text" placeholder="Search keyword (e.g. laptop)" required>
+                <select name="category">
+                    <option value="">All Categories</option>
+                    <option value="electronics">Electronics</option>
+                    <option value="clothing">Clothing</option>
+                    <option value="food">Food</option>
+                </select>
+                <input name="maxPrice" type="number" placeholder="Max price (optional)">
+                <button type="submit">Search</button>
+            </form>
+
+            <pre class="code-block"><code>&lt;form action="/api/search" method="POST"
+      <strong>toolname="search-products"</strong>
+      <strong>tooldescription="Search for products..."</strong>
+      <strong>toolautosubmit</strong>&gt;
+    &lt;input name="query" type="text" required&gt;
+    ...
+&lt;/form&gt;</code></pre>
+        </div>
+
+        <!-- ===== DEMO 2: Declarative API - Login ===== -->
+        <h2><span class="badge badge-dec">Declarative</span> 로그인</h2>
+        <div class="demo-card">
+            <h3>User Login</h3>
+            <p>기존 로그인 폼에 속성 3개만 추가하면 에이전트가 자동 로그인 가능.</p>
+
+            <form action="/api/login" method="POST"
+                  toolname="user-login"
+                  tooldescription="Log in with email and password">
+                <input name="email" type="email" placeholder="Email" required>
+                <input name="password" type="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+
+        <!-- ===== DEMO 3: Imperative API ===== -->
+        <h2><span class="badge badge-imp">Imperative</span> 날씨 조회</h2>
+        <div class="demo-card">
+            <h3>Weather Tool (JavaScript)</h3>
+            <p>JavaScript로 등록. 동적/복잡한 도구에 적합.</p>
+
+            <div style="display: flex; gap: 8px;">
+                <input id="weather-city" type="text" placeholder="City name" style="flex: 1;">
+                <button onclick="testWeatherTool()">Test Tool</button>
+            </div>
+
+            <pre class="code-block"><code>navigator.modelContext.registerTool({
+    name: "get-weather",
+    description: "Get weather for a city",
+    inputSchema: {
+        type: "object",
+        properties: {
+            city: { type: "string" }
+        },
+        required: ["city"]
+    },
+    async execute({ city }) {
+        // Your implementation here
+        return { content: [{ type: "text", text: `Weather for ${city}: 15°C, Sunny` }] };
+    }
+});</code></pre>
+        </div>
+
+        <!-- ===== DEMO 4: Imperative API - Cart ===== -->
+        <h2><span class="badge badge-imp">Imperative</span> 장바구니 관리</h2>
+        <div class="demo-card">
+            <h3>Shopping Cart Tool</h3>
+            <p>에이전트가 상품을 장바구니에 추가/제거. 사용자 확인(requestUserInteraction) 포함.</p>
+
+            <div style="display: flex; gap: 8px;">
+                <input id="cart-product" type="text" placeholder="Product name" style="flex: 1;">
+                <input id="cart-qty" type="number" value="1" style="width: 80px;">
+                <button onclick="testCartTool()">Add to Cart</button>
+            </div>
+        </div>
+
+        <!-- ===== Tool Call Log ===== -->
+        <h2>Tool Call Log</h2>
+        <div id="tool-log">Waiting for tool calls...</div>
+    </div>
+
+    <script>
+        const logEl = document.getElementById('tool-log');
+        const statusEl = document.getElementById('status');
+
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            logEl.textContent += `[${time}] ${msg}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        // Feature detection
+        if ('modelContext' in navigator) {
+            statusEl.textContent = 'WebMCP supported! Tools are registered.';
+            statusEl.style.background = '#d4edda';
+            statusEl.style.borderColor = '#28a745';
+            log('WebMCP is natively supported');
+        } else {
+            statusEl.textContent = 'WebMCP not natively supported. Using polyfill simulation.';
+            statusEl.style.background = '#fff3cd';
+            statusEl.style.borderColor = '#ffc107';
+            log('WebMCP not supported - using simulation mode');
+
+            // Simple simulation for demo purposes
+            if (!navigator.modelContext) {
+                navigator.modelContext = {
+                    registerTool(tool) {
+                        log(`Registered tool: ${tool.name}`);
+                        window.__wmcpTools = window.__wmcpTools || {};
+                        window.__wmcpTools[tool.name] = tool;
+                    },
+                    unregisterTool(name) {
+                        log(`Unregistered tool: ${name}`);
+                        if (window.__wmcpTools) delete window.__wmcpTools[name];
+                    },
+                    provideContext(opts) { log(`Context provided: ${JSON.stringify(opts)}`); },
+                    clearContext() { log('Context cleared'); }
+                };
+            }
+        }
+
+        // Register Imperative tools
+        navigator.modelContext.registerTool({
+            name: "get-weather",
+            description: "Get current weather for a city",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    city: { type: "string", description: "City name" }
+                },
+                required: ["city"]
+            },
+            async execute({ city }) {
+                log(`get-weather called: city=${city}`);
+                // Simulated response
+                const temps = { seoul: 8, tokyo: 12, london: 6, 'new york': 3 };
+                const temp = temps[city.toLowerCase()] ?? Math.floor(Math.random() * 30);
+                const result = `Weather for ${city}: ${temp}°C, ${temp > 10 ? 'Sunny' : 'Cloudy'}`;
+                log(`get-weather result: ${result}`);
+                return { content: [{ type: "text", text: result }] };
+            }
+        });
+
+        navigator.modelContext.registerTool({
+            name: "add-to-cart",
+            description: "Add a product to the shopping cart with quantity",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    product: { type: "string", description: "Product name" },
+                    quantity: { type: "number", description: "Quantity" }
+                },
+                required: ["product", "quantity"]
+            },
+            annotations: { destructiveHint: false, idempotentHint: false },
+            async execute({ product, quantity }, client) {
+                log(`add-to-cart called: ${product} x${quantity}`);
+                // In real implementation, would call requestUserInteraction
+                if (client?.requestUserInteraction) {
+                    const { interacted } = await client.requestUserInteraction({
+                        reason: `Agent wants to add ${quantity}x ${product} to your cart`
+                    });
+                    if (!interacted) {
+                        log('User declined cart addition');
+                        return { content: [{ type: "text", text: "User declined" }] };
+                    }
+                }
+                log(`Added ${quantity}x ${product} to cart`);
+                return { content: [{ type: "text", text: `Added ${quantity}x ${product} to cart` }] };
+            }
+        });
+
+        // Test functions
+        function testWeatherTool() {
+            const city = document.getElementById('weather-city').value || 'Seoul';
+            if (window.__wmcpTools?.['get-weather']) {
+                window.__wmcpTools['get-weather'].execute({ city });
+            }
+        }
+
+        function testCartTool() {
+            const product = document.getElementById('cart-product').value || 'Sample Product';
+            const quantity = parseInt(document.getElementById('cart-qty').value) || 1;
+            if (window.__wmcpTools?.['add-to-cart']) {
+                window.__wmcpTools['add-to-cart'].execute({ product, quantity });
+            }
+        }
+
+        // Detect agent-invoked form submissions
+        document.querySelectorAll('form[toolname]').forEach(form => {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData);
+                const isAgent = e.agentInvoked || false;
+                log(`Form submitted (${isAgent ? 'AGENT' : 'HUMAN'}): ${form.getAttribute('toolname')} → ${JSON.stringify(data)}`);
+            });
+        });
+
+        log('Demo ready. Try the tools above or use Chrome DevTools WebMCP inspector.');
+    </script>
+</body>
+</html>

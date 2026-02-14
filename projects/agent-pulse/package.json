@@ -1,0 +1,22 @@
+{
+  "name": "@wmcp/agent-pulse",
+  "version": "0.1.0",
+  "description": "Lightweight WebMCP analytics - track AI agent interactions on your site",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["webmcp", "analytics", "agent", "ai", "chrome-146"],
+  "license": "MIT",
+  "dependencies": {
+    "@wmcp/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
