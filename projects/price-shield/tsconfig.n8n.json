@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "dist/n8n",
+    "rootDir": "src/n8n",
+    "declaration": true,
+    "sourceMap": true
+  },
+  "include": ["src/n8n"]
+}

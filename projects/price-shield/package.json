@@ -1,17 +1,60 @@
 {
   "name": "@wmcp/price-shield",
-  "version": "0.1.0",
-  "description": "AI agent that detects hidden fees, dynamic pricing, and protects you from price manipulation",
+  "version": "0.2.0",
+  "description": "Node-based pipeline for price tracking, hidden fee detection, and cross-site comparison",
   "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "price-shield": "./dist/cli/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./runtime": {
+      "import": "./dist/runtime/index.js",
+      "types": "./dist/runtime/index.d.ts"
+    },
+    "./nodes": {
+      "import": "./dist/nodes/index.js",
+      "types": "./dist/nodes/index.d.ts"
+    },
+    "./presets": {
+      "import": "./dist/presets/analyze-page.js"
+    },
+    "./mcp": {
+      "import": "./dist/mcp/server.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
-  "keywords": ["webmcp", "chrome-extension", "price-protection", "hidden-fees", "dynamic-pricing", "consumer-protection", "ai-agent", "agentic-commerce"],
+  "keywords": [
+    "webmcp",
+    "price-tracking",
+    "hidden-fees",
+    "dynamic-pricing",
+    "consumer-protection",
+    "pipeline",
+    "node-based",
+    "mcp"
+  ],
   "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@wmcp/shopguard": "workspace:*",
+    "commander": "^13.1.0",
+    "zod": "^3.24.2"
+  },
   "devDependencies": {
-    "@types/chrome": "^0.0.287",
-    "typescript": "^5.5.0"
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^4.0.18"
   }
 }
