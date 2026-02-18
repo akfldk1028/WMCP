@@ -1,11 +1,5 @@
 import type { PriceComponent, PriceIssue } from '../core/types.js';
-
-/**
- * Price regex supporting KRW (원), USD ($), EUR, GBP, JPY.
- * Enhanced from price-shield with better KRW support.
- */
-const PRICE_REGEX =
-  /(?:\$|€|£|¥|₩|USD|EUR|GBP|KRW)\s*(\d{1,3}(?:[,.]?\d{3})*(?:[.,]\d{1,2})?)|(\d{1,3}(?:[,.]?\d{3})*)\s*(?:원|円)/g;
+import { createPriceRegex, parseCurrency, parseAmountCents } from '../core/regex.js';
 
 /** Fee keywords that indicate hidden or additional charges */
 const FEE_KEYWORDS: Array<{ pattern: RegExp; label: string; severity: number }> = [
@@ -48,13 +42,12 @@ export function detectHiddenFees(html: string): PriceIssue[] {
     const end = Math.min(html.length, match.index + match[0].length + 100);
     const context = html.substring(start, end);
 
-    const priceRegex = new RegExp(PRICE_REGEX.source, 'g');
+    const priceRegex = createPriceRegex();
     const priceMatch = priceRegex.exec(context);
 
     const priceStr = priceMatch?.[1] ?? priceMatch?.[2] ?? '0';
-    const estimatedCost = Math.round(
-      parseFloat(priceStr.replace(/,/g, '')) * 100,
-    );
+    const currency = priceMatch ? parseCurrency(priceMatch[0]) : 'USD';
+    const estimatedCost = parseAmountCents(priceStr, currency);
 
     issues.push({
       type: 'hidden-fee',
@@ -111,19 +104,19 @@ export function detectSubscriptionTraps(html: string): PriceIssue[] {
     },
     {
       regex:
-        /cancel\s+(?:at\s+)?any\s+time.{0,200}(?:billed?\s+(?:annually|yearly)|annual\s+(?:billing|plan))/i,
+        /cancel\s+(?:at\s+)?any\s+time[^<]{0,200}(?:billed?\s+(?:annually|yearly)|annual\s+(?:billing|plan))/i,
       description:
         '"Cancel anytime" but billed annually — cancellation may not refund remaining period',
       severity: 60,
     },
     // Korean subscription traps
     {
-      regex: /무료\s*(?:체험|이용).{0,100}(?:자동\s*(?:결제|갱신|연장))/i,
+      regex: /무료\s*(?:체험|이용)[^<]{0,100}(?:자동\s*(?:결제|갱신|연장))/i,
       description: '무료 체험 후 자동 결제 전환',
       severity: 75,
     },
     {
-      regex: /(?:해지|취소).{0,100}(?:전화|고객\s*센터|상담원)/i,
+      regex: /(?:해지|취소)[^<]{0,100}(?:전화|고객\s*센터|상담원)/i,
       description: '해지/취소를 위해 전화 필요 — 의도적 어렵게 만듦',
       severity: 70,
     },
@@ -150,26 +143,14 @@ export function detectSubscriptionTraps(html: string): PriceIssue[] {
  */
 export function extractPrices(html: string): PriceComponent[] {
   const components: PriceComponent[] = [];
-  const priceRegex = new RegExp(PRICE_REGEX.source, 'g');
+  const priceRegex = createPriceRegex();
   let match: RegExpExecArray | null;
 
   while ((match = priceRegex.exec(html)) !== null) {
     const fullMatch = match[0];
-    const amountStr = (match[1] ?? match[2] ?? '0').replace(/,/g, '');
-    const amount = parseFloat(amountStr);
-
-    // Determine currency
-    let currency = 'USD';
-    if (/[₩]|KRW|원/.test(fullMatch)) currency = 'KRW';
-    else if (/€|EUR/.test(fullMatch)) currency = 'EUR';
-    else if (/£|GBP/.test(fullMatch)) currency = 'GBP';
-    else if (/[¥]|円/.test(fullMatch)) currency = 'JPY';
-
-    // For KRW/JPY, amounts are already in base units (no cents)
-    const amountCents =
-      currency === 'KRW' || currency === 'JPY'
-        ? Math.round(amount)
-        : Math.round(amount * 100);
+    const amountStr = match[1] ?? match[2] ?? '0';
+    const currency = parseCurrency(fullMatch);
+    const amountCents = parseAmountCents(amountStr, currency);
 
     components.push({
       label: 'detected-price',

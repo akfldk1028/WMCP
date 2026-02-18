@@ -53,7 +53,7 @@ const DARK_PATTERN_RULES: Array<{
       /I(?:'?ll)?\s+(?:pass|skip)\s+(?:on\s+)?(?:this|saving|the\s+(?:discount|deal|offer))/i,
       /(?:miss\s+out|stay\s+(?:uninformed|behind))/i,
       // Korean confirm-shaming
-      /(?:할인|혜택|쿠폰).*?(?:포기|거부|안\s*받)/,
+      /(?:할인|혜택|쿠폰)[^<]{0,60}(?:포기|거부|안\s*받)/,
     ],
     risk: 'high',
     explanation: 'Shames users into accepting by making the decline option negative',
@@ -81,8 +81,8 @@ const DARK_PATTERN_RULES: Array<{
       /(?:after|when)\s+(?:your\s+)?(?:free\s+)?trial\s+(?:ends?|expires?|is\s+over)/i,
       /credit\s+card\s+required\s+(?:for\s+)?(?:free\s+)?trial/i,
       // Korean
-      /무료\s*체험.*?자동\s*(?:결제|전환|갱신)/,
-      /(?:체험|이용)\s*기간.*?(?:결제|과금)/,
+      /무료\s*체험[^<]{0,60}자동\s*(?:결제|전환|갱신)/,
+      /(?:체험|이용)\s*기간[^<]{0,60}(?:결제|과금)/,
     ],
     risk: 'high',
     explanation: 'Free trial automatically converts to paid subscription',
@@ -93,7 +93,7 @@ const DARK_PATTERN_RULES: Array<{
       /(?:call|contact|email)\s+(?:us|support|customer\s+service)\s+to\s+cancel/i,
       /(?:cancellation|cancel)\s+(?:requires?|needs?)\s+(?:phone|call|written|letter)/i,
       // Korean
-      /(?:해지|탈퇴|취소).*?(?:전화|고객\s*센터|상담원|방문)/,
+      /(?:해지|탈퇴|취소)[^<]{0,60}(?:전화|고객\s*센터|상담원|방문)/,
     ],
     risk: 'critical',
     explanation: 'Makes cancellation intentionally difficult',

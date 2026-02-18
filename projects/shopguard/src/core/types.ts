@@ -117,6 +117,92 @@ export interface PriceAnalysis {
   totalHiddenFeeCents: number;
 }
 
+// ── Signal Evidence (for agent-based architecture) ──
+
+/** Evidence-based signal — scores + human-readable evidence strings */
+export interface SignalEvidence {
+  score: number;
+  evidence: string[];
+  rawData?: unknown;
+}
+
+// ── Extraction Types (structured data for AI agents) ──
+
+/** Full page extraction result */
+export interface PageExtraction {
+  url?: string;
+  title?: string;
+  platform?: string;
+  meta: Record<string, string>;
+  priceContexts: string[];
+  reviewBlocks: string[];
+  interactiveElements: InteractiveElement[];
+  formCount: number;
+  agentReadinessDetected: boolean;
+  agentReadinessSignals: string[];
+}
+
+export interface InteractiveElement {
+  tag: string;
+  type?: string;
+  text?: string;
+  name?: string;
+  checked?: boolean;
+}
+
+/** Structured review extracted from HTML */
+export interface StructuredReview {
+  text: string;
+  rating?: number;
+  date?: string;
+  author?: string;
+  verified?: boolean;
+  wordCount: number;
+  incentiveKeywords: string[];
+}
+
+/** Review extraction result with statistical signals */
+export interface ReviewExtraction {
+  reviews: StructuredReview[];
+  signals: Record<string, SignalEvidence>;
+}
+
+/** Fee match evidence */
+export interface FeeMatch {
+  label: string;
+  evidence: string;
+  context: string;
+  nearbyPrice?: string;
+}
+
+/** Pricing trap match evidence */
+export interface TrapMatch {
+  type: string;
+  evidence: string;
+  context: string;
+}
+
+/** Price extraction result */
+export interface PriceExtraction {
+  components: PriceComponent[];
+  feeMatches: FeeMatch[];
+  trapMatches: TrapMatch[];
+}
+
+/** Dark pattern evidence with context */
+export interface DarkPatternEvidence {
+  type: DarkPatternType;
+  evidence: string;
+  context: string;
+  elementType?: string;
+  locale?: Locale;
+}
+
+/** Dark pattern extraction result */
+export interface DarkPatternExtraction {
+  matches: DarkPatternEvidence[];
+}
+
 // ── Combined Trust Score ──
 
 export interface TrustScore {
