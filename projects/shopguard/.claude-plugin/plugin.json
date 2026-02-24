@@ -1,0 +1,24 @@
+{
+  "name": "shopguard",
+  "description": "AI shopping protection — fake review detection, hidden fee alerts, dark pattern scanning for e-commerce pages",
+  "version": "0.4.0",
+  "author": {
+    "name": "ClickAround",
+    "email": "clickaround8@gmail.com"
+  },
+  "homepage": "https://github.com/akfldk1028/WMCP",
+  "repository": "https://github.com/akfldk1028/WMCP",
+  "license": "MIT",
+  "keywords": [
+    "shopguard",
+    "shopping",
+    "consumer-protection",
+    "dark-patterns",
+    "fake-reviews",
+    "hidden-fees",
+    "e-commerce",
+    "mcp",
+    "ai-agent",
+    "skills"
+  ]
+}

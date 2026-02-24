@@ -1,0 +1,47 @@
+{
+  "name": "shopguard-marketplace",
+  "description": "AI shopping protection skills — fake review detection, hidden fee alerts, dark pattern scanning",
+  "owner": {
+    "name": "ClickAround",
+    "email": "clickaround8@gmail.com"
+  },
+  "metadata": {
+    "description": "ShopGuard Skills for AI-powered consumer protection on e-commerce pages",
+    "version": "0.4.0",
+    "homepage": "https://github.com/akfldk1028/WMCP",
+    "keywords": ["shopping", "consumer-protection", "dark-patterns", "fake-reviews", "hidden-fees", "e-commerce", "mcp"]
+  },
+  "plugins": [
+    {
+      "name": "shopguard-full",
+      "description": "Complete ShopGuard skill suite — full page audit, review verification, price check, dark pattern scan. Requires shopguard-mcp MCP server.",
+      "version": "0.4.0",
+      "source": "./",
+      "author": {
+        "name": "ClickAround",
+        "email": "clickaround8@gmail.com"
+      },
+      "skills": [
+        "./skills",
+        "./skills/shopguard-audit",
+        "./skills/review-verify",
+        "./skills/price-check",
+        "./skills/dark-pattern-scan"
+      ]
+    },
+    {
+      "name": "shopguard-lite",
+      "description": "ShopGuard core — full page audit skill only. Lightweight single-skill option.",
+      "version": "0.4.0",
+      "source": "./",
+      "author": {
+        "name": "ClickAround",
+        "email": "clickaround8@gmail.com"
+      },
+      "skills": [
+        "./skills",
+        "./skills/shopguard-audit"
+      ]
+    }
+  ]
+}
