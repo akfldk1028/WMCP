@@ -2,13 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateLicense } from '@/lib/lemonsqueezy';
 import { runServerPipeline } from '@/lib/pipeline';
 
+// Extension API key — prevents casual abuse (not a secret, embedded in extension)
+const EXT_API_KEY = process.env.SHOPGUARD_EXT_KEY || 'sg_ext_v040';
+
 // In-memory rate limiting (per deviceId)
+// Note: resets on Vercel cold start. Replace with Vercel KV for production.
 const usage = new Map<string, { count: number; resetAt: number }>();
 const FREE_DAILY_LIMIT = 5;
 const DAY_MS = 86_400_000;
+const MAX_ENTRIES = 10_000;
 
 function checkRateLimit(deviceId: string): { allowed: boolean; remaining: number } {
   const now = Date.now();
+
+  // Prevent unbounded memory growth — prune expired entries
+  if (usage.size > MAX_ENTRIES) {
+    for (const [key, entry] of usage) {
+      if (now > entry.resetAt) usage.delete(key);
+    }
+  }
+
   let entry = usage.get(deviceId);
   if (!entry || now > entry.resetAt) {
     entry = { count: 0, resetAt: now + DAY_MS };
@@ -22,6 +35,15 @@ function checkRateLimit(deviceId: string): { allowed: boolean; remaining: number
 }
 
 export async function POST(req: NextRequest) {
+  // Verify extension API key
+  const apiKey = req.headers.get('x-shopguard-key');
+  if (apiKey !== EXT_API_KEY) {
+    return NextResponse.json(
+      { error: 'Invalid or missing extension API key.' },
+      { status: 403 },
+    );
+  }
+
   const body = await req.json().catch(() => null);
   if (!body?.snapshot || !body?.deviceId) {
     return NextResponse.json(
