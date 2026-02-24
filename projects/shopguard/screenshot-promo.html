@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 1280px;
+  height: 800px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: white;
+  display: flex;
+  overflow: hidden;
+}
+.left {
+  flex: 1;
+  padding: 80px 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.logo-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.logo {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+.brand {
+  font-size: 42px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.tagline {
+  font-size: 22px;
+  color: #94a3b8;
+  margin-bottom: 48px;
+  line-height: 1.5;
+}
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.feature-icon.review { background: rgba(239, 68, 68, 0.2); }
+.feature-icon.price { background: rgba(34, 197, 94, 0.2); }
+.feature-icon.dark { background: rgba(168, 85, 247, 0.2); }
+.feature-text h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.feature-text p {
+  font-size: 14px;
+  color: #94a3b8;
+}
+.right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+.card {
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 20px;
+  padding: 36px;
+  width: 460px;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.score-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: conic-gradient(#22c55e 0deg 280deg, rgba(148,163,184,0.2) 280deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.score-inner {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #1e293b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.score-num {
+  font-size: 32px;
+  font-weight: 800;
+  color: #22c55e;
+}
+.score-label {
+  font-size: 11px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.grade {
+  font-size: 56px;
+  font-weight: 900;
+  color: #22c55e;
+}
+.card-site {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 20px;
+}
+.bar-section {
+  margin-bottom: 16px;
+}
+.bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.bar-label span:first-child { color: #cbd5e1; }
+.bar-label span:last-child { font-weight: 700; }
+.bar-label .good { color: #22c55e; }
+.bar-label .warn { color: #f59e0b; }
+.bar-label .bad { color: #ef4444; }
+.bar {
+  height: 8px;
+  background: rgba(148,163,184,0.15);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+.bar-fill.good { background: linear-gradient(90deg, #22c55e, #4ade80); }
+.bar-fill.warn { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.bar-fill.bad { background: linear-gradient(90deg, #ef4444, #f87171); }
+.findings {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(148,163,184,0.15);
+}
+.finding {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 13px;
+  color: #cbd5e1;
+}
+.finding-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.finding-dot.warn { background: #f59e0b; }
+.finding-dot.bad { background: #ef4444; }
+.finding-dot.good { background: #22c55e; }
+.shortcut {
+  margin-top: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #64748b;
+}
+.key {
+  background: rgba(148,163,184,0.15);
+  border: 1px solid rgba(148,163,184,0.3);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #cbd5e1;
+  font-family: monospace;
+}
+</style>
+</head>
+<body>
+  <div class="left">
+    <div class="logo-row">
+      <div class="logo">🛡️</div>
+      <div class="brand">ShopGuard</div>
+    </div>
+    <div class="tagline">AI-powered shopping protection.<br>Detect fake reviews, hidden fees &amp; dark patterns.</div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon review">🔍</div>
+        <div class="feature-text">
+          <h3>Fake Review Detection</h3>
+          <p>7 statistical signals to spot manipulation</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon price">💰</div>
+        <div class="feature-text">
+          <h3>Hidden Fee Alerts</h3>
+          <p>Uncover surprise charges &amp; pricing traps</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon dark">🛡️</div>
+        <div class="feature-text">
+          <h3>Dark Pattern Scanner</h3>
+          <p>9 types of manipulative UI detection</p>
+        </div>
+      </div>
+    </div>
+    <div class="shortcut">
+      <span>Press</span>
+      <span class="key">Alt</span>
+      <span>+</span>
+      <span class="key">Shift</span>
+      <span>+</span>
+      <span class="key">S</span>
+      <span>to analyze any shopping page</span>
+    </div>
+  </div>
+  <div class="right">
+    <div class="card">
+      <div class="card-header">
+        <div class="score-circle">
+          <div class="score-inner">
+            <div class="score-num">78</div>
+            <div class="score-label">Trust</div>
+          </div>
+        </div>
+        <div class="grade">B+</div>
+      </div>
+      <div class="card-site">amazon.com/product/example-headphones</div>
+      <div class="bar-section">
+        <div class="bar-label"><span>Reviews</span><span class="good">85/100</span></div>
+        <div class="bar"><div class="bar-fill good" style="width:85%"></div></div>
+      </div>
+      <div class="bar-section">
+        <div class="bar-label"><span>Pricing</span><span class="warn">68/100</span></div>
+        <div class="bar"><div class="bar-fill warn" style="width:68%"></div></div>
+      </div>
+      <div class="bar-section">
+        <div class="bar-label"><span>Dark Patterns</span><span class="good">82/100</span></div>
+        <div class="bar"><div class="bar-fill good" style="width:82%"></div></div>
+      </div>
+      <div class="findings">
+        <div class="finding"><div class="finding-dot warn"></div>Hidden shipping fee detected ($12.99)</div>
+        <div class="finding"><div class="finding-dot bad"></div>Urgency trick: "Only 2 left in stock!"</div>
+        <div class="finding"><div class="finding-dot good"></div>Reviews appear authentic (verified buyers)</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

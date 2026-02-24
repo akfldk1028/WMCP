@@ -1,0 +1,20 @@
+# Source
+src/
+test/
+
+# Chrome extension
+extensions/
+
+# Config
+tsconfig.json
+tsconfig.extension.json
+vitest.config.ts
+scripts/
+
+# Screenshots & promo
+screenshot-*
+*.html
+
+# Dev files
+.gitignore
+.npmrc
