@@ -6,7 +6,7 @@
 import { analyzeReviews } from 'shopguard-mcp/review';
 import { analyzePrices } from 'shopguard-mcp/price';
 import { analyzeDarkPatterns } from 'shopguard-mcp/darkpattern';
-import { calculateTrustScore } from 'shopguard-mcp/core';
+import { calculateTrustScore } from 'shopguard-mcp';
 import { callClaudeHaiku } from './claude';
 
 interface PageSnapshot {
@@ -129,8 +129,8 @@ export async function runServerPipeline(snapshot: PageSnapshot): Promise<Pipelin
       pageType = typeof parsed['pageType'] === 'string' ? parsed['pageType'] : 'product';
       agentNotes = typeof parsed['agentNotes'] === 'string' ? parsed['agentNotes'] : agentNotes;
       if (Array.isArray(parsed['suspiciousPatterns'])) {
-        suspiciousPatterns = parsed['suspiciousPatterns'].filter(
-          (p: unknown) => typeof p === 'object' && p !== null && 'type' in p,
+        suspiciousPatterns = (parsed['suspiciousPatterns'] as Array<{ type: string; evidence: string; severity: string }>).filter(
+          (p) => typeof p.type === 'string',
         );
       }
 
