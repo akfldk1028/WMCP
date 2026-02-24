@@ -163,6 +163,11 @@ export interface StatusResponseMessage {
   };
 }
 
+export interface ValidateLicenseMessage {
+  type: 'VALIDATE_LICENSE';
+  licenseKey: string;
+}
+
 export type Message =
   | CapturePageMessage
   | PageSnapshotMessage
@@ -171,4 +176,5 @@ export type Message =
   | AnalysisResultMessage
   | AnalysisErrorMessage
   | GetStatusMessage
-  | StatusResponseMessage;
+  | StatusResponseMessage
+  | ValidateLicenseMessage;

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ShopGuard",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "AI shopping protection - fake review detection, hidden fee alerts, dark pattern scanning",
   "permissions": [
     "activeTab",
@@ -9,12 +9,55 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://api.anthropic.com/*"
+    "https://api.anthropic.com/*",
+    "https://shopguard-api.vercel.app/*"
   ],
   "background": {
     "service_worker": "dist/background.js",
     "type": "module"
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.amazon.com/*",
+        "https://*.amazon.co.uk/*",
+        "https://*.amazon.co.jp/*",
+        "https://*.amazon.de/*",
+        "https://*.coupang.com/*",
+        "https://*.ebay.com/*",
+        "https://*.ebay.co.uk/*",
+        "https://*.aliexpress.com/*",
+        "https://*.walmart.com/*",
+        "https://*.etsy.com/*",
+        "https://*.temu.com/*",
+        "https://*.shein.com/*",
+        "https://*.gmarket.co.kr/*",
+        "https://*.11st.co.kr/*",
+        "https://shopping.naver.com/*",
+        "https://shop.naver.com/*",
+        "https://smartstore.naver.com/*",
+        "https://*.target.com/*",
+        "https://*.bestbuy.com/*",
+        "https://*.newegg.com/*",
+        "https://*.shopee.com/*",
+        "https://*.shopee.co.id/*",
+        "https://*.lazada.com/*",
+        "https://*.rakuten.co.jp/*",
+        "https://*.mercari.com/*",
+        "https://*.musinsa.com/*",
+        "https://*.ssg.com/*",
+        "https://*.lotteon.com/*",
+        "https://*.kurly.com/*",
+        "https://*.oliveyoung.co.kr/*",
+        "https://*.auction.co.kr/*",
+        "https://*.interpark.com/*",
+        "https://*.wemakeprice.com/*",
+        "https://*.tmon.co.kr/*"
+      ],
+      "js": ["dist/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

@@ -1,5 +1,6 @@
 import { runAgentPipeline, runLocalPipeline } from './agent/pipeline.js';
 import { validateApiKey } from './agent/client.js';
+import { analyzeViaProxy, validateLicense } from './agent/proxy-client.js';
 import type {
   Message,
   PageSnapshot,
@@ -53,12 +54,40 @@ async function getSettings(): Promise<{ apiKey: string; model: string }> {
   };
 }
 
+/** Get Pro settings (license key) */
+async function getProSettings(): Promise<{ licenseKey: string }> {
+  const result = await chrome.storage.local.get(['licenseKey']);
+  return { licenseKey: result.licenseKey ?? '' };
+}
+
 /** Track usage */
 async function trackUsage(tokens?: number): Promise<void> {
   const result = await chrome.storage.local.get(['analysisCount', 'totalTokens']);
   const count = (result.analysisCount ?? 0) + 1;
   const total = (result.totalTokens ?? 0) + (tokens ?? 0);
   await chrome.storage.local.set({ analysisCount: count, totalTokens: total });
+}
+
+/** Send analysis result to content script and update badge */
+function sendResult(
+  tabId: number,
+  result: { success: true; analysis: AnalysisResult | null; pageType: PageType; agentNotes: string; suspiciousPatterns: AgentSuspiciousPattern[] },
+) {
+  if (result.analysis) {
+    chrome.tabs.sendMessage(tabId, {
+      type: 'ANALYSIS_RESULT' as const,
+      data: result.analysis,
+      agentNotes: result.agentNotes,
+      suspiciousPatterns: result.suspiciousPatterns,
+    }).catch(() => {});
+
+    const rank = GRADE_ORDER[result.analysis.overall.grade] ?? 6;
+    const color = rank <= 2 ? '#22c55e' : rank <= 4 ? '#eab308' : '#ef4444';
+    chrome.action.setBadgeText({ text: result.analysis.overall.grade, tabId });
+    chrome.action.setBadgeBackgroundColor({ color, tabId });
+  } else {
+    chrome.action.setBadgeText({ text: '', tabId });
+  }
 }
 
 /** Run the full analysis pipeline for a tab */
@@ -73,53 +102,58 @@ async function analyzeTab(tabId: number, snapshot: PageSnapshot): Promise<void> 
   chrome.tabs.sendMessage(tabId, { type: 'ANALYSIS_STARTED' as const }).catch(() => {});
 
   const { apiKey, model } = await getSettings();
+  const { licenseKey } = await getProSettings();
 
-  // Free mode: local heuristic analysis (no API key needed)
-  // LLM mode: AI-enhanced analysis (requires Anthropic API key)
-  let result;
-  if (!apiKey) {
-    result = runLocalPipeline(snapshot);
+  // Step 1: Always run local pipeline first (instant results)
+  const localResult = runLocalPipeline(snapshot);
+  if (localResult.success && localResult.analysis) {
+    state.pageType = localResult.pageType;
+    state.lastAnalysis = localResult.analysis;
+    state.agentNotes = localResult.agentNotes;
+    state.suspiciousPatterns = localResult.suspiciousPatterns;
+    await saveTabState(tabId, state);
+    sendResult(tabId, localResult as { success: true; analysis: AnalysisResult; pageType: PageType; agentNotes: string; suspiciousPatterns: AgentSuspiciousPattern[] });
+  }
+
+  // Step 2: AI-enhanced analysis
+  let aiResult;
+  if (apiKey) {
+    // User has own API key → use direct Anthropic API (backward compatible)
+    aiResult = await runAgentPipeline(snapshot, apiKey, model);
   } else {
-    result = await runAgentPipeline(snapshot, apiKey, model);
+    // No API key → use server proxy (new default)
+    aiResult = await analyzeViaProxy(snapshot, licenseKey);
   }
 
   state.analyzing = false;
 
-  if (!result.success) {
-    state.error = result.error;
-    state.errorCode = result.errorCode;
+  if (!aiResult.success) {
+    // Local result already shown — just save the error state
+    state.error = aiResult.error;
+    state.errorCode = aiResult.errorCode;
     await saveTabState(tabId, state);
-    chrome.tabs.sendMessage(tabId, {
-      type: 'ANALYSIS_ERROR' as const,
-      error: result.error,
-      errorCode: result.errorCode,
-    }).catch(() => {});
+    // Only send error if we had no local results
+    if (!localResult.success || !localResult.analysis) {
+      chrome.tabs.sendMessage(tabId, {
+        type: 'ANALYSIS_ERROR' as const,
+        error: aiResult.error,
+        errorCode: aiResult.errorCode,
+      }).catch(() => {});
+    }
+    await trackUsage();
     return;
   }
 
-  state.pageType = result.pageType;
-  state.agentNotes = result.agentNotes;
-  state.suspiciousPatterns = result.suspiciousPatterns;
+  // AI result overrides local result
+  state.pageType = aiResult.pageType;
+  state.agentNotes = aiResult.agentNotes;
+  state.suspiciousPatterns = aiResult.suspiciousPatterns;
 
-  if (result.analysis) {
-    state.lastAnalysis = result.analysis;
+  if (aiResult.analysis) {
+    state.lastAnalysis = aiResult.analysis;
     await saveTabState(tabId, state);
-
-    // Send result to content script for overlay rendering
-    chrome.tabs.sendMessage(tabId, {
-      type: 'ANALYSIS_RESULT' as const,
-      data: result.analysis,
-      agentNotes: result.agentNotes,
-      suspiciousPatterns: result.suspiciousPatterns,
-    }).catch(() => {});
-
-    // Update badge
-    const rank = GRADE_ORDER[result.analysis.overall.grade] ?? 6;
-    const color = rank <= 2 ? '#22c55e' : rank <= 4 ? '#eab308' : '#ef4444';
-    chrome.action.setBadgeText({ text: result.analysis.overall.grade, tabId });
-    chrome.action.setBadgeBackgroundColor({ color, tabId });
+    sendResult(tabId, aiResult as { success: true; analysis: AnalysisResult; pageType: PageType; agentNotes: string; suspiciousPatterns: AgentSuspiciousPattern[] });
   } else {
-    // Non-commercial page
     state.lastAnalysis = null;
     await saveTabState(tabId, state);
     chrome.action.setBadgeText({ text: '', tabId });
@@ -167,6 +201,14 @@ chrome.runtime.onMessage.addListener(
     if ((message as { type: string }).type === 'VALIDATE_API_KEY') {
       const apiKey = (message as { apiKey?: string }).apiKey ?? '';
       validateApiKey(apiKey)
+        .then((valid) => sendResponse({ valid }))
+        .catch(() => sendResponse({ valid: false }));
+      return true; // async response
+    }
+
+    // License key validation
+    if (message.type === 'VALIDATE_LICENSE') {
+      validateLicense(message.licenseKey)
         .then((valid) => sendResponse({ valid }))
         .catch(() => sendResponse({ valid: false }));
       return true; // async response

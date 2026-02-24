@@ -21,17 +21,6 @@ function el(tag: string, attrs: Record<string, string> = {}, text = ''): HTMLEle
 
 // ── State Renderers ──
 
-function renderNoApiKey() {
-  contentEl.textContent = '';
-  const wrap = el('div', { class: 'center-block' });
-  wrap.appendChild(el('div', { class: 'icon' }, '\u{1F511}'));
-  wrap.appendChild(el('p', {}, 'API key required'));
-  const btn = el('button', { class: 'btn btn-primary' }, 'Open Settings');
-  btn.addEventListener('click', () => chrome.runtime.openOptionsPage());
-  wrap.appendChild(btn);
-  contentEl.appendChild(wrap);
-}
-
 function renderReady() {
   contentEl.textContent = '';
   const wrap = el('div', { class: 'center-block' });
@@ -43,6 +32,8 @@ function renderReady() {
     renderAnalyzing();
   });
   wrap.appendChild(btn);
+  const hint = el('p', { style: 'font-size: 10px; color: #555; margin-top: 8px;' }, 'Free: 5/day AI \u2022 Pro: unlimited');
+  wrap.appendChild(hint);
   contentEl.appendChild(wrap);
 }
 
@@ -72,6 +63,10 @@ function renderError(error: string, errorCode?: string) {
 
   if (errorCode === 'auth') {
     const btn = el('button', { class: 'btn btn-primary btn-sm' }, 'Open Settings');
+    btn.addEventListener('click', () => chrome.runtime.openOptionsPage());
+    wrap.appendChild(btn);
+  } else if (errorCode === 'rate_limit') {
+    const btn = el('button', { class: 'btn btn-primary btn-sm' }, 'Upgrade to Pro');
     btn.addEventListener('click', () => chrome.runtime.openOptionsPage());
     wrap.appendChild(btn);
   } else {
