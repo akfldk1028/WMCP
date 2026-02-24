@@ -124,16 +124,24 @@
 </head>
 <body>
   <h1>ShopGuard Settings</h1>
-  <p class="subtitle">AI Shopping Protection v0.2.0</p>
+  <p class="subtitle">AI Shopping Protection v0.3.0</p>
 
   <div class="section">
-    <label for="apiKey">Anthropic API Key</label>
-    <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off">
-    <p class="hint">Stored in chrome.storage.local (unencrypted). Never shared externally. Get a key at console.anthropic.com</p>
+    <label>Analysis Mode</label>
+    <div style="background:#1a1a2e;padding:14px;border-radius:8px;margin-bottom:12px;">
+      <div style="color:#22c55e;font-weight:600;margin-bottom:4px;">Free Mode (Active)</div>
+      <div style="color:#888;font-size:12px;">Local analysis — dark patterns, pricing, reviews. No API key needed.</div>
+    </div>
   </div>
 
   <div class="section">
-    <label for="model">Analysis Model</label>
+    <label for="apiKey">Anthropic API Key (Optional — AI Enhanced Mode)</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off">
+    <p class="hint">Optional. Enables AI-enhanced analysis using Claude LLM for deeper page understanding. Get a key at console.anthropic.com</p>
+  </div>
+
+  <div class="section">
+    <label for="model">AI Model (only used with API key)</label>
     <select id="model">
       <option value="claude-sonnet-4-5-20250929">Claude Sonnet 4.5 (Recommended)</option>
       <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (Faster, cheaper)</option>

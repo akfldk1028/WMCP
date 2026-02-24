@@ -47,8 +47,10 @@ saveBtn.addEventListener('click', async () => {
   const key = apiKeyInput.value.trim();
   const model = modelSelect.value;
 
+  // No key = free mode (perfectly fine)
   if (!key) {
-    showStatus('Please enter an API key.', 'error');
+    await chrome.storage.local.set({ apiKey: '', model });
+    showStatus('Free mode active. Local analysis enabled.', 'success');
     return;
   }
 
@@ -64,7 +66,7 @@ saveBtn.addEventListener('click', async () => {
 
   if (valid) {
     await chrome.storage.local.set({ apiKey: key, model });
-    showStatus('API key verified and saved!', 'success');
+    showStatus('API key verified! AI Enhanced mode active.', 'success');
   } else {
     showStatus('Invalid API key. Please check and try again.', 'error');
   }

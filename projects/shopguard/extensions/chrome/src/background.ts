@@ -1,4 +1,4 @@
-import { runAgentPipeline } from './agent/pipeline.js';
+import { runAgentPipeline, runLocalPipeline } from './agent/pipeline.js';
 import { validateApiKey } from './agent/client.js';
 import type {
   Message,
@@ -74,20 +74,14 @@ async function analyzeTab(tabId: number, snapshot: PageSnapshot): Promise<void> 
 
   const { apiKey, model } = await getSettings();
 
+  // Free mode: local heuristic analysis (no API key needed)
+  // LLM mode: AI-enhanced analysis (requires Anthropic API key)
+  let result;
   if (!apiKey) {
-    state.analyzing = false;
-    state.error = 'API key not configured';
-    state.errorCode = 'auth';
-    await saveTabState(tabId, state);
-    chrome.tabs.sendMessage(tabId, {
-      type: 'ANALYSIS_ERROR' as const,
-      error: state.error,
-      errorCode: state.errorCode,
-    }).catch(() => {});
-    return;
+    result = runLocalPipeline(snapshot);
+  } else {
+    result = await runAgentPipeline(snapshot, apiKey, model);
   }
-
-  const result = await runAgentPipeline(snapshot, apiKey, model);
 
   state.analyzing = false;
 

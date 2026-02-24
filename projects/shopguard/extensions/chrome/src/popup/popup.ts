@@ -172,11 +172,6 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 
       const data = response.data;
 
-      if (!data.hasApiKey) {
-        renderNoApiKey();
-        return;
-      }
-
       if (data.analyzing) {
         renderAnalyzing();
         return;

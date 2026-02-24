@@ -103,6 +103,80 @@ function buildAnalysis(
 }
 
 // ---------------------------------------------------------------------------
+// Local analysis (no LLM — free mode)
+// ---------------------------------------------------------------------------
+
+/**
+ * Run heuristic analysis directly on the page snapshot without calling
+ * the LLM. Uses raw HTML/text for dark patterns and price analysis,
+ * and DOM-captured review blocks for basic review analysis.
+ *
+ * This enables zero-setup free tier: no API key, no server calls.
+ */
+export function runLocalPipeline(snapshot: PageSnapshot): PipelineResult {
+  const text = snapshot.rawPageText ?? '';
+  const html = snapshot.rawHtml ?? '';
+
+  // Reviews: build simple structures from DOM-captured review blocks
+  const reviews: { text: string; rating: number; date: string }[] =
+    (snapshot.reviewBlocks ?? [])
+      .filter((b) => b.length > 20)
+      .slice(0, 30)
+      .map((t) => ({ text: t, rating: 3, date: 'unknown' }));
+
+  const reviewResult = analyzeReviews(reviews, { locale: 'ko' });
+  const priceResult = analyzePrices(html);
+  const darkPatternResult = analyzeDarkPatterns(text, html);
+
+  const overall = calculateTrustScore(
+    reviewResult.overallScore,
+    priceResult.trustScore,
+    100 - darkPatternResult.riskScore,
+  );
+
+  return {
+    success: true,
+    pageType: 'product',
+    analysis: {
+      review: {
+        totalReviews: reviewResult.totalReviews,
+        suspiciousCount: reviewResult.suspiciousCount,
+        overallScore: reviewResult.overallScore,
+        grade: reviewResult.grade,
+        details: reviewResult.details,
+      },
+      price: {
+        trustScore: priceResult.trustScore,
+        grade: priceResult.grade,
+        issues: priceResult.issues.map((i) => ({
+          type: i.type,
+          severity: i.severity,
+          description: i.description,
+        })),
+        totalHiddenFeeCents: priceResult.totalHiddenFeeCents,
+      },
+      darkPattern: {
+        riskScore: darkPatternResult.riskScore,
+        grade: darkPatternResult.grade,
+        patterns: darkPatternResult.patterns.map((p) => ({
+          type: p.type,
+          risk: p.risk,
+          explanation: p.explanation,
+        })),
+      },
+      overall: {
+        score: overall.overall,
+        grade: overall.grade,
+        summary: overall.summary,
+      },
+      timestamp: Date.now(),
+    },
+    agentNotes: 'Local analysis mode',
+    suspiciousPatterns: [],
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 

@@ -13,3 +13,6 @@ webmcp/
 extensions/chrome/dist/
 extensions/chrome/popup.html
 extensions/chrome/settings/
+*.zip
+.playwright-mcp/
+clone/
