@@ -22,7 +22,7 @@ Detects deceptive pricing tactics including hidden fees revealed only at checkou
 
 ### Step 1: Extract Pricing
 ```
-Call: extractPricing({ html })
+Call: shopguard:extractPricing({ html })
 ```
 
 Returns:
@@ -44,12 +44,18 @@ For each trap:
 
 ### Step 4: Multi-Source Comparison (if available)
 ```
-Call: comparePrices({ sources: [...] })
+Call: shopguard:comparePrices({ sources: [...] })
 ```
 
 Returns: cheapest/most expensive, spread percentage, statistical outliers.
 
 ### Step 5: Report
+
+<HARD-GATE>
+ALWAYS calculate and present the estimated TOTAL price including all detected fees.
+Compare this with the advertised price to show the real cost difference.
+</HARD-GATE>
+
 - List all fees with amounts and disclosure quality
 - Calculate estimated total vs. advertised price
 - Flag traps with specific evidence

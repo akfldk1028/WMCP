@@ -20,7 +20,7 @@ Multi-signal review verification that goes beyond simple sentiment analysis. Use
 
 ## Statistical Signals
 
-The `extractReviews` tool returns 7 signals, each with evidence:
+The `shopguard:extractReviews` tool returns 7 signals, each with evidence:
 
 | Signal | What It Detects | Strong When |
 |--------|----------------|-------------|
@@ -36,7 +36,7 @@ The `extractReviews` tool returns 7 signals, each with evidence:
 
 ### Step 1: Extract
 ```
-Call: extractReviews({ html, locale })
+Call: shopguard:extractReviews({ html, locale })
 ```
 
 ### Step 2: Assess Signal Strength
@@ -45,17 +45,26 @@ For each flagged signal, check:
 - **Sample size** — is n=5 or n=500? This matters enormously
 - **Combination strength** — individual signals are weak; 3+ signals together are strong
 
+See `references/signal-combinations.md` for the combination guide.
+
 ### Step 3: Cross-Platform (optional)
 If reviews from two sources are available:
 ```
-Call: compareReviewSets({ sourceA, sourceB, locale })
+Call: shopguard:compareReviewSets({ sourceA, sourceB, locale })
 ```
 Look for: rating gaps, duplicate texts, sentiment mismatches.
 
 ### Step 4: Report
-Present findings per-signal with evidence quotes. Use hedging language:
-- "This pattern is consistent with..." (not "this proves...")
-- "X out of Y reviews show..." (not "the reviews are fake")
+
+<HARD-GATE>
+NEVER call reviews "fake." Use hedging language:
+- "This pattern is consistent with..."
+- "X out of Y reviews show..."
+- "Signals suggest possible manipulation"
+ALWAYS state the sample size alongside any finding.
+</HARD-GATE>
+
+Present findings per-signal with evidence quotes.
 
 ## Signal Combinations
 
@@ -74,6 +83,10 @@ Weak signals alone:
 3. Incentivized reviews that disclose sponsorship are actually a positive signal
 4. Consider platform norms (Korean platforms have different review culture than US)
 5. AI-generated detection has false positives — non-native English writers may trigger it
+
+## References
+
+- `references/signal-combinations.md` — signal combination guide with strength levels
 
 ---
 

@@ -6,11 +6,22 @@ description: >
   pricing transparency, or checkout fairness.
 version: 0.4.0
 homepage: https://github.com/akfldk1028/WMCP
+metadata:
+  mcp_server: shopguard
+  install:
+    - id: npx
+      kind: npx
+      package: shopguard-mcp
+      label: "Run via npx (no install)"
+    - id: npm
+      kind: npm
+      package: shopguard-mcp
+      label: "Install globally"
 ---
 
 # ShopGuard — AI Shopping Protection
 
-ShopGuard protects consumers from deceptive e-commerce practices. It provides evidence-based analysis of shopping pages through 7 specialized tools, 3 domain knowledge catalogs, and multi-step agentic workflows.
+ShopGuard protects consumers from deceptive e-commerce practices. It provides evidence-based analysis of shopping pages through 7 specialized MCP tools, 3 domain knowledge catalogs, and multi-step agentic workflows.
 
 ## When to Activate
 
@@ -21,17 +32,13 @@ Activate this skill when the user:
 - Shares a shopping URL (Amazon, Coupang, eBay, AliExpress, etc.)
 - Says "analyze this page" or "check this store" in a shopping context
 
-**Trigger keywords**: shopping, product, review, price, checkout, dark pattern, scam, fake review, hidden fee, trust, safety, e-commerce
+**Trigger keywords**: shopping, product, review, price, checkout, dark pattern, scam, fake review, hidden fee, trust, safety, e-commerce, 리뷰, 가격, 다크패턴, 쇼핑
 
 ## Prerequisites
 
-This skill requires the ShopGuard MCP server:
+### Claude Code (Recommended)
+Add to your MCP config (`~/.claude/claude_desktop_config.json` or project `.mcp.json`):
 
-```bash
-npx shopguard-mcp
-```
-
-Or add to Claude Code MCP config:
 ```json
 {
   "mcpServers": {
@@ -43,17 +50,27 @@ Or add to Claude Code MCP config:
 }
 ```
 
+### Cursor / Windsurf
+Add the same MCP config to your editor's settings.
+
+### Manual
+```bash
+npx shopguard-mcp
+```
+
 ## Available Tools
+
+All tools are accessed via the `shopguard` MCP server prefix.
 
 | Tool | Purpose | Input |
 |------|---------|-------|
-| `extractPageData` | Page overview — platform, prices, reviews, interactive elements | HTML, URL |
-| `extractReviews` | Review extraction + 7 statistical fraud signals | HTML or review blocks |
-| `extractPricing` | Hidden fee detection + subscription trap analysis | HTML |
-| `scanDarkPatterns` | 9 dark pattern types with evidence | Text + HTML |
-| `compareReviewSets` | Cross-platform review comparison | Two sets of reviews |
-| `comparePrices` | Multi-source price comparison with outlier detection | Price sources |
-| `detectAgentReadiness` | Structured data / agent-readiness signals | HTML |
+| `shopguard:extractPageData` | Page overview — platform, prices, reviews, elements | HTML, URL |
+| `shopguard:extractReviews` | Review extraction + 7 statistical fraud signals | HTML or review blocks |
+| `shopguard:extractPricing` | Hidden fee detection + subscription trap analysis | HTML |
+| `shopguard:scanDarkPatterns` | 9 dark pattern types with evidence | Text + HTML |
+| `shopguard:compareReviewSets` | Cross-platform review comparison | Two review sets |
+| `shopguard:comparePrices` | Multi-source price comparison with outlier detection | Price sources |
+| `shopguard:detectAgentReadiness` | Structured data / agent-readiness signals | HTML |
 
 ## Available Resources
 
@@ -68,29 +85,42 @@ Read these catalogs for domain knowledge before analysis:
 When a user asks you to analyze a shopping page:
 
 ### Step 1: Page Overview
-Call `extractPageData` with the page HTML. This identifies the platform, finds price contexts, review blocks, and interactive elements.
+Call `shopguard:extractPageData` with the page HTML. This identifies the platform, finds price contexts, review blocks, and interactive elements.
 
-### Step 2: Dark Pattern Scan (always)
-Call `scanDarkPatterns` — urgency, fake social proof, confirm-shaming, preselection, obstruction. This step is non-negotiable; always run it.
+### Step 2: Dark Pattern Scan
+
+<HARD-GATE>
+ALWAYS run dark pattern scan. This step is non-negotiable — never skip it,
+even if the page looks legitimate or the user only asked about reviews.
+</HARD-GATE>
+
+Call `shopguard:scanDarkPatterns` — urgency, fake social proof, confirm-shaming, preselection, obstruction.
 
 ### Step 3: Price Analysis (if prices found)
-Call `extractPricing` if Step 1 found price contexts. Look for hidden fees, subscription traps, drip pricing.
+Call `shopguard:extractPricing` if Step 1 found price contexts. Look for hidden fees, subscription traps, drip pricing.
 
 ### Step 4: Review Analysis (if reviews found)
-Call `extractReviews` if Step 1 found review blocks. The tool returns 7 statistical signals:
+Call `shopguard:extractReviews` if Step 1 found review blocks. The tool returns 7 statistical signals:
 - Date clustering, rating anomaly, phrase repetition
 - Length uniformity, incentive keywords, rating surge
 - AI-generated content detection
 
 ### Step 5: Synthesize
-Combine all evidence. Cross-reference findings (fake urgency + hidden fees = high concern). Present evidence with specific quotes — never assign grades without evidence.
+
+<HARD-GATE>
+ALWAYS present evidence with specific quotes from the page.
+NEVER assign trust grades without supporting evidence.
+NEVER say "this product is safe" — say "no concerning signals were detected."
+</HARD-GATE>
+
+Combine all evidence. Cross-reference findings (fake urgency + hidden fees = high concern).
 
 ## Guidelines
 
 1. **Present evidence, not verdicts** — quote specific page elements, let users decide
 2. **Always run dark pattern scan** — even if the page looks legitimate
 3. **Cross-reference signals** — individual signals are weak; combinations are strong
-4. **Consider context** — some fees are standard for certain platforms (e.g., shipping in Korean e-commerce)
+4. **Consider context** — some fees are standard for certain platforms (e.g., 배송비 in Korean e-commerce)
 5. **Note limitations** — you cannot detect dynamic pricing from a single visit
 6. **Respect sample size** — signals from 3 reviews are weaker than from 50
 7. **Incentivized ≠ fake** — disclosed sponsorship is a positive transparency signal
@@ -106,9 +136,9 @@ For focused analysis, see:
 ## Integration
 
 Works alongside:
-- Browser automation skills (Playwright, Puppeteer) for page capture
-- Web fetch skills for retrieving shopping page HTML
-- Comparison skills for cross-site analysis
+- Browser automation skills (Playwright, Puppeteer) for capturing dynamic shopping pages
+- Web fetch skills for retrieving static page HTML
+- File system skills for saving evidence reports
 
 ---
 

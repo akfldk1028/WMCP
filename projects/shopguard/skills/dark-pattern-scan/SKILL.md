@@ -36,7 +36,7 @@ Detects 9 categories of dark patterns in e-commerce pages. Each detection includ
 
 ### Step 1: Scan
 ```
-Call: scanDarkPatterns({ content: pageVisibleText, html: pageHtml })
+Call: shopguard:scanDarkPatterns({ content: pageVisibleText, html: pageHtml })
 ```
 
 The `content` parameter captures urgency language and shaming text.
@@ -55,6 +55,13 @@ Dark patterns are more concerning in combination:
 - Confirm-shaming + forced continuity = emotional manipulation into subscription
 
 ### Step 4: Report
+
+<HARD-GATE>
+ALWAYS quote the specific evidence for every dark pattern finding.
+Generic statements like "the page uses urgency tactics" without evidence are NOT acceptable.
+Every finding MUST include the exact text or described UI element from the page.
+</HARD-GATE>
+
 Present each finding with:
 - The dark pattern type and risk level
 - The exact evidence (quoted text or described UI element)
@@ -66,7 +73,7 @@ Present each finding with:
 1. Not every urgency indicator is a dark pattern — legitimate sales have real deadlines
 2. Pre-checked boxes for required terms are different from opt-in marketing pre-checks
 3. Consider jurisdiction — EU GDPR has specific rules about consent patterns
-4. Always quote the specific evidence — "the page contains a countdown timer" is better than "the page uses urgency tactics"
+4. Always quote the specific evidence
 5. Obstruction is the most serious pattern — difficulty cancelling is always a red flag
 
 ## Resource

@@ -1,14 +1,14 @@
 ---
 name: shopguard-audit
 description: >
-  Full shopping page audit — runs all ShopGuard tools in sequence to produce
+  Full shopping page audit — runs all ShopGuard MCP tools in sequence to produce
   a comprehensive safety assessment. Use when analyzing a complete product page.
 version: 0.4.0
 ---
 
 # ShopGuard Audit — Full Page Analysis
 
-Complete shopping page analysis workflow that chains all ShopGuard tools in the optimal sequence. Produces a comprehensive evidence report covering reviews, pricing, and dark patterns.
+Complete shopping page analysis workflow that chains all ShopGuard MCP tools in the optimal sequence. Produces a comprehensive evidence report covering reviews, pricing, and dark patterns.
 
 ## When to Activate
 
@@ -28,7 +28,7 @@ If the user provides a URL but not HTML:
 ### Phase 2: Overview
 
 ```
-Call: extractPageData({ html, url })
+Call: shopguard:extractPageData({ html, url })
 ```
 
 Read the response to determine what's on the page:
@@ -36,50 +36,36 @@ Read the response to determine what's on the page:
 - If `priceContexts` count > 0 → queue price analysis
 - Note the detected `platform` for context-aware assessment
 
-### Phase 3: Evidence Collection (parallel when possible)
+### Phase 3: Evidence Collection
 
-Run these tools based on Phase 2 findings:
+<HARD-GATE>
+Dark pattern scan is MANDATORY. Never skip this step, regardless of what
+the user asked for. Run it even if reviews look clean and prices seem fair.
+</HARD-GATE>
 
 **Always:**
 ```
-Call: scanDarkPatterns({ content: visibleText, html })
+Call: shopguard:scanDarkPatterns({ content: visibleText, html })
 ```
 
 **If reviews found:**
 ```
-Call: extractReviews({ html, locale: "ko" or "en" })
+Call: shopguard:extractReviews({ html, locale: "ko" or "en" })
 ```
 
 **If prices found:**
 ```
-Call: extractPricing({ html })
+Call: shopguard:extractPricing({ html })
 ```
 
 ### Phase 4: Synthesis
 
-Combine all evidence into a structured report:
+<HARD-GATE>
+Present ALL findings before making any recommendation.
+Never auto-proceed with purchases or suggest "this is safe" without evidence.
+</HARD-GATE>
 
-```
-## Page: [product name] on [platform]
-
-### Dark Patterns
-[List each finding with evidence quote]
-
-### Pricing
-[Hidden fees, traps, transparency assessment]
-
-### Reviews
-[Statistical signals, flagged indicators]
-
-### Cross-References
-[Combinations that amplify concern]
-
-### Recommendations
-[Specific, actionable advice for the user]
-
-### Limitations
-[What could NOT be determined from this single analysis]
-```
+Combine all evidence into a structured report. See `references/evidence-format.md` for the template.
 
 ## Safety Gates
 
@@ -94,8 +80,15 @@ Combine all evidence into a structured report:
 - Do NOT ignore dark patterns just because reviews look good
 - Do NOT present a single flagged review signal as definitive proof of fraud
 
+## Error Recovery
+
+- If `shopguard:extractPageData` fails → page HTML may be malformed; try with `WebFetch` to re-capture
+- If `shopguard:extractReviews` returns empty → reviews may be client-rendered; try browser automation
+- If all tools return clean → explicitly state "no signals detected" with limitations caveat
+
 ## References
 
+- `references/evidence-format.md` — structured report template
 - `shopguard://catalog/dark-patterns` for dark pattern type definitions
 - `shopguard://catalog/pricing-tactics` for pricing tactic detection methods
 - `shopguard://catalog/review-indicators` for fake review heuristic thresholds
