@@ -22,13 +22,13 @@ export default function TermsPage() {
       <div className="legal-page container-narrow">
         <a href="/" className="legal-back">{'\u2190'} Back to ShopGuard</a>
         <h1 className="legal-title fade-up">Terms of Service</h1>
-        <p className="legal-date fade-up">Last updated: February 24, 2026</p>
+        <p className="legal-date fade-up">Last updated: February 25, 2026</p>
 
         <div className="legal-summary fade-up fade-up-d1">
           <strong>Summary</strong>
           <p>
             ShopGuard provides shopping analysis tools (API, Chrome Extension, MCP Server).
-            Free tier has 50 req/day, Pro is $49/mo with a 14-day free trial.
+            Free tier has 50 req/day. Consumer Pro is $4.99/mo, Developer is $19/mo, Enterprise is $99/mo — all with a 14-day free trial.
             {"Don't"} abuse it or resell access. Analysis results are informational, not legal advice.
           </p>
         </div>
@@ -38,7 +38,7 @@ export default function TermsPage() {
           <p>By accessing or using ShopGuard products and services ({'"'}Services{'"'}), including the ShopGuard API, Chrome Extension, and MCP Server, you agree to be bound by these Terms of Service. If you do not agree, do not use the Services.</p>
 
           <h2>2. Description of Services</h2>
-          <p>ShopGuard provides AI-powered shopping protection tools that detect fake reviews, hidden fees, and dark patterns on e-commerce pages. Services are delivered as:</p>
+          <p>ShopGuard provides evidence-based shopping protection tools that detect fake reviews, hidden fees, and dark patterns on e-commerce pages. Core detection uses pattern-analysis heuristics; the server pipeline additionally uses AI classification for enhanced accuracy. Services are delivered as:</p>
           <ul>
             <li><strong>ShopGuard API</strong> — REST API for programmatic analysis of shopping pages</li>
             <li><strong>ShopGuard Chrome Extension</strong> — Browser extension for real-time shopping page analysis</li>
@@ -46,14 +46,16 @@ export default function TermsPage() {
           </ul>
 
           <h2>3. Subscription Plans</h2>
-          <p><strong>Free Tier:</strong> Limited to 50 API requests per day. Includes page data extraction, dark pattern detection, and agent-readiness scanning.</p>
-          <p><strong>Pro Tier:</strong> $49/month subscription. Includes all Free features plus review authenticity analysis (7 statistical signals), hidden fee detection, and price comparison. Billed monthly via Lemon Squeezy.</p>
+          <p><strong>Free Tier:</strong> Limited to 50 API requests per day. Includes page data extraction, dark pattern detection (9 types), and agent-readiness scanning.</p>
+          <p><strong>Consumer Pro:</strong> $4.99/month. Includes all Free features plus review authenticity analysis (7 statistical signals), hidden fee detection, price comparison, and 200 API requests/day.</p>
+          <p><strong>Developer:</strong> $19/month. Includes all Consumer Pro features plus dedicated API key, programmatic access, batch analysis, and 5,000 API requests/day.</p>
+          <p><strong>Enterprise:</strong> $99/month. Includes all Developer features plus compliance reports, SLA guarantee, priority support, and 50,000 API requests/day.</p>
 
           <h2>4. Payment and Billing</h2>
-          <p>Pro subscriptions are billed monthly through our payment processor, Lemon Squeezy. By subscribing, you authorize recurring charges. You may cancel at any time; cancellation takes effect at the end of the current billing period.</p>
+          <p>Paid subscriptions are billed monthly through our payment processor, Lemon Squeezy. By subscribing, you authorize recurring charges. You may cancel at any time; cancellation takes effect at the end of the current billing period.</p>
 
           <h2>5. Free Trial</h2>
-          <p>New Pro subscribers receive a <strong>14-day free trial</strong>. You will not be charged during the trial period. If you do not cancel before the trial ends, your subscription will automatically begin and you will be charged.</p>
+          <p>New paid subscribers receive a <strong>14-day free trial</strong>. You will not be charged during the trial period. If you do not cancel before the trial ends, your subscription will automatically begin and you will be charged.</p>
 
           <h2>6. Acceptable Use</h2>
           <p>You agree not to:</p>

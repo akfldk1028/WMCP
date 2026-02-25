@@ -15,6 +15,7 @@ import {
   handleCompareReviewSets,
   handleComparePrices,
   handleDetectAgentReadiness,
+  handleFetchAndAnalyze,
 } from './tools.js';
 import { ALL_RESOURCES } from './resources.js';
 import { ALL_PROMPTS } from './prompts.js';
@@ -66,7 +67,7 @@ function checkTier(toolName: string): boolean {
 export function createServer(): McpServer {
   const server = new McpServer({
     name: 'shopguard',
-    version: '0.2.0',
+    version: '0.4.0',
   });
 
   // ── Tools (7) ──
@@ -160,6 +161,22 @@ export function createServer(): McpServer {
     async (args) => {
       try {
         return ok(handleDetectAgentReadiness(args));
+      } catch (e) {
+        return err(e);
+      }
+    },
+  );
+
+  server.tool(
+    'fetchAndAnalyze',
+    'Fetch a shopping page URL and run the full ShopGuard analysis pipeline (page extraction, dark patterns, pricing, reviews). This is the primary tool for AI agents — provide a URL and get a complete evidence-based report.',
+    {
+      url: z.string().url().describe('Shopping page URL to fetch and analyze'),
+      locale: z.enum(['ko', 'en']).default('ko').describe('Language for keyword detection'),
+    },
+    async (args) => {
+      try {
+        return ok(await handleFetchAndAnalyze(args));
       } catch (e) {
         return err(e);
       }

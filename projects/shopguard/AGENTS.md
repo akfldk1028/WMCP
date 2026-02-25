@@ -46,10 +46,11 @@ ShopGuard runs as an MCP (Model Context Protocol) server that any AI agent can c
 npx shopguard-mcp
 ```
 
-## Tools (7)
+## Tools (8)
 
 | Tool | Description |
 |------|------------|
+| `fetchAndAnalyze` | **Primary**: fetch URL + full pipeline → complete evidence report |
 | `extractPageData` | Page overview — platform detection, price contexts, review blocks |
 | `extractReviews` | Review extraction + 7 statistical fraud signals |
 | `extractPricing` | Hidden fee detection + subscription trap analysis |
@@ -105,6 +106,8 @@ Located in `skills/` directory. Registered in `.claude-plugin/marketplace.json`.
 User: "이 상품 안전해?" / "Is this product safe?"
     ↓ Skill trigger: shopguard-audit (auto-discovered via marketplace)
     ↓
+Quick: shopguard:fetchAndAnalyze(url) → complete report (one call)
+    ↓ OR (for deeper analysis)
 Phase 1: Capture page (WebFetch / Playwright)
 Phase 2: shopguard:extractPageData → platform, reviews, prices
 Phase 3: shopguard:scanDarkPatterns (MANDATORY)

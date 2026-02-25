@@ -22,7 +22,7 @@ export default function RefundPage() {
       <div className="legal-page container-narrow">
         <a href="/" className="legal-back">{'\u2190'} Back to ShopGuard</a>
         <h1 className="legal-title fade-up">Refund Policy</h1>
-        <p className="legal-date fade-up">Last updated: February 24, 2026</p>
+        <p className="legal-date fade-up">Last updated: February 25, 2026</p>
 
         <div className="legal-summary fade-up fade-up-d1">
           <strong>Summary</strong>
@@ -35,10 +35,10 @@ export default function RefundPage() {
 
         <div className="legal-content fade-up fade-up-d2">
           <h2>Free Trial</h2>
-          <p>All Pro subscriptions include a <strong>14-day free trial</strong>. During the trial, you have full access to Pro features at no charge. If ShopGuard is not right for you, simply cancel before the trial ends and you will not be charged.</p>
+          <p>All paid subscriptions (Consumer Pro, Developer, Enterprise) include a <strong>14-day free trial</strong>. During the trial, you have full access to your plan{`'`}s features at no charge. If ShopGuard is not right for you, simply cancel before the trial ends and you will not be charged.</p>
 
           <h2>Subscription Refunds</h2>
-          <p>If you are not satisfied with your Pro subscription, you may request a <strong>full refund within 14 days</strong> of your first payment. To request a refund, email <a href="mailto:clickaround8@gmail.com">clickaround8@gmail.com</a> with your account details.</p>
+          <p>If you are not satisfied with your paid subscription, you may request a <strong>full refund within 14 days</strong> of your first payment. To request a refund, email <a href="mailto:clickaround8@gmail.com">clickaround8@gmail.com</a> with your account details.</p>
 
           <h2>After 14 Days</h2>
           <p>After the 14-day refund window, subscriptions are non-refundable. You may cancel your subscription at any time, and you will continue to have access until the end of your current billing period.</p>

@@ -15,6 +15,10 @@ import { analyzeReviewSignals } from '../signals/review-signals.js';
 import { extractFeeMatches, extractTrapMatches } from '../signals/price-signals.js';
 import { extractDarkPatternEvidence } from '../signals/darkpattern-signals.js';
 import { findIncentiveKeywords } from '../signals/patterns.js';
+import { analyzeReviews } from '../review/index.js';
+import { analyzePrices } from '../price/index.js';
+import { analyzeDarkPatterns } from '../darkpattern/index.js';
+import { calculateTrustScore } from '../core/index.js';
 
 // ── Tool schemas ──
 
@@ -301,5 +305,67 @@ export function handleDetectAgentReadiness(args: { html: string }): {
       signals,
       note: 'WebMCP tools are registered via JavaScript (window.navigator.modelContext) and cannot be detected from static HTML. These signals indicate structured data that AI agents can leverage.',
     },
+  };
+}
+
+/** Fetch a URL and run the full ShopGuard analysis pipeline */
+export async function handleFetchAndAnalyze(args: {
+  url: string;
+  locale: Locale;
+}): Promise<{
+  url: string;
+  platform: string;
+  timestamp: string;
+  darkPatterns: { count: number; findings: ReturnType<typeof extractDarkPatternEvidence> };
+  pricing: { trustScore: number; grade: string; issues: Array<{ type: string; severity: number; description: string }>; totalHiddenFeeCents: number };
+  reviews: { total: number; suspicious: number; score: number; grade: string; details: string[] };
+  overall: { score: number; grade: string; summary: string };
+}> {
+  const res = await fetch(args.url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; ShopGuard/0.4.0)',
+      'Accept': 'text/html',
+    },
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+  const html = await res.text();
+
+  const page = extractPageData(html, args.url);
+  const bodyText = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 100_000);
+  const darkPatterns = extractDarkPatternEvidence(bodyText, html);
+  const priceResult = analyzePrices(html);
+
+  const reviews = (page.reviewBlocks ?? [])
+    .filter((b: string) => b.length > 20)
+    .slice(0, 30)
+    .map((t: string) => ({ text: t, rating: 0, date: '' }));
+  const reviewResult = analyzeReviews(reviews, { locale: args.locale });
+
+  const overall = calculateTrustScore(
+    reviewResult.overallScore,
+    priceResult.trustScore,
+    100 - (darkPatterns.length > 0 ? Math.min(darkPatterns.length * 15, 80) : 0),
+  );
+
+  return {
+    url: args.url,
+    platform: page.platform ?? 'unknown',
+    timestamp: new Date().toISOString(),
+    darkPatterns: { count: darkPatterns.length, findings: darkPatterns },
+    pricing: {
+      trustScore: priceResult.trustScore,
+      grade: priceResult.grade,
+      issues: priceResult.issues,
+      totalHiddenFeeCents: priceResult.totalHiddenFeeCents,
+    },
+    reviews: {
+      total: reviewResult.totalReviews,
+      suspicious: reviewResult.suspiciousCount,
+      score: reviewResult.overallScore,
+      grade: reviewResult.grade,
+      details: reviewResult.details,
+    },
+    overall: { score: overall.overall, grade: overall.grade, summary: overall.summary },
   };
 }

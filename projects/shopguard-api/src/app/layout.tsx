@@ -1,7 +1,7 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'ShopGuard — AI Shopping Protection',
+  title: 'ShopGuard — Evidence-Based Shopping Protection',
   description: 'Detect fake reviews, hidden fees, and dark patterns before you buy. Chrome Extension, REST API, and MCP Server.',
 };
 

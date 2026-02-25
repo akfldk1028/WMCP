@@ -3,8 +3,8 @@ import { withAuth, type ApiKeyInfo } from '@/lib/auth';
 import { extractFeeMatches, extractTrapMatches } from 'shopguard-mcp/signals';
 
 async function handler(req: NextRequest, info: ApiKeyInfo) {
-  if (info.plan !== 'pro') {
-    return NextResponse.json({ error: 'Pro plan required for pricing analysis.' }, { status: 403 });
+  if (info.plan === 'free') {
+    return NextResponse.json({ error: 'Paid plan required for pricing analysis. Upgrade to Consumer Pro ($4.99/mo) or higher.' }, { status: 403 });
   }
 
   const body = await req.json().catch(() => null);

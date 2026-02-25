@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { kv } from '@vercel/kv';
 
-export type Plan = 'free' | 'pro';
+export type Plan = 'free' | 'consumer' | 'developer' | 'enterprise';
 
 export interface ApiKeyInfo {
   key: string;
@@ -8,44 +9,61 @@ export interface ApiKeyInfo {
   remaining: number;
 }
 
-// In-memory rate limiting (replace with Redis/KV in production)
-const usage = new Map<string, { count: number; resetAt: number }>();
+const PLAN_LIMITS: Record<Plan, number> = {
+  free: 50,
+  consumer: 200,
+  developer: 5_000,
+  enterprise: 50_000,
+};
 
-const FREE_LIMIT = 50;    // 50 requests/day
-const PRO_LIMIT = 10000;  // 10k requests/day
+const DAY_SECONDS = 86_400;
 
-// Valid API keys (replace with DB/Lemonsqueezy lookup in production)
-function resolveKey(key: string): { plan: Plan } | null {
+/** Resolve API key to a plan. Checks KV store first, then env vars as fallback. */
+async function resolveKey(key: string): Promise<{ plan: Plan } | null> {
   const masterKey = process.env.SHOPGUARD_MASTER_KEY;
-  if (masterKey && key === masterKey) return { plan: 'pro' };
+  if (masterKey && key === masterKey) return { plan: 'enterprise' };
 
   // Demo key for testing
   if (key === 'sg_demo_free') return { plan: 'free' };
 
-  // Pro keys from env (comma-separated)
-  const proKeys = (process.env.SHOPGUARD_PRO_KEYS || '').split(',').filter(Boolean);
-  if (proKeys.includes(key)) return { plan: 'pro' };
+  // Check KV for key->plan mapping (set by Lemonsqueezy webhook)
+  try {
+    const kvPlan = await kv.get<Plan>(`key:${key}`);
+    if (kvPlan) return { plan: kvPlan };
+  } catch {
+    // KV unavailable — fall through to env vars
+  }
+
+  // Legacy: env var fallback (comma-separated)
+  const consumerKeys = (process.env.SHOPGUARD_CONSUMER_KEYS || process.env.SHOPGUARD_PRO_KEYS || '').split(',').filter(Boolean);
+  if (consumerKeys.includes(key)) return { plan: 'consumer' };
+
+  const devKeys = (process.env.SHOPGUARD_DEVELOPER_KEYS || '').split(',').filter(Boolean);
+  if (devKeys.includes(key)) return { plan: 'developer' };
 
   return null;
 }
 
-function checkRateLimit(key: string, plan: Plan): { allowed: boolean; remaining: number } {
-  const limit = plan === 'pro' ? PRO_LIMIT : FREE_LIMIT;
-  const now = Date.now();
-  const dayMs = 86400000;
+/** Rate limiting via Vercel KV with daily TTL. Falls back to no-limit on KV failure. */
+async function checkRateLimit(key: string, plan: Plan): Promise<{ allowed: boolean; remaining: number }> {
+  const limit = PLAN_LIMITS[plan];
+  const kvKey = `rate:${key}`;
 
-  let entry = usage.get(key);
-  if (!entry || now > entry.resetAt) {
-    entry = { count: 0, resetAt: now + dayMs };
-    usage.set(key, entry);
+  try {
+    const count = await kv.incr(kvKey);
+    // Set TTL on first request of the day
+    if (count === 1) {
+      await kv.expire(kvKey, DAY_SECONDS);
+    }
+
+    if (count > limit) {
+      return { allowed: false, remaining: 0 };
+    }
+    return { allowed: true, remaining: limit - count };
+  } catch {
+    // KV unavailable — allow request but warn
+    return { allowed: true, remaining: limit };
   }
-
-  if (entry.count >= limit) {
-    return { allowed: false, remaining: 0 };
-  }
-
-  entry.count++;
-  return { allowed: true, remaining: limit - entry.count };
 }
 
 export function withAuth(
@@ -64,7 +82,7 @@ export function withAuth(
       );
     }
 
-    const resolved = resolveKey(key);
+    const resolved = await resolveKey(key);
     if (!resolved) {
       return NextResponse.json(
         { error: 'Invalid API key.' },
@@ -72,10 +90,10 @@ export function withAuth(
       );
     }
 
-    const { allowed, remaining } = checkRateLimit(key, resolved.plan);
+    const { allowed, remaining } = await checkRateLimit(key, resolved.plan);
     if (!allowed) {
       return NextResponse.json(
-        { error: 'Rate limit exceeded. Upgrade to pro for higher limits.' },
+        { error: `Rate limit exceeded (${PLAN_LIMITS[resolved.plan]}/day). Upgrade your plan for higher limits.`, plan: resolved.plan },
         { status: 429 }
       );
     }

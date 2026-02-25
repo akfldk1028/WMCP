@@ -1,37 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { kv } from '@vercel/kv';
 import { validateLicense } from '@/lib/lemonsqueezy';
 import { runServerPipeline } from '@/lib/pipeline';
 
 // Extension API key — prevents casual abuse (not a secret, embedded in extension)
 const EXT_API_KEY = process.env.SHOPGUARD_EXT_KEY || 'sg_ext_v040';
 
-// In-memory rate limiting (per deviceId)
-// Note: resets on Vercel cold start. Replace with Vercel KV for production.
-const usage = new Map<string, { count: number; resetAt: number }>();
 const FREE_DAILY_LIMIT = 5;
-const DAY_MS = 86_400_000;
-const MAX_ENTRIES = 10_000;
+const DAY_SECONDS = 86_400;
 
-function checkRateLimit(deviceId: string): { allowed: boolean; remaining: number } {
-  const now = Date.now();
+async function checkRateLimit(deviceId: string): Promise<{ allowed: boolean; remaining: number }> {
+  const kvKey = `ext:${deviceId}`;
 
-  // Prevent unbounded memory growth — prune expired entries
-  if (usage.size > MAX_ENTRIES) {
-    for (const [key, entry] of usage) {
-      if (now > entry.resetAt) usage.delete(key);
+  try {
+    const count = await kv.incr(kvKey);
+    if (count === 1) {
+      await kv.expire(kvKey, DAY_SECONDS);
     }
-  }
 
-  let entry = usage.get(deviceId);
-  if (!entry || now > entry.resetAt) {
-    entry = { count: 0, resetAt: now + DAY_MS };
-    usage.set(deviceId, entry);
+    if (count > FREE_DAILY_LIMIT) {
+      return { allowed: false, remaining: 0 };
+    }
+    return { allowed: true, remaining: FREE_DAILY_LIMIT - count };
+  } catch {
+    // KV unavailable — allow request
+    return { allowed: true, remaining: FREE_DAILY_LIMIT };
   }
-  if (entry.count >= FREE_DAILY_LIMIT) {
-    return { allowed: false, remaining: 0 };
-  }
-  entry.count++;
-  return { allowed: true, remaining: FREE_DAILY_LIMIT - entry.count };
 }
 
 export async function POST(req: NextRequest) {
@@ -60,7 +54,7 @@ export async function POST(req: NextRequest) {
 
   // Rate limit for free users
   if (!isPro) {
-    const { allowed, remaining } = checkRateLimit(body.deviceId);
+    const { allowed, remaining } = await checkRateLimit(body.deviceId);
     if (!allowed) {
       return NextResponse.json(
         { success: false, error: 'Daily limit reached (5/day). Upgrade to Pro for unlimited.', errorCode: 'rate_limit' },

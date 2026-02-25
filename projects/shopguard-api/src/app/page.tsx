@@ -243,7 +243,8 @@ export default function Home() {
             <h2 className="section-title">Simple, transparent pricing</h2>
             <p className="section-desc">Start free. Upgrade when you need deeper analysis.</p>
           </div>
-          <div className="pricing-grid">
+          <div className="pricing-grid-4">
+            {/* Free */}
             <div className="price-card fade-up">
               <div className="price-tier">Free</div>
               <div className="price-amount">$0</div>
@@ -259,21 +260,56 @@ export default function Home() {
                 Install Free Extension
               </a>
             </div>
+
+            {/* Consumer Pro */}
             <div className="price-card popular fade-up fade-up-d1">
               <div className="price-badge">Most Popular</div>
-              <div className="price-tier">Pro</div>
-              <div className="price-amount">$49 <span>/month</span></div>
+              <div className="price-tier">Consumer Pro</div>
+              <div className="price-amount">$4.99 <span>/month</span></div>
               <div className="price-desc">14-day free trial. Cancel anytime.</div>
               <ul className="price-features">
                 <li>Everything in Free</li>
                 <li>Fake review detection (7 signals)</li>
                 <li>Hidden fee scanner</li>
                 <li>Price comparison</li>
-                <li>10,000 API requests/day</li>
-                <li>Priority support</li>
+                <li>200 API requests/day</li>
               </ul>
               <a href="https://clickaround.lemonsqueezy.com/checkout/buy/2e995298-d33c-4ab1-8350-fb7c68363da7" className="price-btn price-btn-fill">
                 Start Free Trial
+              </a>
+            </div>
+
+            {/* Developer */}
+            <div className="price-card fade-up fade-up-d2">
+              <div className="price-tier">Developer</div>
+              <div className="price-amount">$19 <span>/month</span></div>
+              <div className="price-desc">For apps and integrations.</div>
+              <ul className="price-features">
+                <li>Everything in Consumer Pro</li>
+                <li>Dedicated API key</li>
+                <li>Programmatic access</li>
+                <li>Batch analysis</li>
+                <li>5,000 API requests/day</li>
+              </ul>
+              <a href="https://clickaround.lemonsqueezy.com" className="price-btn price-btn-outline">
+                Get API Key
+              </a>
+            </div>
+
+            {/* Enterprise */}
+            <div className="price-card fade-up fade-up-d3">
+              <div className="price-tier">Enterprise</div>
+              <div className="price-amount">$99 <span>/month</span></div>
+              <div className="price-desc">Compliance-grade analysis.</div>
+              <ul className="price-features">
+                <li>Everything in Developer</li>
+                <li>Compliance reports</li>
+                <li>SLA guarantee</li>
+                <li>Priority support</li>
+                <li>50,000 API requests/day</li>
+              </ul>
+              <a href="mailto:clickaround8@gmail.com" className="price-btn price-btn-outline">
+                Contact Sales
               </a>
             </div>
           </div>
@@ -357,7 +393,7 @@ export default function Home() {
           <div className="faq-list">
             <div className="faq-item">
               <div className="faq-q">Is ShopGuard free?</div>
-              <div className="faq-a">Yes. The Chrome Extension and basic API access are free forever. Pro features like fake review detection and hidden fee scanning require a subscription.</div>
+              <div className="faq-a">Yes. The Chrome Extension and basic API access are free forever with 50 requests/day. Pro features like fake review detection and hidden fee scanning start at $4.99/month.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">Which sites does it work on?</div>
@@ -368,16 +404,16 @@ export default function Home() {
               <div className="faq-a">No. ShopGuard analyzes pages locally in your browser. In Free mode, no data leaves your device. Pro features send page data to our API for analysis, but we never store personal information.</div>
             </div>
             <div className="faq-item">
-              <div className="faq-q">How accurate is the fake review detection?</div>
-              <div className="faq-a">ShopGuard uses 7 statistical signals including sentiment distribution, timing patterns, duplicate detection, and rating consistency. It flags suspicious patterns with evidence — not accusations.</div>
+              <div className="faq-q">How accurate is the detection?</div>
+              <div className="faq-a">ShopGuard uses evidence-based pattern analysis with 7 statistical signals for reviews and 9 dark pattern classifiers. It flags suspicious patterns with evidence — not accusations. The server pipeline also uses AI classification for additional context.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">Can I use the API for my own product?</div>
-              <div className="faq-a">Absolutely. The REST API and MCP Server are built for developers and AI agents. Free tier gives you 50 requests/day, Pro gives 10,000.</div>
+              <div className="faq-a">Absolutely. The REST API and MCP Server are built for developers and AI agents. Free tier gives you 50 requests/day, Developer plan gives 5,000, and Enterprise gives 50,000.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">What{`'`}s the refund policy?</div>
-              <div className="faq-a">14-day free trial on all Pro subscriptions. After your first payment, full refund within 14 days. No questions asked. <a href="/refund" style={{ color: 'var(--accent)' }}>Read full policy</a>.</div>
+              <div className="faq-a">14-day free trial on all paid subscriptions. After your first payment, full refund within 14 days. No questions asked. <a href="/refund" style={{ color: 'var(--accent)' }}>Read full policy</a>.</div>
             </div>
           </div>
         </div>

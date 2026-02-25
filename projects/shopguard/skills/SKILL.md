@@ -64,6 +64,7 @@ All tools are accessed via the `shopguard` MCP server prefix.
 
 | Tool | Purpose | Input |
 |------|---------|-------|
+| `shopguard:fetchAndAnalyze` | **One-shot**: fetch URL + run full pipeline → complete report | URL |
 | `shopguard:extractPageData` | Page overview — platform, prices, reviews, elements | HTML, URL |
 | `shopguard:extractReviews` | Review extraction + 7 statistical fraud signals | HTML or review blocks |
 | `shopguard:extractPricing` | Hidden fee detection + subscription trap analysis | HTML |
@@ -83,6 +84,11 @@ Read these catalogs for domain knowledge before analysis:
 ## Core Workflow
 
 When a user asks you to analyze a shopping page:
+
+### Quick Path (URL only)
+If the user provides a URL, call `shopguard:fetchAndAnalyze` with the URL. This fetches the page and runs the full pipeline in one call — returns dark patterns, pricing, reviews, and overall trust score.
+
+### Detailed Path (manual steps for deeper analysis)
 
 ### Step 1: Page Overview
 Call `shopguard:extractPageData` with the page HTML. This identifies the platform, finds price contexts, review blocks, and interactive elements.

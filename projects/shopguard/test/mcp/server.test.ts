@@ -37,10 +37,10 @@ describe('MCP Server — Tools', () => {
     }
   });
 
-  it('lists 7 tools', async () => {
+  it('lists 8 tools', async () => {
     const client = await createTestClient();
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(7);
+    expect(tools).toHaveLength(8);
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual([
       'comparePrices',
@@ -49,6 +49,7 @@ describe('MCP Server — Tools', () => {
       'extractPageData',
       'extractPricing',
       'extractReviews',
+      'fetchAndAnalyze',
       'scanDarkPatterns',
     ]);
   });

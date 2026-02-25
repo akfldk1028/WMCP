@@ -1,6 +1,6 @@
 {
   "name": "@wmcp/shopguard",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "AI shopping protection - fake review detection, hidden fee alerts, dark pattern scanning",
   "type": "module",
   "main": "dist/index.js",

@@ -5,11 +5,19 @@ import { getDeviceId } from '../lib/device-id.js';
 
 const API_BASE = 'https://shopguard-api.vercel.app';
 const TIMEOUT_MS = 45_000;
+const EXT_API_KEY = 'sg_ext_v040';
 
-/** Build a light snapshot (no rawHtml) to keep payload ~50KB */
-function toLightSnapshot(snapshot: PageSnapshot): Omit<PageSnapshot, 'rawHtml' | 'rawPageText'> {
-  const { rawHtml: _h, rawPageText: _t, ...light } = snapshot;
-  return light;
+/** Truncate snapshot to keep payload under ~200KB while preserving data for heuristics */
+const MAX_HTML = 150_000;
+const MAX_TEXT = 50_000;
+
+function toTruncatedSnapshot(snapshot: PageSnapshot): PageSnapshot {
+  return {
+    ...snapshot,
+    rawHtml: snapshot.rawHtml?.slice(0, MAX_HTML),
+    rawPageText: snapshot.rawPageText?.slice(0, MAX_TEXT),
+    visibleText: snapshot.visibleText?.slice(0, MAX_TEXT),
+  };
 }
 
 export async function analyzeViaProxy(
@@ -24,9 +32,9 @@ export async function analyzeViaProxy(
   try {
     const response = await fetch(`${API_BASE}/api/extension/analyze`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-ShopGuard-Key': EXT_API_KEY },
       body: JSON.stringify({
-        snapshot: toLightSnapshot(snapshot),
+        snapshot: toTruncatedSnapshot(snapshot),
         deviceId,
         licenseKey: licenseKey || undefined,
       }),

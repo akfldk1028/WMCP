@@ -23,7 +23,8 @@ async function handler(req: NextRequest, info: ApiKeyInfo) {
 
   let reviews = null;
   let pricing = null;
-  if (info.plan === 'pro') {
+  const isPaid = info.plan !== 'free';
+  if (isPaid) {
     const extracted = extractReviews(body.html, locale);
     if (extracted.length > 0) {
       const asReviews = extracted.map(r => ({
@@ -51,9 +52,9 @@ async function handler(req: NextRequest, info: ApiKeyInfo) {
       interactiveElements: page.interactiveElements.length,
     },
     darkPatterns,
-    ...(info.plan === 'pro' ? { reviews, pricing } : {
-      reviews: { locked: true, message: 'Upgrade to pro for review analysis' },
-      pricing: { locked: true, message: 'Upgrade to pro for pricing analysis' },
+    ...(isPaid ? { reviews, pricing } : {
+      reviews: { locked: true, message: 'Upgrade to a paid plan for review analysis' },
+      pricing: { locked: true, message: 'Upgrade to a paid plan for pricing analysis' },
     }),
   });
 }

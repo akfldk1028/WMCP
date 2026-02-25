@@ -56,10 +56,8 @@ const DARK_PATTERN_RULES: Array<{
     type: 'misdirection',
     patterns: [/accept\s+all/i, /모두\s*동의/],
   },
-  {
-    type: 'preselection',
-    patterns: [/checked\s*(?:=\s*["']?(?:true|checked)["']?)?/i],
-  },
+  // preselection: detected via HTML checkbox analysis below, not text patterns
+  // (text-based /checked/ regex false-positives on normal content)
   {
     type: 'forced-continuity',
     patterns: [
@@ -103,14 +101,15 @@ export function extractDarkPatternEvidence(
   const matches: DarkPatternEvidence[] = [];
   const seen = new Set<string>();
 
-  // Text-based patterns
+  // Text-based patterns (use type+locale key to allow both EN and KO matches)
   for (const rule of DARK_PATTERN_RULES) {
-    if (seen.has(rule.type)) continue;
+    const seenKey = `${rule.type}:${rule.locale ?? 'any'}`;
+    if (seen.has(seenKey)) continue;
 
     for (const pattern of rule.patterns) {
       const match = pattern.exec(content);
       if (match) {
-        seen.add(rule.type);
+        seen.add(seenKey);
         const start = Math.max(0, match.index - 80);
         const end = Math.min(content.length, match.index + match[0].length + 80);
 
@@ -137,8 +136,8 @@ export function extractDarkPatternEvidence(
       const fieldName = nameMatch ? nameMatch[1] : 'unknown';
       if (/remember|stay.?logged|keep.?signed/i.test(fieldName)) continue;
 
-      if (!seen.has('preselection')) {
-        seen.add('preselection');
+      if (!seen.has('preselection:html')) {
+        seen.add('preselection:html');
         matches.push({
           type: 'preselection',
           evidence: `Pre-checked checkbox: ${fieldName}`,
@@ -153,8 +152,8 @@ export function extractDarkPatternEvidence(
     if (cookieRegex.test(html)) {
       const hasAcceptAll = /accept\s+all|agree\s+(?:to\s+)?all/i.test(html);
       const hasRejectAll = /reject\s+all|decline\s+all|deny\s+all/i.test(html);
-      if (hasAcceptAll && !hasRejectAll && !seen.has('misdirection')) {
-        seen.add('misdirection');
+      if (hasAcceptAll && !hasRejectAll && !seen.has('misdirection:html')) {
+        seen.add('misdirection:html');
         matches.push({
           type: 'misdirection',
           evidence: 'Cookie banner has "Accept All" but no equivalent "Reject All"',

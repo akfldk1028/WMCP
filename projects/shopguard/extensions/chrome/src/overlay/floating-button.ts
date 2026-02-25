@@ -15,7 +15,7 @@ const CSS = `
   :host { all: initial; }
   .sg-fab {
     position: fixed;
-    bottom: 20px;
+    bottom: 80px;
     right: 20px;
     width: 48px;
     height: 48px;
