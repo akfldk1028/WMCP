@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type ApiKeyInfo } from '@/lib/auth';
 import { extractPageData, extractReviews } from 'shopguard-mcp/extractors';
 import { analyzeReviewSignals, extractFeeMatches, extractTrapMatches, extractDarkPatternEvidence } from 'shopguard-mcp/signals';
+import { enrichDarkPatterns } from '@/lib/enrich';
 
 async function handler(req: NextRequest, info: ApiKeyInfo) {
   const body = await req.json().catch(() => null);
@@ -18,7 +19,7 @@ async function handler(req: NextRequest, info: ApiKeyInfo) {
 
   const locale = body.locale || 'en';
   const page = extractPageData(body.html, body.url);
-  const darkPatterns = extractDarkPatternEvidence(body.html);
+  const darkPatterns = enrichDarkPatterns(extractDarkPatternEvidence(body.html));
 
   let reviews = null;
   let pricing = null;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth';
 import { extractDarkPatternEvidence } from 'shopguard-mcp/signals';
+import { enrichDarkPatterns } from '@/lib/enrich';
 
 async function handler(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -12,7 +13,8 @@ async function handler(req: NextRequest) {
     return NextResponse.json({ error: 'HTML too large. Max 2MB.' }, { status: 413 });
   }
 
-  const results = extractDarkPatternEvidence(body.html);
+  const raw = extractDarkPatternEvidence(body.html);
+  const results = enrichDarkPatterns(raw);
   return NextResponse.json(results);
 }
 
