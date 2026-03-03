@@ -14,7 +14,7 @@ function showStatus(msg: string, type: 'success' | 'error' | 'loading') {
 }
 
 function showLicenseStatus(active: boolean) {
-  licenseStatusEl.textContent = active ? 'Pro license active' : 'No license activated';
+  licenseStatusEl.textContent = active ? 'License active' : 'No license activated';
   licenseStatusEl.className = `license-status ${active ? 'active' : 'inactive'}`;
 }
 
