@@ -26,7 +26,7 @@ Fakespot shut down in July 2025, leaving 10M users without fake review protectio
 ShopGuard picks up where Fakespot left off — and adds dark pattern + hidden fee detection on top.
 
 Free Chrome extension:
-https://chrome.google.com/webstore/detail/befjaannnnnhcnmbgjhcakhjgmjcjklf
+https://chromewebstore.google.com/detail/shopguard/befjaannnnnhcnmbgjhcakhjgmjcjklf
 ```
 
 ### 3. Dark Pattern Awareness
@@ -48,7 +48,7 @@ It scans any shopping page and gives you a trust grade from A to F. Fake reviews
 
 100% free. No account needed.
 
-https://chrome.google.com/webstore/detail/befjaannnnnhcnmbgjhcakhjgmjcjklf
+https://chromewebstore.google.com/detail/shopguard/befjaannnnnhcnmbgjhcakhjgmjcjklf
 ```
 
 ### 5. Blog Post Promotion
@@ -84,7 +84,7 @@ The 14 pattern types the tool checks for: fake urgency, fake social proof, confi
 
 The leaderboard is public and updated as more sites get scanned: https://shopguard-api.vercel.app/leaderboard
 
-The detection engine is open source (shopguard-mcp on npm) if anyone wants to look at the methodology or run their own scans. The Chrome extension that runs the scans is free with no account required: https://chrome.google.com/webstore/detail/befjaannnnnhcnmbgjhcakhjgmjcjklf
+The detection engine is open source (shopguard-mcp on npm) if anyone wants to look at the methodology or run their own scans. The Chrome extension that runs the scans is free with no account required: https://chromewebstore.google.com/detail/shopguard/befjaannnnnhcnmbgjhcakhjgmjcjklf
 
 I am a solo developer who built this after getting frustrated with how normalized these manipulation tactics have become. Happy to answer questions about how specific patterns are detected or discuss the methodology.
 
@@ -112,7 +112,7 @@ Full leaderboard of site grades: https://shopguard-api.vercel.app/leaderboard
 
 Detailed breakdown of all 14 pattern types with real examples: https://shopguard-api.vercel.app/blog/dark-patterns-guide
 
-The analysis engine is open source on npm (shopguard-mcp) and the extension is free: https://chrome.google.com/webstore/detail/befjaannnnnhcnmbgjhcakhjgmjcjklf
+The analysis engine is open source on npm (shopguard-mcp) and the extension is free: https://chromewebstore.google.com/detail/shopguard/befjaannnnnhcnmbgjhcakhjgmjcjklf
 
 Would love feedback from this community on patterns I might be missing or sites that should be added to the leaderboard.
 
@@ -139,7 +139,7 @@ After scanning 30+ major shopping sites, I published the results in a public lea
 
 Temu scored an F with 11 dark pattern types. Apple Store scored an A with 1. Most major retailers fall in the C-D range.
 
-Chrome extension (free, no account): https://chrome.google.com/webstore/detail/befjaannnnnhcnmbgjhcakhjgmjcjklf
+Chrome extension (free, no account): https://chromewebstore.google.com/detail/shopguard/befjaannnnnhcnmbgjhcakhjgmjcjklf
 
 I built this as a solo developer. The code runs analysis on your machine, not on a remote server (except for the optional AI scan, which is rate-limited to 5/day). Feedback on the privacy approach is welcome.
 
@@ -191,7 +191,7 @@ Technical details:
 Interesting findings from scanning major sites: Temu scores an F with 11 dark pattern types on a typical product page. Apple Store scores an A with 1. Most major retailers are in the C-D range.
 
 Leaderboard: https://shopguard-api.vercel.app/leaderboard
-Chrome extension: https://chrome.google.com/webstore/detail/befjaannnnnhcnmbgjhcakhjgmjcjklf
+Chrome extension: https://chromewebstore.google.com/detail/shopguard/befjaannnnnhcnmbgjhcakhjgmjcjklf
 Landing page: https://shopguard-api.vercel.app
 Blog with detailed examples: https://shopguard-api.vercel.app/blog
 

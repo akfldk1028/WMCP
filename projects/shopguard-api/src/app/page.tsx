@@ -59,7 +59,7 @@ export default function Home() {
             ShopGuard detects fake reviews, hidden fees, and dark patterns on any shopping page — so you can buy with confidence.
           </p>
           <div className="hero-actions fade-up fade-up-d3">
-            <a href="https://chrome.google.com/webstore/detail/befjaannnnnhcnmbgjhcakhjgmjcjklf" className="btn-primary">
+            <a href="https://chromewebstore.google.com/detail/shopguard/befjaannnnnhcnmbgjhcakhjgmjcjklf" className="btn-primary">
               {'\u{2B07}'} Add to Chrome — Free
             </a>
             <a href="#api" className="btn-secondary">
@@ -281,7 +281,7 @@ export default function Home() {
                 <li>50 API requests/day</li>
                 <li>Chrome Extension</li>
               </ul>
-              <a href="https://chrome.google.com/webstore/detail/befjaannnnnhcnmbgjhcakhjgmjcjklf" className="price-btn price-btn-outline">
+              <a href="https://chromewebstore.google.com/detail/shopguard/befjaannnnnhcnmbgjhcakhjgmjcjklf" className="price-btn price-btn-outline">
                 Install Free Extension
               </a>
             </div>
@@ -438,7 +438,7 @@ export default function Home() {
           <h2 className="fade-up">Ready to shop smarter?</h2>
           <p className="fade-up fade-up-d1">Join thousands of smart shoppers who never get tricked.</p>
           <div className="fade-up fade-up-d2">
-            <a href="https://chrome.google.com/webstore/detail/befjaannnnnhcnmbgjhcakhjgmjcjklf" className="btn-primary">
+            <a href="https://chromewebstore.google.com/detail/shopguard/befjaannnnnhcnmbgjhcakhjgmjcjklf" className="btn-primary">
               {'\u{2B07}'} Add to Chrome — Free
             </a>
           </div>

@@ -59,7 +59,7 @@ export default function LeaderboardPage() {
             <a href="/#how-it-works">How it works</a>
             <a href="/#pricing">Pricing</a>
             <a href="/#api">API</a>
-            <a href="https://chrome.google.com/webstore/detail/befjaannnnnhcnmbgjhcakhjgmjcjklf" className="nav-cta">Get Started</a>
+            <a href="https://chromewebstore.google.com/detail/shopguard/befjaannnnnhcnmbgjhcakhjgmjcjklf" className="nav-cta">Get Started</a>
           </div>
         </div>
       </nav>
@@ -243,7 +243,7 @@ export default function LeaderboardPage() {
           </div>
           <div className="fade-up">
             <a
-              href="https://chrome.google.com/webstore/detail/befjaannnnnhcnmbgjhcakhjgmjcjklf"
+              href="https://chromewebstore.google.com/detail/shopguard/befjaannnnnhcnmbgjhcakhjgmjcjklf"
               className="btn-primary"
             >
               {'\u{2B07}'} Add to Chrome — Free
