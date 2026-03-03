@@ -5,7 +5,7 @@ export default function Home() {
       <nav className="nav">
         <div className="container nav-inner">
           <a href="/" className="nav-logo">
-            <span style={{ fontSize: 22 }}>{'\u{1F6E1}\u{FE0F}'}</span>
+            <img src="/logo.png" alt="" width={24} height={24} style={{ borderRadius: 4 }} />
             ShopGuard
           </a>
           <div className="nav-links">
@@ -68,7 +68,7 @@ export default function Home() {
                   {/* Right: ShopGuard overlay */}
                   <div style={{ width: 280, background: 'white', border: '2px solid var(--accent)', borderRadius: 14, padding: 20, boxShadow: 'var(--shadow-lg)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                      <span style={{ fontSize: 18 }}>{'\u{1F6E1}\u{FE0F}'}</span>
+                      <img src="/logo.png" alt="" width={18} height={18} style={{ borderRadius: 3 }} />
                       <span style={{ fontWeight: 700, fontSize: 14 }}>ShopGuard Analysis</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
@@ -193,7 +193,7 @@ export default function Home() {
             <p className="section-desc">Here{`'`}s what a typical scan looks like on a suspicious product page.</p>
           </div>
           <div className="detection-demo fade-up">
-            <div className="demo-header">{'\u{1F6E1}\u{FE0F}'} ShopGuard Analysis — Trust Score: 38/100</div>
+            <div className="demo-header"><img src="/logo.png" alt="" width={20} height={20} style={{ borderRadius: 3, verticalAlign: 'middle', marginRight: 8 }} />ShopGuard Analysis — Trust Score: 38/100</div>
             <div className="demo-body">
               <div className="demo-item">
                 <span className="demo-severity severity-high">High</span>
@@ -427,7 +427,7 @@ export default function Home() {
       <footer className="footer">
         <div className="container footer-inner">
           <div className="footer-copy">
-            {'\u{1F6E1}\u{FE0F}'} ShopGuard by clickaround &middot; {'\u00A9'} 2026
+            <img src="/logo.png" alt="" width={18} height={18} style={{ borderRadius: 3, verticalAlign: 'middle', marginRight: 6 }} />ShopGuard by clickaround &middot; {'\u00A9'} 2026
           </div>
           <div className="footer-links">
             <a href="/terms">Terms of Service</a>

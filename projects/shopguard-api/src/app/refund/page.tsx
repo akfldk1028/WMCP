@@ -8,7 +8,7 @@ export default function RefundPage() {
       <nav className="nav">
         <div className="container nav-inner">
           <a href="/" className="nav-logo">
-            <span style={{ fontSize: 22 }}>{'\u{1F6E1}\u{FE0F}'}</span>
+            <img src="/logo.png" alt="" width={24} height={24} style={{ borderRadius: 4 }} />
             ShopGuard
           </a>
           <div className="nav-links">
@@ -66,7 +66,7 @@ export default function RefundPage() {
 
       <footer className="footer">
         <div className="container footer-inner">
-          <div className="footer-copy">{'\u{1F6E1}\u{FE0F}'} ShopGuard by clickaround</div>
+          <div className="footer-copy"><img src="/logo.png" alt="" width={18} height={18} style={{ borderRadius: 3, verticalAlign: 'middle', marginRight: 6 }} />ShopGuard by clickaround</div>
           <div className="footer-links">
             <a href="/terms">Terms</a>
             <a href="/refund">Refund Policy</a>
