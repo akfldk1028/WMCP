@@ -4,9 +4,7 @@ import { analyzeReviewSignals } from 'shopguard-mcp/signals';
 import { extractReviews } from 'shopguard-mcp/extractors';
 
 async function handler(req: NextRequest, info: ApiKeyInfo) {
-  if (info.plan === 'free') {
-    return NextResponse.json({ error: 'Paid plan required for review analysis. Upgrade to Consumer Pro ($4.99/mo) or higher.' }, { status: 403 });
-  }
+  // All plans can access review analysis (rate-limited by plan)
 
   const body = await req.json().catch(() => null);
   const locale = body?.locale || 'en';

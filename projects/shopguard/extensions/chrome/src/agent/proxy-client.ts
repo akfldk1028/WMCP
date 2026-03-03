@@ -46,7 +46,7 @@ export async function analyzeViaProxy(
     if (response.status === 429) {
       return {
         success: false,
-        error: 'Daily limit reached. Upgrade to Pro for unlimited AI analysis.',
+        error: 'Daily limit reached. Try again tomorrow.',
         errorCode: 'rate_limit',
       };
     }

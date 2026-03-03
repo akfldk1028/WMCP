@@ -1,6 +1,29 @@
 export default function Home() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'ShopGuard',
+            applicationCategory: 'BrowserApplication',
+            operatingSystem: 'Chrome',
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'USD',
+            },
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: '5.0',
+              reviewCount: '1',
+            },
+            description: 'Free Chrome extension that detects fake reviews, hidden fees, and 14 types of dark patterns on any shopping site.',
+          }),
+        }}
+      />
       {/* Nav */}
       <nav className="nav">
         <div className="container nav-inner">
@@ -13,6 +36,7 @@ export default function Home() {
             <a href="#how-it-works">How it works</a>
             <a href="#pricing">Pricing</a>
             <a href="#api">API</a>
+            <a href="/seller">For Sellers</a>
             <a href="#pricing" className="nav-cta">Get Started</a>
           </div>
         </div>
@@ -153,7 +177,7 @@ export default function Home() {
             <div className="feature-card featured fade-up">
               <div className="feature-icon feature-icon-shield">{'\u{1F6E1}\u{FE0F}'}</div>
               <h3>Dark Pattern Detection</h3>
-              <p>Identifies 9 types of manipulative UI patterns: fake urgency, forced actions, confirmshaming, hidden costs, trick questions, disguised ads, bait-and-switch, and more. Each detection includes evidence and severity.</p>
+              <p>Identifies 14 types of manipulative UI patterns: fake urgency, forced actions, confirmshaming, hidden costs, trick questions, disguised ads, bait-and-switch, and more. Each detection includes evidence and severity.</p>
               <span className="feature-tag tag-free">Free</span>
             </div>
             <div className="feature-card fade-up fade-up-d1">
@@ -166,19 +190,19 @@ export default function Home() {
               <div className="feature-icon feature-icon-search">{'\u{1F50D}'}</div>
               <h3>Fake Review Detection</h3>
               <p>7 statistical signals analyze review authenticity: sentiment distribution, timing clusters, duplicate content, and more.</p>
-              <span className="feature-tag tag-pro">Pro</span>
+              <span className="feature-tag tag-free">Free</span>
             </div>
             <div className="feature-card fade-up fade-up-d2">
               <div className="feature-icon feature-icon-money">{'\u{1F4B0}'}</div>
               <h3>Hidden Fee Scanner</h3>
               <p>Catches drip pricing, bait-and-switch, surprise charges, and deceptive price anchoring.</p>
-              <span className="feature-tag tag-pro">Pro</span>
+              <span className="feature-tag tag-free">Free</span>
             </div>
             <div className="feature-card featured fade-up fade-up-d2">
               <div className="feature-icon feature-icon-chart">{'\u{1F4CA}'}</div>
               <h3>Price Comparison</h3>
               <p>Compare prices across sources with fee-inclusive analysis. Detect outliers and suspicious pricing patterns. Understand the true cost before you buy.</p>
-              <span className="feature-tag tag-pro">Pro</span>
+              <span className="feature-tag tag-free">Free</span>
             </div>
           </div>
         </div>
@@ -241,18 +265,19 @@ export default function Home() {
           <div className="section-header">
             <div className="section-label">Pricing</div>
             <h2 className="section-title">Simple, transparent pricing</h2>
-            <p className="section-desc">Start free. Upgrade when you need deeper analysis.</p>
+            <p className="section-desc">Free for shoppers. Tools for sellers.</p>
           </div>
           <div className="pricing-grid-4">
-            {/* Free */}
+            {/* Free (Shoppers) */}
             <div className="price-card fade-up">
               <div className="price-tier">Free</div>
               <div className="price-amount">$0</div>
               <div className="price-desc">Free forever. No credit card.</div>
               <ul className="price-features">
-                <li>Dark pattern detection (9 types)</li>
-                <li>Page data extraction</li>
-                <li>Agent-readiness scan</li>
+                <li>Dark pattern detection (14 types)</li>
+                <li>Fake review detection (7 signals)</li>
+                <li>Hidden fee scanner</li>
+                <li>Price comparison</li>
                 <li>50 API requests/day</li>
                 <li>Chrome Extension</li>
               </ul>
@@ -261,22 +286,20 @@ export default function Home() {
               </a>
             </div>
 
-            {/* Consumer Pro */}
-            <div className="price-card popular fade-up fade-up-d1">
-              <div className="price-badge">Most Popular</div>
-              <div className="price-tier">Consumer Pro</div>
-              <div className="price-amount">$4.99 <span>/month</span></div>
-              <div className="price-desc">14-day free trial. Cancel anytime.</div>
+            {/* Seller */}
+            <div className="price-card fade-up fade-up-d1">
+              <div className="price-tier">Seller</div>
+              <div className="price-amount">{'\u20A9'}9,900 <span>/month</span></div>
+              <div className="price-desc">Compliance tools for e-commerce sellers.</div>
               <ul className="price-features">
-                <li>Everything in Free</li>
-                <li>Fake review detection (7 signals)</li>
-                <li>Hidden fee scanner</li>
-                <li>Price comparison</li>
-                <li>200 API requests/day</li>
+                <li>Store compliance scan</li>
+                <li>Weekly dark pattern report</li>
+                <li>Fix guides &amp; recommendations</li>
+                <li>1,000 API requests/day</li>
               </ul>
-              <a href="https://clickaround.lemonsqueezy.com/checkout/buy/2e995298-d33c-4ab1-8350-fb7c68363da7" className="price-btn price-btn-fill">
-                Start Free Trial
-              </a>
+              <button className="price-btn price-btn-outline" disabled style={{ opacity: 0.6, cursor: 'not-allowed' }}>
+                Coming Soon
+              </button>
             </div>
 
             {/* Developer */}
@@ -285,7 +308,7 @@ export default function Home() {
               <div className="price-amount">$19 <span>/month</span></div>
               <div className="price-desc">For apps and integrations.</div>
               <ul className="price-features">
-                <li>Everything in Consumer Pro</li>
+                <li>Everything in Free</li>
                 <li>Dedicated API key</li>
                 <li>Programmatic access</li>
                 <li>Batch analysis</li>
@@ -295,7 +318,6 @@ export default function Home() {
                 Get API Key
               </a>
             </div>
-
 
           </div>
         </div>
@@ -348,9 +370,9 @@ export default function Home() {
           <div className="api-endpoints fade-up">
             {[
               { method: 'POST', path: '/api/analyze', desc: 'Full page analysis', tag: 'Free' },
-              { method: 'POST', path: '/api/darkpatterns', desc: 'Dark pattern scan (9 types)', tag: 'Free' },
-              { method: 'POST', path: '/api/reviews', desc: 'Review authenticity (7 signals)', tag: 'Pro' },
-              { method: 'POST', path: '/api/pricing', desc: 'Hidden fee detection', tag: 'Pro' },
+              { method: 'POST', path: '/api/darkpatterns', desc: 'Dark pattern scan (14 types)', tag: 'Free' },
+              { method: 'POST', path: '/api/reviews', desc: 'Review authenticity (7 signals)', tag: 'Free' },
+              { method: 'POST', path: '/api/pricing', desc: 'Hidden fee detection', tag: 'Free' },
             ].map(ep => (
               <div key={ep.path} className="endpoint">
                 <span className="endpoint-method">{ep.method}</span>
@@ -384,7 +406,7 @@ export default function Home() {
           <div className="faq-list">
             <div className="faq-item">
               <div className="faq-q">Is ShopGuard free?</div>
-              <div className="faq-a">Yes. The Chrome Extension and basic API access are free forever with 50 requests/day. Pro features like fake review detection and hidden fee scanning start at $4.99/month.</div>
+              <div className="faq-a">Yes. The Chrome Extension includes all features — dark pattern detection, fake review analysis, hidden fee scanning, and price comparison — completely free. The API offers 50 requests/day on the free tier.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">Which sites does it work on?</div>
@@ -392,11 +414,11 @@ export default function Home() {
             </div>
             <div className="faq-item">
               <div className="faq-q">Does it collect my browsing data?</div>
-              <div className="faq-a">No. ShopGuard analyzes pages locally in your browser. In Free mode, no data leaves your device. Pro features send page data to our API for analysis, but we never store personal information.</div>
+              <div className="faq-a">No. ShopGuard analyzes pages locally in your browser. Local analysis never sends data anywhere. AI-powered scans send page data to our API for analysis, but we never store personal information.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">How accurate is the detection?</div>
-              <div className="faq-a">ShopGuard uses evidence-based pattern analysis with 7 statistical signals for reviews and 9 dark pattern classifiers. It flags suspicious patterns with evidence — not accusations. The server pipeline also uses AI classification for additional context.</div>
+              <div className="faq-a">ShopGuard uses evidence-based pattern analysis with 7 statistical signals for reviews and 14 dark pattern classifiers. It flags suspicious patterns with evidence — not accusations. The server pipeline also uses AI classification for additional context.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">Can I use the API for my own product?</div>
@@ -404,7 +426,7 @@ export default function Home() {
             </div>
             <div className="faq-item">
               <div className="faq-q">What{`'`}s the refund policy?</div>
-              <div className="faq-a">14-day free trial on all paid subscriptions. After your first payment, full refund within 14 days. No questions asked. <a href="/refund" style={{ color: 'var(--accent)' }}>Read full policy</a>.</div>
+              <div className="faq-a">Seller and Developer plans include a 14-day free trial. After your first payment, full refund within 14 days. No questions asked. <a href="/refund" style={{ color: 'var(--accent)' }}>Read full policy</a>.</div>
             </div>
           </div>
         </div>

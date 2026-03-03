@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     const { allowed, remaining } = await checkRateLimit(body.deviceId);
     if (!allowed) {
       return NextResponse.json(
-        { success: false, error: 'Daily limit reached (5/day). Upgrade to Pro for unlimited.', errorCode: 'rate_limit' },
+        { success: false, error: 'Daily limit reached (5/day). Try again tomorrow.', errorCode: 'rate_limit' },
         { status: 429, headers: { 'X-RateLimit-Remaining': '0' } },
       );
     }

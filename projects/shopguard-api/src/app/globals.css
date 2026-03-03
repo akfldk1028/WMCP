@@ -307,7 +307,6 @@ body {
   margin-top: 12px;
 }
 .tag-free { background: var(--green-bg); color: var(--green); }
-.tag-pro { background: #f5f3ff; color: #7c3aed; }
 
 /* Detection demo */
 .detection-demo {
@@ -357,10 +356,6 @@ body {
   background: var(--bg);
   position: relative;
 }
-.price-card.popular {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent), var(--shadow-lg);
-}
 .price-badge {
   position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
   background: var(--accent); color: white;
@@ -396,11 +391,8 @@ body {
   width: 20px; height: 20px; border-radius: 50%;
   font-size: 11px; font-weight: 700;
 }
-.price-card:not(.popular) .price-features li::before {
+.price-features li::before {
   background: var(--bg-muted); color: var(--text-muted);
-}
-.price-card.popular .price-features li::before {
-  background: var(--accent-bg); color: var(--accent);
 }
 .price-btn {
   display: block; text-align: center; width: 100%;
@@ -588,6 +580,42 @@ body {
 .fade-up-d2 { animation-delay: 0.2s; }
 .fade-up-d3 { animation-delay: 0.3s; }
 .fade-up-d4 { animation-delay: 0.4s; }
+
+/* Leaderboard */
+.lb-header {
+  display: grid;
+  grid-template-columns: 48px 1fr 72px 100px 1fr 100px;
+  gap: 12px; padding: 12px 20px;
+  font-size: 12px; font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--border);
+}
+.lb-row {
+  display: grid;
+  grid-template-columns: 48px 1fr 72px 100px 1fr 100px;
+  gap: 12px; align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.lb-row:hover { background: var(--bg-soft); }
+@media (max-width: 768px) {
+  .lb-header { display: none; }
+  .lb-row {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 20px; margin-bottom: 8px;
+    border: 1px solid var(--border-light); border-radius: var(--radius);
+    background: var(--bg);
+  }
+  .lb-row:hover { box-shadow: var(--shadow-sm); }
+  .lb-rank { order: 0; }
+  .lb-name { order: 1; flex: 1; }
+  .lb-grade { order: 2; }
+  .lb-patterns { order: 4; }
+  .lb-worst { order: 5; width: 100%; }
+  .lb-category { order: 3; }
+}
 
 /* Responsive */
 @media (max-width: 1024px) {

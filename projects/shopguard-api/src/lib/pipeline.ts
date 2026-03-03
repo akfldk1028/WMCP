@@ -1,6 +1,11 @@
 /**
  * Server-side analysis pipeline.
  * Runs local heuristics + Claude Haiku classification.
+ *
+ * Cost optimizations:
+ * 1. URL cache — same URL returns cached result for 24h (KV)
+ * 2. Local-first — skip AI if local signals are already strong enough
+ * 3. Already using Haiku (cheapest model)
  */
 
 import { analyzeReviews } from 'shopguard-mcp/review';
@@ -8,6 +13,7 @@ import { analyzePrices } from 'shopguard-mcp/price';
 import { analyzeDarkPatterns } from 'shopguard-mcp/darkpattern';
 import { calculateTrustScore } from 'shopguard-mcp';
 import { callClaudeHaiku } from './claude';
+import { kv } from '@vercel/kv';
 
 interface PageSnapshot {
   url: string;
@@ -70,7 +76,43 @@ function extractJson(raw: string): Record<string, unknown> | null {
   return null;
 }
 
+const CACHE_TTL = 86_400; // 24 hours
+
+/** Simple hash for URL-based cache key */
+function urlCacheKey(url: string): string {
+  // Normalize: lowercase, strip tracking params, trailing slash
+  const normalized = url.toLowerCase().replace(/[?#].*$/, '').replace(/\/+$/, '');
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i++) {
+    hash = ((hash << 5) - hash + normalized.charCodeAt(i)) | 0;
+  }
+  return `cache:${hash.toString(36)}`;
+}
+
+/** Check if local analysis is strong enough to skip AI call */
+function localSignalsSufficient(
+  darkPatternCount: number,
+  overallScore: number,
+): boolean {
+  // Strong local evidence: 3+ dark patterns found OR overall score very low
+  // In these cases, AI adds marginal value — page is clearly problematic
+  if (darkPatternCount >= 3) return true;
+  if (overallScore <= 35) return true;
+  return false;
+}
+
 export async function runServerPipeline(snapshot: PageSnapshot): Promise<PipelineResult> {
+  // Optimization 1: URL cache — return cached result if available
+  const cacheKey = urlCacheKey(snapshot.url);
+  try {
+    const cached = await kv.get<PipelineResult>(cacheKey);
+    if (cached) {
+      return { ...cached, agentNotes: (cached.agentNotes ?? '') + ' (cached)' };
+    }
+  } catch {
+    // KV unavailable — proceed without cache
+  }
+
   // Step 1: Local heuristic analysis (always runs)
   const html = snapshot.rawHtml ?? '';
   const text = snapshot.rawPageText ?? snapshot.visibleText ?? '';
@@ -117,31 +159,48 @@ export async function runServerPipeline(snapshot: PageSnapshot): Promise<Pipelin
     timestamp: Date.now(),
   };
 
-  // Step 2: AI classification via Claude Haiku
+  // Optimization 2: Local-first — skip AI if local signals are strong enough
+  const skipAi = localSignalsSufficient(
+    darkPatternResult.patterns.length,
+    overall.overall,
+  );
+
   let agentNotes = 'Server analysis (local heuristics)';
   let suspiciousPatterns: Array<{ type: string; evidence: string; severity: string }> = [];
   let pageType = 'product';
 
-  try {
-    const rawResponse = await callClaudeHaiku(SYSTEM_PROMPT, buildUserMessage(snapshot));
-    const parsed = extractJson(rawResponse);
-    if (parsed) {
-      pageType = typeof parsed['pageType'] === 'string' ? parsed['pageType'] : 'product';
-      agentNotes = typeof parsed['agentNotes'] === 'string' ? parsed['agentNotes'] : agentNotes;
-      if (Array.isArray(parsed['suspiciousPatterns'])) {
-        suspiciousPatterns = (parsed['suspiciousPatterns'] as Array<{ type: string; evidence: string; severity: string }>).filter(
-          (p) => typeof p.type === 'string',
-        );
-      }
+  if (skipAi) {
+    // Local analysis found enough evidence — no need for AI call
+    agentNotes = 'Server analysis (local heuristics, AI skipped — strong local signals)';
+  } else {
+    // Step 2: AI classification via Claude Haiku
+    try {
+      const rawResponse = await callClaudeHaiku(SYSTEM_PROMPT, buildUserMessage(snapshot));
+      const parsed = extractJson(rawResponse);
+      if (parsed) {
+        pageType = typeof parsed['pageType'] === 'string' ? parsed['pageType'] : 'product';
+        agentNotes = typeof parsed['agentNotes'] === 'string' ? parsed['agentNotes'] : agentNotes;
+        if (Array.isArray(parsed['suspiciousPatterns'])) {
+          suspiciousPatterns = (parsed['suspiciousPatterns'] as Array<{ type: string; evidence: string; severity: string }>).filter(
+            (p) => typeof p.type === 'string',
+          );
+        }
 
-      if (pageType === 'non-commercial') {
-        return { success: true, pageType, analysis: null, agentNotes, suspiciousPatterns };
+        if (pageType === 'non-commercial') {
+          const nonCommResult: PipelineResult = { success: true, pageType, analysis: null, agentNotes, suspiciousPatterns };
+          try { await kv.set(cacheKey, nonCommResult, { ex: CACHE_TTL }); } catch {}
+          return nonCommResult;
+        }
       }
+    } catch {
+      agentNotes = 'Server analysis (AI unavailable, local heuristics only)';
     }
-  } catch {
-    // AI failed — fall back to local-only results
-    agentNotes = 'Server analysis (AI unavailable, local heuristics only)';
   }
 
-  return { success: true, pageType, analysis: localAnalysis, agentNotes, suspiciousPatterns };
+  const result: PipelineResult = { success: true, pageType, analysis: localAnalysis, agentNotes, suspiciousPatterns };
+
+  // Optimization 1: Write to cache for 24h
+  try { await kv.set(cacheKey, result, { ex: CACHE_TTL }); } catch {}
+
+  return result;
 }

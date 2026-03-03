@@ -32,7 +32,7 @@ function renderReady() {
     renderAnalyzing();
   });
   wrap.appendChild(btn);
-  const hint = el('p', { style: 'font-size: 10px; color: #555; margin-top: 8px;' }, 'Free: 5/day AI \u2022 Pro: unlimited');
+  const hint = el('p', { style: 'font-size: 10px; color: #555; margin-top: 8px;' }, '5 AI scans/day \u2022 Local analysis unlimited');
   wrap.appendChild(hint);
   contentEl.appendChild(wrap);
 }
@@ -66,9 +66,13 @@ function renderError(error: string, errorCode?: string) {
     btn.addEventListener('click', () => chrome.runtime.openOptionsPage());
     wrap.appendChild(btn);
   } else if (errorCode === 'rate_limit') {
-    const btn = el('button', { class: 'btn btn-primary btn-sm' }, 'Upgrade to Pro');
-    btn.addEventListener('click', () => chrome.runtime.openOptionsPage());
-    wrap.appendChild(btn);
+    wrap.appendChild(el('p', { style: 'font-size: 11px; color: #aaa; margin: 8px 0 4px;' }, 'Daily AI limit reached. Try again tomorrow.'));
+    const retryBtn = el('button', { class: 'btn btn-secondary btn-sm' }, 'Retry');
+    retryBtn.addEventListener('click', () => {
+      chrome.runtime.sendMessage({ type: 'TRIGGER_ANALYSIS' });
+      renderAnalyzing();
+    });
+    wrap.appendChild(retryBtn);
   } else {
     const btn = el('button', { class: 'btn btn-secondary btn-sm' }, 'Retry');
     btn.addEventListener('click', () => {
@@ -142,6 +146,40 @@ function renderResult(
   contentEl.appendChild(reBtn);
 }
 
+// ── Review Prompt ──
+
+function maybeShowReviewPrompt() {
+  chrome.storage.local.get(['scanCount', 'reviewDismissed'], (res) => {
+    if ((res.scanCount ?? 0) >= 7 && !res.reviewDismissed) {
+      const banner = el('div', {
+        style: 'margin-top: 12px; padding: 10px; background: rgba(99,102,241,0.15); border-radius: 8px; text-align: center;',
+      });
+      banner.appendChild(el('p', { style: 'font-size: 12px; color: #a5b4fc; margin-bottom: 6px;' }, 'Enjoying ShopGuard?'));
+
+      const reviewLink = document.createElement('a');
+      reviewLink.href = 'https://chromewebstore.google.com/detail/befjaannnnnhcnmbgjhcakhjgmjcjklf/reviews';
+      reviewLink.target = '_blank';
+      reviewLink.rel = 'noopener';
+      const reviewBtn = el('button', { class: 'btn btn-primary btn-sm' }, 'Leave a Review');
+      reviewLink.appendChild(reviewBtn);
+      banner.appendChild(reviewLink);
+
+      const laterBtn = el('button', { class: 'btn btn-secondary btn-sm', style: 'margin-left: 6px;' }, 'Later');
+      laterBtn.addEventListener('click', () => banner.remove());
+      banner.appendChild(laterBtn);
+
+      const neverBtn = el('button', { class: 'btn btn-secondary btn-sm', style: 'margin-left: 6px;' }, "Don't ask");
+      neverBtn.addEventListener('click', () => {
+        chrome.storage.local.set({ reviewDismissed: true });
+        banner.remove();
+      });
+      banner.appendChild(neverBtn);
+
+      contentEl.appendChild(banner);
+    }
+  });
+}
+
 // ── Settings link ──
 
 settingsLink.addEventListener('click', () => {
@@ -184,6 +222,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 
       if (data.lastAnalysis) {
         renderResult(data.lastAnalysis, data.agentNotes, data.suspiciousPatterns);
+        maybeShowReviewPrompt();
         return;
       }
 

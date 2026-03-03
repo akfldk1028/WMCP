@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { kv } from '@vercel/kv';
 
-export type Plan = 'free' | 'consumer' | 'developer';
+export type Plan = 'free' | 'consumer' | 'developer' | 'seller';
 
 export interface ApiKeyInfo {
   key: string;
@@ -12,6 +12,7 @@ export interface ApiKeyInfo {
 const PLAN_LIMITS: Record<Plan, number> = {
   free: 50,
   consumer: 200,
+  seller: 1_000,
   developer: 5_000,
 };
 

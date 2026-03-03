@@ -51,8 +51,8 @@ function proRequired(toolName: string) {
       text: JSON.stringify({
         error: 'pro_required',
         tool: toolName,
-        message: `The "${toolName}" tool requires ShopGuard Pro. Free tier includes: extractPageData, scanDarkPatterns, detectAgentReadiness.`,
-        upgrade_url: 'https://shopguard.dev/pricing',
+        message: `The "${toolName}" tool requires a paid plan (Seller or Developer). Free tier includes: extractPageData, scanDarkPatterns, detectAgentReadiness.`,
+        upgrade_url: 'https://shopguard-api.vercel.app/#pricing',
       }),
     }],
     isError: true as const,

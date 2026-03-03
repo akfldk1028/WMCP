@@ -70,9 +70,7 @@ import { renderFloatingButton } from '../overlay/floating-button.js';
 
   function renderOverlays(result: AnalysisResult) {
     renderTrustBadge(result);
-    if (result.review.totalReviews > 0) {
-      renderReviewPanel(result);
-    }
+    renderReviewPanel(result);
     if (result.price.issues.length > 0) {
       renderPriceAlert(result);
     }
