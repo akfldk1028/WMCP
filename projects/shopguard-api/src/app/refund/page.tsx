@@ -35,7 +35,7 @@ export default function RefundPage() {
 
         <div className="legal-content fade-up fade-up-d2">
           <h2>Free Trial</h2>
-          <p>All paid subscriptions (Consumer Pro, Developer, Enterprise) include a <strong>14-day free trial</strong>. During the trial, you have full access to your plan{`'`}s features at no charge. If ShopGuard is not right for you, simply cancel before the trial ends and you will not be charged.</p>
+          <p>All paid subscriptions (Consumer Pro, Developer) include a <strong>14-day free trial</strong>. During the trial, you have full access to your plan{`'`}s features at no charge. If ShopGuard is not right for you, simply cancel before the trial ends and you will not be charged.</p>
 
           <h2>Subscription Refunds</h2>
           <p>If you are not satisfied with your paid subscription, you may request a <strong>full refund within 14 days</strong> of your first payment. To request a refund, email <a href="mailto:clickaround8@gmail.com">clickaround8@gmail.com</a> with your account details.</p>

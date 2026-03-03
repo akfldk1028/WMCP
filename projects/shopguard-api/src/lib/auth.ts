@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { kv } from '@vercel/kv';
 
-export type Plan = 'free' | 'consumer' | 'developer' | 'enterprise';
+export type Plan = 'free' | 'consumer' | 'developer';
 
 export interface ApiKeyInfo {
   key: string;
@@ -13,7 +13,6 @@ const PLAN_LIMITS: Record<Plan, number> = {
   free: 50,
   consumer: 200,
   developer: 5_000,
-  enterprise: 50_000,
 };
 
 const DAY_SECONDS = 86_400;
@@ -21,7 +20,7 @@ const DAY_SECONDS = 86_400;
 /** Resolve API key to a plan. Checks KV store first, then env vars as fallback. */
 async function resolveKey(key: string): Promise<{ plan: Plan } | null> {
   const masterKey = process.env.SHOPGUARD_MASTER_KEY;
-  if (masterKey && key === masterKey) return { plan: 'enterprise' };
+  if (masterKey && key === masterKey) return { plan: 'developer' };
 
   // Demo key for testing
   if (key === 'sg_demo_free') return { plan: 'free' };

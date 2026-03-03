@@ -291,27 +291,12 @@ export default function Home() {
                 <li>Batch analysis</li>
                 <li>5,000 API requests/day</li>
               </ul>
-              <a href="https://clickaround.lemonsqueezy.com" className="price-btn price-btn-outline">
+              <a href="https://clickaround.lemonsqueezy.com/checkout/buy/ab1efa53-850e-414e-a17e-f891998caa01" className="price-btn price-btn-outline">
                 Get API Key
               </a>
             </div>
 
-            {/* Enterprise */}
-            <div className="price-card fade-up fade-up-d3">
-              <div className="price-tier">Enterprise</div>
-              <div className="price-amount">$99 <span>/month</span></div>
-              <div className="price-desc">Compliance-grade analysis.</div>
-              <ul className="price-features">
-                <li>Everything in Developer</li>
-                <li>Compliance reports</li>
-                <li>SLA guarantee</li>
-                <li>Priority support</li>
-                <li>50,000 API requests/day</li>
-              </ul>
-              <a href="mailto:clickaround8@gmail.com" className="price-btn price-btn-outline">
-                Contact Sales
-              </a>
-            </div>
+
           </div>
         </div>
       </section>
@@ -341,6 +326,12 @@ export default function Home() {
               <h3>REST API</h3>
               <p>Integrate into any application</p>
               <code>POST /api/analyze</code>
+            </div>
+            <div className="platform-card fade-up fade-up-d3">
+              <div className="platform-icon">{'\u{1F916}'}</div>
+              <h3>WebMCP</h3>
+              <p>Browser-native tools for AI agents</p>
+              <code>navigator.modelContext</code>
             </div>
           </div>
         </div>
@@ -409,7 +400,7 @@ export default function Home() {
             </div>
             <div className="faq-item">
               <div className="faq-q">Can I use the API for my own product?</div>
-              <div className="faq-a">Absolutely. The REST API and MCP Server are built for developers and AI agents. Free tier gives you 50 requests/day, Developer plan gives 5,000, and Enterprise gives 50,000.</div>
+              <div className="faq-a">Absolutely. The REST API and MCP Server are built for developers and AI agents. Free tier gives you 50 requests/day, and Developer plan gives 5,000.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">What{`'`}s the refund policy?</div>

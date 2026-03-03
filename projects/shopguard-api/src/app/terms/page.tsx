@@ -28,7 +28,7 @@ export default function TermsPage() {
           <strong>Summary</strong>
           <p>
             ShopGuard provides shopping analysis tools (API, Chrome Extension, MCP Server).
-            Free tier has 50 req/day. Consumer Pro is $4.99/mo, Developer is $19/mo, Enterprise is $99/mo — all with a 14-day free trial.
+            Free tier has 50 req/day. Consumer Pro is $4.99/mo, Developer is $19/mo — both with a 14-day free trial.
             {"Don't"} abuse it or resell access. Analysis results are informational, not legal advice.
           </p>
         </div>
@@ -49,8 +49,6 @@ export default function TermsPage() {
           <p><strong>Free Tier:</strong> Limited to 50 API requests per day. Includes page data extraction, dark pattern detection (9 types), and agent-readiness scanning.</p>
           <p><strong>Consumer Pro:</strong> $4.99/month. Includes all Free features plus review authenticity analysis (7 statistical signals), hidden fee detection, price comparison, and 200 API requests/day.</p>
           <p><strong>Developer:</strong> $19/month. Includes all Consumer Pro features plus dedicated API key, programmatic access, batch analysis, and 5,000 API requests/day.</p>
-          <p><strong>Enterprise:</strong> $99/month. Includes all Developer features plus compliance reports, SLA guarantee, priority support, and 50,000 API requests/day.</p>
-
           <h2>4. Payment and Billing</h2>
           <p>Paid subscriptions are billed monthly through our payment processor, Lemon Squeezy. By subscribing, you authorize recurring charges. You may cancel at any time; cancellation takes effect at the end of the current billing period.</p>
 

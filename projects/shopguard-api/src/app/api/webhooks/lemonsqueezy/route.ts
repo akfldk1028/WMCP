@@ -27,7 +27,6 @@ async function verifySignature(body: string, signature: string): Promise<boolean
 /** Map Lemonsqueezy variant/product to our plan tier */
 function resolvePlan(variantName: string): Plan {
   const lower = variantName.toLowerCase();
-  if (lower.includes('enterprise')) return 'enterprise';
   if (lower.includes('developer')) return 'developer';
   return 'consumer';
 }

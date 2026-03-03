@@ -59,7 +59,7 @@ export async function getKeyPlan(apiKey: string): Promise<Plan | null> {
 
 /** Generate a random API key */
 export function generateApiKey(plan: Plan): string {
-  const prefix = plan === 'enterprise' ? 'sg_ent' : plan === 'developer' ? 'sg_dev' : 'sg_con';
+  const prefix = plan === 'developer' ? 'sg_dev' : 'sg_con';
   const random = Array.from(crypto.getRandomValues(new Uint8Array(16)))
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
