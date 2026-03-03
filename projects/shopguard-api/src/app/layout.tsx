@@ -27,6 +27,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://shopguard-api.vercel.app',
   },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || '',
+  },
   metadataBase: new URL('https://shopguard-api.vercel.app'),
 };
 

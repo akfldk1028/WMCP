@@ -280,6 +280,15 @@ export default function LeaderboardPage() {
             >
               Share on LinkedIn
             </a>
+            <a
+              href="https://www.reddit.com/submit?url=https%3A%2F%2Fshopguard-api.vercel.app%2Fleaderboard&title=Dark%20Pattern%20Leaderboard%202026%20%E2%80%94%20Which%20Shopping%20Sites%20Trick%20You%20Most%3F"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary"
+              style={{ fontSize: 14, padding: '10px 20px' }}
+            >
+              Share on Reddit
+            </a>
             <CopyLinkButton />
           </div>
         </div>
