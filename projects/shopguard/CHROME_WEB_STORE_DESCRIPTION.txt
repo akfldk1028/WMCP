@@ -1,0 +1,144 @@
+================================================================================
+SHORT DESCRIPTION (132 characters max — for Chrome Web Store summary field)
+================================================================================
+
+Free shopping protection: detects fake reviews, hidden fees, and 14 types of dark patterns on Amazon, Temu, eBay, and more.
+
+================================================================================
+FULL DESCRIPTION (for Chrome Web Store detailed description field)
+================================================================================
+
+ShopGuard — Free Shopping Protection for Every Online Shopper
+
+Shop smarter. Never get tricked again. ShopGuard is a free Chrome extension that scans any shopping page for fake reviews, hidden fees, and manipulative dark patterns — giving you the facts before you buy.
+
+Completely free. No account required. No paywall. Just install and shop safely.
+
+
+WHY SHOPGUARD?
+
+Online shopping is full of tricks designed to make you spend more than you should. Fake urgency timers, inflated reviews, hidden shipping fees, and deceptive pricing are everywhere. ShopGuard puts the evidence in your hands so you can make informed decisions.
+
+If you used Fakespot before it shut down in 2025, or you're looking for a Honey alternative that actually protects you from deceptive pricing — ShopGuard is built for you.
+
+
+WHAT SHOPGUARD DETECTS
+
+1. Dark Pattern Detection (14 Types)
+ShopGuard identifies 14 categories of manipulative design patterns, including:
+  - Fake urgency ("Only 2 left!" timers that reset on refresh)
+  - Fake social proof (fabricated "X people viewing this" counters)
+  - Confirmshaming ("No thanks, I don't want to save money")
+  - Hidden costs and drip pricing
+  - Bait-and-switch tactics
+  - Forced continuity (sneaky auto-renewals)
+  - Preselected options you didn't choose
+  - Misdirection and visual tricks
+  - Disguised ads posing as content
+  - Trick questions designed to confuse
+  - Obstruction (making cancellation difficult)
+  - Nagging (repeated prompts to wear you down)
+
+Each detection includes the exact evidence found on the page and a severity rating (high, medium, low), so you can judge for yourself.
+
+2. Fake Review Detection (7 Statistical Signals)
+ShopGuard analyzes reviews using 7 evidence-based signals:
+  - Date clustering: Are reviews suspiciously bunched on the same dates?
+  - Rating distribution anomaly: Is the star-rating pattern unnatural?
+  - Phrase repetition: Do multiple reviews use identical wording?
+  - Length uniformity: Are all reviews suspiciously similar in length?
+  - Incentive keywords: Do reviews mention free products or discounts for reviewing?
+  - Rating surge detection: Did the product suddenly get a flood of 5-star reviews?
+  - AI-generated content detection: Do reviews show signs of being written by AI?
+
+This is not guesswork. Every finding is backed by data you can verify yourself.
+
+3. Hidden Fee Scanner
+Catches pricing tricks before you reach checkout:
+  - Drip pricing (fees added one by one through the checkout flow)
+  - Hidden shipping and handling charges
+  - Surprise service fees and taxes not shown upfront
+  - Deceptive price anchoring (fake "original" prices)
+
+4. Price Comparison
+  - Compare prices across sources with fee-inclusive totals
+  - Detect pricing outliers and suspicious discounts
+  - Understand the true all-in cost before you commit
+
+
+HOW IT WORKS
+
+1. Install ShopGuard from the Chrome Web Store (one click, free)
+2. Visit any shopping page as you normally would
+3. ShopGuard automatically scans the page and shows results in a clean overlay
+
+That's it. No signup. No configuration. It just works.
+
+Keyboard shortcut: Press Alt+Shift+S to trigger a manual scan on any page.
+
+
+SUPPORTED SITES
+
+ShopGuard works on 30+ shopping platforms worldwide:
+
+  Global: Amazon, eBay, AliExpress, Walmart, Target, Best Buy, Newegg, Etsy, Temu, Shein, Shopee, Lazada, Mercari, Rakuten
+  Korea: Coupang, Naver Shopping, Gmarket, 11st, Musinsa, SSG, Lotte ON, Kurly, Olive Young, Auction, Interpark, WeMakePrice, TMON
+
+If it's a shopping site, ShopGuard can analyze it.
+
+
+WHAT YOU GET — ALL FREE
+
+  - 14 dark pattern types detected and explained
+  - 7 fake review analysis signals
+  - Hidden fee and drip pricing scanner
+  - Price comparison across sources
+  - Trust score for every product page
+  - Automatic scanning on supported sites
+  - 5 AI-powered deep scans per day
+  - Unlimited local pattern analysis (no daily limit)
+  - Works in English and Korean
+
+
+PRIVACY AND SECURITY
+
+  - Local-first analysis: Most scanning happens entirely in your browser
+  - No personal data collected or stored
+  - No browsing history tracked
+  - AI scans send only page content to our API for analysis (never personal info)
+  - No ads. No affiliate links. No hidden monetization.
+  - Open and transparent about what data is processed
+
+
+EVIDENCE-BASED, NOT OPINION-BASED
+
+ShopGuard does not tell you what to buy or what to avoid. It shows you the evidence — suspicious review patterns, hidden fees, manipulative design tricks — and lets you decide. Every finding comes with an explanation of what was detected and why it matters.
+
+
+FREQUENTLY ASKED QUESTIONS
+
+Q: Is ShopGuard really free?
+A: Yes. The Chrome extension is 100% free with all features included. No trial period. No feature gates. No credit card required.
+
+Q: How is this different from Fakespot?
+A: Fakespot shut down in July 2025. ShopGuard is an actively maintained alternative that goes beyond review analysis — it also detects 14 types of dark patterns, hidden fees, and deceptive pricing.
+
+Q: How is this different from Honey?
+A: Honey focuses on coupon codes. ShopGuard focuses on protecting you from deceptive practices — fake reviews, hidden fees, and dark patterns that cost you money.
+
+Q: Does it slow down my browser?
+A: No. ShopGuard is lightweight and only activates on shopping sites. It runs at document idle to avoid impacting page load times.
+
+Q: What about my privacy?
+A: ShopGuard does not collect personal data, track your browsing history, or sell any information. Local analysis never leaves your browser. AI scans process only page content.
+
+
+ABOUT
+
+ShopGuard is built by an independent developer committed to making online shopping safer. No corporate sponsors. No conflicts of interest. Just honest tools for honest shopping.
+
+Website: https://shopguard-api.vercel.app
+Privacy Policy: https://gist.github.com/akfldk1028/ccec6da52c9e6a0a19788e0dd5498192
+Contact: clickaround8@gmail.com
+
+Keywords: fake review detector, dark pattern scanner, hidden fee alert, price comparison, shopping protection, scam detection, Fakespot alternative, Honey alternative, online shopping safety, consumer protection, deceptive design, drip pricing, fake urgency, confirmshaming, review analysis, trust score
