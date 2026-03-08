@@ -14,7 +14,9 @@ async function handler(req: NextRequest) {
   }
 
   const locale = body.locale || 'en';
-  const raw = extractDarkPatternEvidence(body.html, body.html);
+  // Strip HTML tags to get visible text for pattern matching (avoids false positives from tag names)
+  const visibleText = body.html.replace(/<[^>]*>/g, ' ');
+  const raw = extractDarkPatternEvidence(visibleText, body.html);
   const results = enrichDarkPatterns(raw, locale);
   return NextResponse.json(results);
 }

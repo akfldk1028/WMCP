@@ -19,7 +19,9 @@ async function handler(req: NextRequest, info: ApiKeyInfo) {
 
   const locale = body.locale || 'en';
   const page = extractPageData(body.html, body.url);
-  const darkPatterns = enrichDarkPatterns(extractDarkPatternEvidence(body.html, body.html), locale);
+  // Strip HTML tags to get visible text for pattern matching (avoids false positives from tag names)
+  const visibleText = body.html.replace(/<[^>]*>/g, ' ');
+  const darkPatterns = enrichDarkPatterns(extractDarkPatternEvidence(visibleText, body.html), locale);
 
   let reviews = null;
   let pricing = null;
