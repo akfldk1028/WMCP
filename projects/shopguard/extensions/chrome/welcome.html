@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to ShopGuard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #1a1a2e;
+      color: #e0e0e0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      max-width: 560px;
+      padding: 48px 32px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 36px;
+    }
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      text-align: left;
+      margin-bottom: 36px;
+    }
+    .step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #6366f1;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .step-content h3 {
+      font-size: 15px;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .step-content p {
+      font-size: 13px;
+      color: #aaa;
+      line-height: 1.5;
+    }
+    .cta {
+      display: inline-block;
+      padding: 14px 36px;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .cta:hover { opacity: 0.9; }
+    .pro-hint {
+      margin-top: 16px;
+      font-size: 11px;
+      color: #666;
+    }
+    .pro-hint a {
+      color: #6366f1;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to ShopGuard</h1>
+    <p class="subtitle">Evidence-based shopping protection, installed and ready.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>Visit any shopping site</h3>
+          <p>Amazon, Coupang, eBay, Walmart, and 30+ stores are automatically supported.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>Get instant analysis</h3>
+          <p>ShopGuard scans for fake reviews, hidden fees, and dark patterns. Click the extension icon to see your trust grade.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>Shop with confidence</h3>
+          <p>Evidence-based insights help you make informed decisions. Includes 5 AI scans per day.</p>
+        </div>
+      </div>
+    </div>
+
+    <button class="cta" id="startBtn">Start Shopping Safely</button>
+    <p class="pro-hint">
+      Learn more at <a href="https://shopguard-api.vercel.app" target="_blank" rel="noopener">shopguard-api.vercel.app</a>
+    </p>
+  </div>
+  <script>
+    document.getElementById('startBtn').addEventListener('click', () => {
+      window.close();
+    });
+  </script>
+</body>
+</html>

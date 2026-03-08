@@ -66,7 +66,12 @@ export type DarkPatternType =
   | 'confirm-shaming'
   | 'obstruction'
   | 'preselection'
-  | 'privacy-zuckering';
+  | 'privacy-zuckering'
+  | 'bait-and-switch'
+  | 'drip-pricing'
+  | 'nagging'
+  | 'trick-question'
+  | 'disguised-ads';
 
 export interface DarkPatternMatch {
   type: DarkPatternType;

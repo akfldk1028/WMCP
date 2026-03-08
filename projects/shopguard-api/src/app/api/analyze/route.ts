@@ -19,7 +19,7 @@ async function handler(req: NextRequest, info: ApiKeyInfo) {
 
   const locale = body.locale || 'en';
   const page = extractPageData(body.html, body.url);
-  const darkPatterns = enrichDarkPatterns(extractDarkPatternEvidence(body.html));
+  const darkPatterns = enrichDarkPatterns(extractDarkPatternEvidence(body.html, body.html), locale);
 
   let reviews = null;
   let pricing = null;

@@ -75,7 +75,14 @@ async function build() {
   );
   console.log('  \u2713 settings/settings.html (copied)');
 
-  // 7. Verify icons exist
+  // 7. Copy welcome.html to extension root
+  copyFileSync(
+    resolve(chromeDir, 'src/welcome/welcome.html'),
+    resolve(chromeDir, 'welcome.html'),
+  );
+  console.log('  \u2713 welcome.html (copied)');
+
+  // 8. Verify icons exist
   const iconSizes = [16, 48, 128];
   for (const size of iconSizes) {
     const iconPath = resolve(chromeDir, `icons/icon${size}.png`);

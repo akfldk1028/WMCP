@@ -159,6 +159,11 @@ async function analyzeTab(tabId: number, snapshot: PageSnapshot): Promise<void> 
     chrome.action.setBadgeText({ text: '', tabId });
   }
 
+  // Track scan count for review prompt (once per analysis, not per sendResult)
+  chrome.storage.local.get(['scanCount'], (res) => {
+    chrome.storage.local.set({ scanCount: (res.scanCount ?? 0) + 1 });
+  });
+
   await trackUsage();
 }
 
@@ -257,6 +262,13 @@ chrome.commands.onCommand.addListener((command) => {
         type: 'CAPTURE_PAGE' as const,
       }).catch(() => {});
     });
+  }
+});
+
+// Open welcome page on first install
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason === 'install') {
+    chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') });
   }
 });
 

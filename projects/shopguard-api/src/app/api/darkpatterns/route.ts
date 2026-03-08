@@ -13,8 +13,9 @@ async function handler(req: NextRequest) {
     return NextResponse.json({ error: 'HTML too large. Max 2MB.' }, { status: 413 });
   }
 
-  const raw = extractDarkPatternEvidence(body.html);
-  const results = enrichDarkPatterns(raw);
+  const locale = body.locale || 'en';
+  const raw = extractDarkPatternEvidence(body.html, body.html);
+  const results = enrichDarkPatterns(raw, locale);
   return NextResponse.json(results);
 }
 

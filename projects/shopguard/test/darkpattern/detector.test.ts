@@ -147,3 +147,96 @@ describe('analyzeDarkPatterns', () => {
     expect(result.patterns.length).toBeGreaterThan(0);
   });
 });
+
+// ── New pattern tests (expanded rules) ──
+
+describe('detectDarkPatterns — expanded patterns', () => {
+  it('detects "limited time deal"', () => {
+    const matches = detectDarkPatterns('Limited time deal');
+    expect(matches.some((m) => m.type === 'fake-urgency')).toBe(true);
+  });
+
+  it('detects "deal of the day"', () => {
+    const matches = detectDarkPatterns('Deal of the Day');
+    expect(matches.some((m) => m.type === 'fake-urgency')).toBe(true);
+  });
+
+  it('detects "selling fast"', () => {
+    const matches = detectDarkPatterns('Selling fast - buy now');
+    expect(matches.some((m) => m.type === 'fake-urgency')).toBe(true);
+  });
+
+  it('detects "1K+ bought in past month"', () => {
+    const matches = detectDarkPatterns('1K+ bought in past month');
+    expect(matches.some((m) => m.type === 'fake-social-proof')).toBe(true);
+  });
+
+  it('detects "50K+ ratings"', () => {
+    const matches = detectDarkPatterns('50K+ ratings');
+    expect(matches.some((m) => m.type === 'fake-social-proof')).toBe(true);
+  });
+
+  it('detects "best seller"', () => {
+    const matches = detectDarkPatterns('Best seller in category');
+    expect(matches.some((m) => m.type === 'fake-social-proof')).toBe(true);
+  });
+
+  it('detects "continue without saving"', () => {
+    const matches = detectDarkPatterns('Continue without saving');
+    expect(matches.some((m) => m.type === 'confirm-shaming')).toBe(true);
+  });
+
+  it('detects "shipping calculated at checkout"', () => {
+    const matches = detectDarkPatterns('Shipping calculated at checkout');
+    expect(matches.some((m) => m.type === 'hidden-costs')).toBe(true);
+  });
+
+  it('detects Korean 오늘만 한정', () => {
+    const matches = detectDarkPatterns('오늘만 한정 특가');
+    expect(matches.some((m) => m.type === 'fake-urgency')).toBe(true);
+  });
+
+  it('detects Korean 배송비 별도', () => {
+    const matches = detectDarkPatterns('배송비 별도');
+    expect(matches.some((m) => m.type === 'hidden-costs')).toBe(true);
+  });
+});
+
+// ── New category tests ──
+
+describe('detectDarkPatterns — new categories', () => {
+  it('detects bait-and-switch', () => {
+    const matches = detectDarkPatterns('From $9.99');
+    expect(matches.some((m) => m.type === 'bait-and-switch')).toBe(true);
+  });
+
+  it('detects drip-pricing', () => {
+    const matches = detectDarkPatterns('Taxes not included');
+    expect(matches.some((m) => m.type === 'drip-pricing')).toBe(true);
+  });
+
+  it('detects nagging', () => {
+    const matches = detectDarkPatterns('Subscribe to our newsletter');
+    expect(matches.some((m) => m.type === 'nagging')).toBe(true);
+  });
+
+  it('detects trick-question', () => {
+    const matches = detectDarkPatterns('Uncheck to opt out of emails');
+    expect(matches.some((m) => m.type === 'trick-question')).toBe(true);
+  });
+
+  it('detects disguised-ads', () => {
+    const matches = detectDarkPatterns('Sponsored product listing');
+    expect(matches.some((m) => m.type === 'disguised-ads')).toBe(true);
+  });
+
+  it('detects Korean drip-pricing', () => {
+    const matches = detectDarkPatterns('배송비 미포함 가격입니다');
+    expect(matches.some((m) => m.type === 'drip-pricing')).toBe(true);
+  });
+
+  it('detects Korean disguised-ads', () => {
+    const matches = detectDarkPatterns('광고 상품입니다');
+    expect(matches.some((m) => m.type === 'disguised-ads')).toBe(true);
+  });
+});
