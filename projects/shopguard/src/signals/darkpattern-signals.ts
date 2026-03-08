@@ -10,7 +10,7 @@ const DARK_PATTERN_RULES: Array<{
     patterns: [
       /only\s+\d+\s+(?:left|remaining|available)/i,
       /(?:sale|offer|deal)\s+ends?\s+(?:in|soon|today|tonight)/i,
-      /(?:hurry|rush|act\s+(?:now|fast)|limited\s+time|don'?t\s+miss)/i,
+      /\b(?:hurry|rush|act\s+(?:now|fast)|limited\s+time|don'?t\s+miss)\b/i,
       /\d{1,2}:\d{2}(?::\d{2})?\s*(?:remaining|left)/i,
       /limited[\s-]+time\s+deal/i,
       /deal\s+of\s+the\s+day/i,
