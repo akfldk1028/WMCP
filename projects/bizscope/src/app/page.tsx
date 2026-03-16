@@ -49,7 +49,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <span className="flex items-center gap-2 text-lg font-bold tracking-tight">
-            <img src="/logo.png" alt="BS" className="h-6 w-auto" />
+            <img src="/logo.png" alt="BS" className="h-9 w-auto" />
             BizScope
           </span>
           <Link

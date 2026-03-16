@@ -35,7 +35,7 @@ export default function NewReportPage() {
           <div className="mx-auto flex max-w-5xl items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1.5 text-sm font-bold text-primary">
-                <img src="/logo.png" alt="BS" className="h-4 w-auto" />
+                <img src="/logo.png" alt="BS" className="h-9 w-auto" />
                 BizScope
               </span>
               {isGenerating && (
@@ -78,7 +78,7 @@ export default function NewReportPage() {
       <header className="border-b bg-background">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold text-primary">
-            <img src="/logo.png" alt="BS" className="h-6 w-auto" />
+            <img src="/logo.png" alt="BS" className="h-9 w-auto" />
             BizScope
           </Link>
           <Link href="/history" className="text-sm font-medium text-muted-foreground transition hover:text-primary">
