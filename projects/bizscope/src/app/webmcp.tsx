@@ -202,6 +202,39 @@ const TOOLS = [
     },
     endpoint: '/api/webmcp/final-implications',
   },
+  // === Utility tools — AI agent can call these anytime ===
+  {
+    name: 'bizscope-web-search',
+    description:
+      'Search the web for any information. Use this tool to gather research data BEFORE calling analysis tools. You should call this multiple times with different queries to build comprehensive research. For example, search for company financials, then industry trends, then recent news separately.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query — be specific, include company name and topic' },
+        count: { type: 'number', description: 'Number of results (default 10, max 20)' },
+      },
+      required: ['query'],
+    },
+    endpoint: '/api/tools/search',
+  },
+  {
+    name: 'bizscope-financial-data',
+    description:
+      'Get financial data for a company — revenue, operating profit, net income, employees, market cap. Call this early in the analysis to get concrete numbers for the company overview and internal capability sections.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        companyName: { type: 'string', description: 'Company name' },
+        metrics: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Specific metrics to search for (e.g. ["revenue", "R&D spending", "debt ratio"])',
+        },
+      },
+      required: ['companyName'],
+    },
+    endpoint: '/api/tools/financial',
+  },
 ];
 
 export function WebMCPRegistration() {
