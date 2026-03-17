@@ -6,50 +6,14 @@ interface PESTTableProps {
   factors: PESTFactor[];
 }
 
-const CATEGORY_CONFIG: Record<
-  PESTCategory,
-  { label: string; fullLabel: string; prefix: string; color: string; headerBg: string; rowBg: string }
-> = {
-  political: {
-    label: 'P',
-    fullLabel: 'Politics',
-    prefix: 'P',
-    color: 'text-blue-800',
-    headerBg: 'bg-blue-50 border-blue-200',
-    rowBg: 'bg-blue-50/30',
-  },
-  economic: {
-    label: 'E',
-    fullLabel: 'Economics',
-    prefix: 'E',
-    color: 'text-amber-800',
-    headerBg: 'bg-amber-50 border-amber-200',
-    rowBg: 'bg-amber-50/30',
-  },
-  social: {
-    label: 'S',
-    fullLabel: 'Social',
-    prefix: 'S',
-    color: 'text-green-800',
-    headerBg: 'bg-green-50 border-green-200',
-    rowBg: 'bg-green-50/30',
-  },
-  technological: {
-    label: 'T',
-    fullLabel: 'Technical',
-    prefix: 'T',
-    color: 'text-purple-800',
-    headerBg: 'bg-purple-50 border-purple-200',
-    rowBg: 'bg-purple-50/30',
-  },
+const CATEGORY_CONFIG: Record<PESTCategory, { label: string; full: string; accent: string }> = {
+  political: { label: 'P', full: 'Political', accent: 'border-l-blue-600' },
+  economic: { label: 'E', full: 'Economic', accent: 'border-l-amber-600' },
+  social: { label: 'S', full: 'Social', accent: 'border-l-emerald-600' },
+  technological: { label: 'T', full: 'Technological', accent: 'border-l-violet-600' },
 };
 
-const CATEGORY_ORDER: PESTCategory[] = [
-  'political',
-  'economic',
-  'social',
-  'technological',
-];
+const CATEGORY_ORDER: PESTCategory[] = ['political', 'economic', 'social', 'technological'];
 
 const FORCE_KEYS = [
   { key: 'rivalry' as const, label: '경쟁' },
@@ -59,46 +23,16 @@ const FORCE_KEYS = [
   { key: 'substitutes' as const, label: '대체' },
 ];
 
-function ScoreCircle({ value, highlight }: { value: number; highlight?: boolean }) {
-  const pct = Math.round((value / 5) * 100);
-  return (
-    <span
-      className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-bold
-        ${highlight
-          ? 'bg-red-400 text-white'
-          : 'border border-red-300 bg-white text-red-600'
-        }`}
-    >
-      {pct}%
-    </span>
-  );
-}
-
-function PossibilityBadge({ level }: { level: string }) {
-  const styles: Record<string, string> = {
-    HIGH: 'text-red-700 font-bold',
-    'MIDDLE HIGH': 'text-orange-600 font-semibold',
-    MIDDLE: 'text-amber-600 font-medium',
-    LOW: 'text-slate-500',
-  };
-  return (
-    <span className={`text-xs ${styles[level] ?? 'text-slate-600'}`}>
-      {level}
-    </span>
-  );
-}
-
 function getPossibilityLevel(probability: number): string {
   if (probability >= 0.8) return 'HIGH';
-  if (probability >= 0.6) return 'MIDDLE HIGH';
-  if (probability >= 0.4) return 'MIDDLE';
+  if (probability >= 0.6) return 'MID-H';
+  if (probability >= 0.4) return 'MID';
   return 'LOW';
 }
 
 function getCompositeScore(factor: PESTFactor): number {
-  const forces = factor.fiveForces;
-  const avg = (forces.rivalry + forces.newEntrants + forces.supplierPower + forces.buyerPower + forces.substitutes) / 5;
-  return Math.round((avg / 5) * 100);
+  const f = factor.fiveForces;
+  return Math.round(((f.rivalry + f.newEntrants + f.supplierPower + f.buyerPower + f.substitutes) / 25) * 100);
 }
 
 export default function PESTTable({ factors }: PESTTableProps) {
@@ -110,113 +44,96 @@ export default function PESTTable({ factors }: PESTTableProps) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-xs">
-        {/* Header */}
+      <table className="w-full text-xs">
         <thead>
-          <tr>
-            <th className="border border-gray-300 bg-gray-100 px-2 py-2 text-left font-semibold w-16">
+          <tr className="border-b-2 border-foreground/20">
+            <th className="pb-2.5 pl-3 pr-2 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 w-14">
               Factor
             </th>
-            <th className="border border-gray-300 bg-gray-100 px-2 py-2 text-left font-semibold w-28">
+            <th className="pb-2.5 px-2 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 w-28">
               Details
             </th>
-            <th className="border border-gray-300 bg-gray-100 px-2 py-2 text-left font-semibold">
+            <th className="pb-2.5 px-2 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
               Implication
             </th>
-            <th className="border border-gray-300 bg-gray-100 px-2 py-2 text-center font-semibold w-20">
-              Possibility
+            <th className="pb-2.5 px-2 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 w-14">
+              Prob.
             </th>
             {FORCE_KEYS.map((fk) => (
               <th
                 key={fk.key}
-                className="border border-gray-300 bg-red-50 px-1 py-2 text-center font-semibold w-10 text-red-700"
+                className="pb-2.5 px-1 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 w-9"
               >
                 {fk.label}
               </th>
             ))}
-            <th className="border-2 border-sky-400 bg-sky-50 px-1 py-2 text-center font-bold w-10 text-sky-700">
+            <th className="pb-2.5 px-1 text-center text-[10px] font-bold uppercase tracking-wider text-indigo-600 w-10">
               종합
             </th>
-            <th className="border border-gray-300 bg-gray-100 px-2 py-2 text-center font-semibold w-10">
-              OT
+            <th className="pb-2.5 px-2 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 w-8">
+              O/T
             </th>
           </tr>
         </thead>
-
         <tbody>
-          {grouped.map(({ category, config, items }) => (
-            <CategoryRows
-              key={category}
-              config={config}
-              items={items}
-            />
-          ))}
+          {grouped.flatMap(({ config, items }) =>
+            items.map((factor, idx) => {
+              const composite = getCompositeScore(factor);
+              const probLevel = getPossibilityLevel(factor.probability);
+              return (
+                <tr key={factor.id} className="border-b border-border/40">
+                  {idx === 0 && (
+                    <td
+                      rowSpan={items.length}
+                      className={`border-l-2 ${config.accent} pl-2 pr-2 py-2 text-center align-middle`}
+                    >
+                      <span className="text-base font-bold">{config.label}</span>
+                      <span className="block text-[9px] text-muted-foreground/50">{config.full}</span>
+                    </td>
+                  )}
+                  <td className="px-2 py-2.5 align-top font-medium">
+                    {config.label}{idx + 1}. {factor.factor}
+                  </td>
+                  <td className="px-2 py-2.5 text-muted-foreground align-top leading-relaxed">
+                    {factor.implication || factor.description}
+                  </td>
+                  <td className="px-2 py-2.5 text-center align-middle">
+                    <span
+                      className={`text-[10px] font-semibold ${
+                        probLevel === 'HIGH'
+                          ? 'text-rose-500'
+                          : probLevel === 'MID-H'
+                            ? 'text-amber-600'
+                            : 'text-muted-foreground'
+                      }`}
+                    >
+                      {probLevel}
+                    </span>
+                  </td>
+                  {FORCE_KEYS.map((fk) => (
+                    <td
+                      key={fk.key}
+                      className="px-1 py-2.5 text-center align-middle tabular-nums text-muted-foreground"
+                    >
+                      {factor.fiveForces[fk.key]}
+                    </td>
+                  ))}
+                  <td className="px-1 py-2.5 text-center align-middle">
+                    <span className="text-sm font-bold tabular-nums text-indigo-600">{composite}%</span>
+                  </td>
+                  <td className="px-2 py-2.5 text-center align-middle font-bold">
+                    {factor.classification === 'opportunity' ? (
+                      <span className="text-emerald-600">O</span>
+                    ) : (
+                      <span className="text-rose-500">T</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })
+          )}
         </tbody>
       </table>
     </div>
-  );
-}
-
-function CategoryRows({
-  config,
-  items,
-}: {
-  config: (typeof CATEGORY_CONFIG)[PESTCategory];
-  items: PESTFactor[];
-}) {
-  return (
-    <>
-      {items.map((factor, idx) => {
-        const composite = getCompositeScore(factor);
-        const possLevel = getPossibilityLevel(factor.probability);
-        return (
-          <tr key={factor.id} className={config.rowBg}>
-            {/* Category label - only on first row, rowSpan */}
-            {idx === 0 && (
-              <td
-                rowSpan={items.length}
-                className={`border border-gray-300 px-2 py-2 text-center align-middle ${config.headerBg}`}
-              >
-                <div className={`text-lg font-bold ${config.color}`}>{config.label}</div>
-                <div className={`text-[10px] ${config.color}`}>{config.fullLabel}</div>
-              </td>
-            )}
-            {/* Factor details */}
-            <td className="border border-gray-300 px-2 py-2 align-top">
-              <span className="font-bold text-gray-800">
-                {config.prefix}{idx + 1}.
-              </span>{' '}
-              <span className="text-gray-700">{factor.factor}</span>
-            </td>
-            {/* Implication */}
-            <td className="border border-gray-300 px-2 py-2 text-gray-600 align-top leading-relaxed">
-              {factor.implication || factor.description}
-            </td>
-            {/* Possibility */}
-            <td className="border border-gray-300 px-2 py-2 text-center align-middle">
-              <PossibilityBadge level={possLevel} />
-            </td>
-            {/* 5 Forces scores */}
-            {FORCE_KEYS.map((fk) => (
-              <td key={fk.key} className="border border-gray-300 px-1 py-2 text-center align-middle">
-                <ScoreCircle value={factor.fiveForces[fk.key]} />
-              </td>
-            ))}
-            {/* Composite */}
-            <td className="border-2 border-sky-400 px-1 py-2 text-center align-middle">
-              <ScoreCircle value={composite / 20} highlight />
-            </td>
-            {/* O/T */}
-            <td className="border border-gray-300 px-2 py-2 text-center align-middle font-bold">
-              {factor.classification === 'opportunity' ? (
-                <span className="text-green-700">O</span>
-              ) : (
-                <span className="text-red-600">T</span>
-              )}
-            </td>
-          </tr>
-        );
-      })}
-    </>
   );
 }

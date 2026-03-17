@@ -6,15 +6,15 @@ interface SevenSPyramidProps {
   items: SevenSItem[];
 }
 
-/** PPT style: stacked pyramid with Strategy at top, Shared Value at bottom */
+/** Consulting-style stacked pyramid with Strategy at top, Shared Value at bottom */
 const PYRAMID_LAYERS: { element: SevenSElement; label: string; color: string; textColor: string }[] = [
-  { element: 'strategy', label: 'Strategy', color: '#fbbf24', textColor: '#92400e' },
-  { element: 'structure', label: 'Structure', color: '#fcd34d', textColor: '#92400e' },
-  { element: 'staff', label: 'Staff', color: '#fde68a', textColor: '#78350f' },
-  { element: 'skills', label: 'Skill', color: '#fef3c7', textColor: '#78350f' },
-  { element: 'systems', label: 'System', color: '#fef9c3', textColor: '#713f12' },
-  { element: 'style', label: 'Style', color: '#fffbeb', textColor: '#713f12' },
-  { element: 'shared-values', label: 'Shared Value', color: '#f59e0b', textColor: '#fff' },
+  { element: 'strategy', label: 'Strategy', color: '#e0e7ff', textColor: '#4338ca' },
+  { element: 'structure', label: 'Structure', color: '#eef2ff', textColor: '#4338ca' },
+  { element: 'staff', label: 'Staff', color: '#f1f5f9', textColor: '#334155' },
+  { element: 'skills', label: 'Skill', color: '#f1f5f9', textColor: '#334155' },
+  { element: 'systems', label: 'System', color: '#f8fafc', textColor: '#334155' },
+  { element: 'style', label: 'Style', color: '#f8fafc', textColor: '#334155' },
+  { element: 'shared-values', label: 'Shared Value', color: '#4f46e5', textColor: '#ffffff' },
 ];
 
 function getDifficultyImpactLabel(difficulty: number, impact: number): { dLabel: string; iLabel: string } {
@@ -40,7 +40,7 @@ export default function SevenSPyramid({ items }: SevenSPyramidProps) {
   const layerH = (svgH - topY - 20) / PYRAMID_LAYERS.length;
 
   return (
-    <div className="w-full flex flex-col items-center gap-4">
+    <div className="flex w-full flex-col items-center gap-6">
       <svg viewBox={`0 0 ${svgW} ${svgH}`} className="w-full max-w-[600px]">
         {PYRAMID_LAYERS.map((layer, i) => {
           const item = itemMap.get(layer.element);
@@ -55,7 +55,6 @@ export default function SevenSPyramid({ items }: SevenSPyramidProps) {
           const bottomRight = cx + bottomWidth / 2;
 
           const points = `${topLeft},${y} ${topRight},${y} ${bottomRight},${y + layerH} ${bottomLeft},${y + layerH}`;
-          const isHighlighted = item && item.impact >= 4;
 
           return (
             <g key={layer.element}>
@@ -63,16 +62,15 @@ export default function SevenSPyramid({ items }: SevenSPyramidProps) {
               <polygon
                 points={points}
                 fill={layer.color}
-                stroke="#d4a017"
+                stroke="#cbd5e1"
                 strokeWidth={1}
-                opacity={isHighlighted ? 1 : 0.8}
               />
               <text
                 x={cx}
                 y={y + layerH / 2 + 4}
                 textAnchor="middle"
                 fontSize={11}
-                fontWeight="bold"
+                fontWeight="600"
                 fill={layer.textColor}
               >
                 {layer.label}
@@ -87,7 +85,7 @@ export default function SevenSPyramid({ items }: SevenSPyramidProps) {
                     y1={y + layerH / 2}
                     x2={250}
                     y2={y + layerH / 2}
-                    stroke="#d1d5db"
+                    stroke="#cbd5e1"
                     strokeWidth={1}
                     strokeDasharray="3 2"
                   />
@@ -101,8 +99,8 @@ export default function SevenSPyramid({ items }: SevenSPyramidProps) {
                           width={48}
                           height={20}
                           rx={3}
-                          fill="#e0e7ff"
-                          stroke="#818cf8"
+                          fill="#eef2ff"
+                          stroke="#c7d2fe"
                           strokeWidth={0.5}
                         />
                         <text
@@ -127,7 +125,7 @@ export default function SevenSPyramid({ items }: SevenSPyramidProps) {
                         y={y + layerH / 2 + 4}
                         textAnchor="start"
                         fontSize={9}
-                        fill="#6b7280"
+                        fill="#94a3b8"
                       >
                         D:{dLabel} I:{iLabel}
                       </text>
@@ -142,42 +140,42 @@ export default function SevenSPyramid({ items }: SevenSPyramidProps) {
 
       {/* Details table */}
       <div className="w-full overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
+        <table className="w-full text-sm">
           <thead>
-            <tr className="bg-gray-50">
-              <th className="border border-gray-200 px-3 py-1.5 text-left font-semibold">
+            <tr className="border-b border-border">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 Element
               </th>
-              <th className="border border-gray-200 px-3 py-1.5 text-left font-semibold">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 Current State
               </th>
-              <th className="border border-gray-200 px-3 py-1.5 text-left font-semibold">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 Required Change
               </th>
-              <th className="border border-gray-200 px-3 py-1.5 text-center font-semibold w-20">
+              <th className="w-20 px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 Difficulty
               </th>
-              <th className="border border-gray-200 px-3 py-1.5 text-center font-semibold w-20">
+              <th className="w-20 px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 Impact
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-border/40">
             {items.map((item) => (
-              <tr key={item.element} className="hover:bg-gray-50">
-                <td className="border border-gray-200 px-3 py-1.5 font-medium">
+              <tr key={item.element}>
+                <td className="px-3 py-2 font-medium">
                   {item.label}
                 </td>
-                <td className="border border-gray-200 px-3 py-1.5 text-gray-700">
+                <td className="px-3 py-2 text-muted-foreground">
                   {item.currentState}
                 </td>
-                <td className="border border-gray-200 px-3 py-1.5 text-gray-700">
+                <td className="px-3 py-2 text-muted-foreground">
                   {item.requiredChange}
                 </td>
-                <td className="border border-gray-200 px-3 py-1.5 text-center">
+                <td className="px-3 py-2 text-center tabular-nums">
                   {item.difficulty}/5
                 </td>
-                <td className="border border-gray-200 px-3 py-1.5 text-center">
+                <td className="px-3 py-2 text-center tabular-nums">
                   {item.impact}/5
                 </td>
               </tr>

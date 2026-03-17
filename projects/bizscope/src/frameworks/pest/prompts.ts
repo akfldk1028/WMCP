@@ -39,3 +39,19 @@ export function buildUserMessage(ctx: PipelineContext): string {
 
 각 외부 환경 요인이 해당 기업의 산업에서 Porter's Five Forces에 어떤 영향을 미치는지도 함께 평가해 주세요.`;
 }
+
+export function buildWebMCPUserMessage(ctx: PipelineContext, research: string): string {
+  const overview = ctx.companyOverview;
+  const overviewText = overview
+    ? `\n\n기업 개요:\n- 산업: ${overview.industry}\n- 설명: ${overview.description}\n- 주력 제품: ${overview.mainProducts.join(', ')}`
+    : '';
+
+  return `다음 리서치 데이터를 기반으로 "${ctx.companyName}" 기업에 대한 PEST + Five Forces 통합 분석을 수행해 주세요.${overviewText}
+
+=== 리서치 데이터 ===
+${research.slice(0, 15000)}
+===
+
+위 데이터에 기반해서만 분석하세요. 데이터에 없는 내용은 추측하지 마세요.
+각 외부 환경 요인이 해당 기업의 산업에서 Porter's Five Forces에 어떤 영향을 미치는지도 함께 평가해 주세요.`;
+}

@@ -22,3 +22,14 @@ export function buildUserMessage(ctx: PipelineContext): string {
 해당 기업의 산업, 주요 제품/서비스, 핵심 강점, 최근 동향 등을 포함해 주세요.
 mainProducts, keyStrengths, recentNews는 각각 3-5개 항목으로 작성해 주세요.`;
 }
+
+export function buildWebMCPUserMessage(ctx: PipelineContext, research: string): string {
+  return `다음 리서치 데이터를 기반으로 "${ctx.companyName}" 기업의 종합적인 개요를 작성해 주세요.
+
+=== 리서치 데이터 ===
+${research.slice(0, 15000)}
+===
+
+위 데이터에 기반해서만 분석하세요. 데이터에 없는 내용은 추측하지 마세요.
+mainProducts, keyStrengths, recentNews는 각각 3-5개 항목으로 작성해 주세요.`;
+}

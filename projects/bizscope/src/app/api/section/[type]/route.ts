@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { SectionType, PipelineContext, SectionData } from '@/frameworks/types';
 import { SECTION_ORDER } from '@/frameworks/types';
+import { searchForSection } from '@/lib/search';
 
 // --- IP-based rate limit (20 req/min) ---
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -11,7 +12,6 @@ function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const entry = rateLimitMap.get(ip);
   if (!entry || now > entry.resetAt) {
-    // Clean up expired entries periodically
     if (rateLimitMap.size > 1000) {
       for (const [key, val] of rateLimitMap) {
         if (now > val.resetAt) rateLimitMap.delete(key);
@@ -29,16 +29,49 @@ function getClientIP(request: Request): string {
   return forwarded?.split(',')[0]?.trim() ?? '127.0.0.1';
 }
 
-const MODULE_MAP: Record<SectionType, () => Promise<{ generate: (ctx: PipelineContext) => Promise<SectionData> }>> = {
+/** Pure computation sections — no AI, no search needed. */
+const COMPUTE_SECTIONS: SectionType[] = [
+  'possibility-impact-matrix',
+  'swot-summary',
+  'priority-matrix',
+];
+
+/** AI-powered sections that need research for accurate results. */
+const AI_MODULE_MAP: Partial<
+  Record<SectionType, () => Promise<{ generateWithResearch: (ctx: PipelineContext, research: string) => Promise<SectionData> }>>
+> = {
   'company-overview': () => import('@/frameworks/company-overview'),
   'pest-analysis': () => import('@/frameworks/pest'),
-  'possibility-impact-matrix': () => import('@/frameworks/matrix'),
   'internal-capability': () => import('@/frameworks/internal-capability'),
-  'swot-summary': () => import('@/frameworks/swot'),
   'tows-cross-matrix': () => import('@/frameworks/tows'),
   'strategy-combination': () => import('@/frameworks/strategy-combination'),
   'seven-s-alignment': () => import('@/frameworks/seven-s'),
+  'strategy-current-comparison': () => import('@/frameworks/strategy-current'),
+  'competitor-comparison': () => import('@/frameworks/competitor'),
+  'final-implications': () => import('@/frameworks/implications'),
+};
+
+/** Compute section generators. */
+const COMPUTE_MODULE_MAP: Record<
+  string,
+  () => Promise<{ generate: (ctx: PipelineContext) => Promise<SectionData> }>
+> = {
+  'possibility-impact-matrix': () => import('@/frameworks/matrix'),
+  'swot-summary': () => import('@/frameworks/swot'),
   'priority-matrix': () => import('@/frameworks/priority-matrix'),
+};
+
+/** Fallback generators (no research) for when search API is not configured. */
+const FALLBACK_MODULE_MAP: Record<
+  string,
+  () => Promise<{ generate: (ctx: PipelineContext) => Promise<SectionData> }>
+> = {
+  'company-overview': () => import('@/frameworks/company-overview'),
+  'pest-analysis': () => import('@/frameworks/pest'),
+  'internal-capability': () => import('@/frameworks/internal-capability'),
+  'tows-cross-matrix': () => import('@/frameworks/tows'),
+  'strategy-combination': () => import('@/frameworks/strategy-combination'),
+  'seven-s-alignment': () => import('@/frameworks/seven-s'),
   'strategy-current-comparison': () => import('@/frameworks/strategy-current'),
   'competitor-comparison': () => import('@/frameworks/competitor'),
   'final-implications': () => import('@/frameworks/implications'),
@@ -86,9 +119,34 @@ export async function POST(
     return NextResponse.json({ error: 'companyName is required' }, { status: 400 });
   }
 
+  const ctx: PipelineContext = context ?? { companyName };
+
   try {
-    const mod = await MODULE_MAP[sectionType]();
-    const data = await mod.generate(context ?? { companyName });
+    let data: SectionData;
+
+    if (COMPUTE_SECTIONS.includes(sectionType)) {
+      // Pure computation — no search needed
+      const mod = await COMPUTE_MODULE_MAP[sectionType]();
+      data = await mod.generate(ctx);
+    } else {
+      // AI-powered section — search the web first
+      const research = await searchForSection(sectionType, companyName);
+
+      if (research) {
+        // Research available → use generateWithResearch for grounded results
+        const loader = AI_MODULE_MAP[sectionType];
+        if (!loader) {
+          return NextResponse.json({ error: `No generator for ${sectionType}` }, { status: 500 });
+        }
+        const mod = await loader();
+        data = await mod.generateWithResearch(ctx, research);
+      } else {
+        // No search API configured → fallback to generate (AI-only, may hallucinate)
+        const mod = await FALLBACK_MODULE_MAP[sectionType]();
+        data = await mod.generate(ctx);
+      }
+    }
+
     return NextResponse.json(data);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

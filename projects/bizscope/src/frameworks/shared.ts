@@ -2,7 +2,7 @@
  * Shared pipeline mappings — single source of truth for GENERATORS,
  * CONTEXT_KEYS, DEPENDENCY_MAP, and dependency checking.
  *
- * Used by: pipeline.ts, mcp/pipeline-runner.ts, hooks/useGeneration.ts
+ * Used by: pipeline.ts, hooks/useGeneration.ts
  */
 
 import {

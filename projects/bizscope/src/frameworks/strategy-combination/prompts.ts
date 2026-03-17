@@ -52,3 +52,39 @@ export function buildUserMessage(ctx: PipelineContext): string {
 
   return parts.join('\n');
 }
+
+export function buildWebMCPUserMessage(ctx: PipelineContext, research: string): string {
+  const swot = ctx.swot;
+  const parts: string[] = [
+    `다음 리서치 데이터를 기반으로 "${ctx.companyName}" 기업의 SWOT 교차 전략을 도출해 주세요.`,
+  ];
+
+  if (swot) {
+    parts.push(
+      '',
+      'SWOT 분석 결과:',
+      `- 강점: ${swot.strengths.join(' / ')}`,
+      `- 약점: ${swot.weaknesses.join(' / ')}`,
+      `- 기회: ${swot.opportunities.join(' / ')}`,
+      `- 위협: ${swot.threats.join(' / ')}`,
+    );
+
+    if (ctx.towsCrossMatrix?.derivedStrategyCodes?.length) {
+      parts.push('');
+      parts.push('TOWS 교차 매트릭스에서 도출된 활성 전략 코드:');
+      parts.push(ctx.towsCrossMatrix.derivedStrategyCodes.join(', '));
+      parts.push('위 전략 코드를 우선적으로 반영하여 구체적인 실행 전략을 도출해 주세요.');
+    }
+  }
+
+  parts.push(
+    '',
+    '=== 리서치 데이터 ===',
+    research.slice(0, 15000),
+    '===',
+    '',
+    '위 데이터에 기반해서만 분석하세요. 데이터에 없는 내용은 추측하지 마세요.',
+  );
+
+  return parts.join('\n');
+}

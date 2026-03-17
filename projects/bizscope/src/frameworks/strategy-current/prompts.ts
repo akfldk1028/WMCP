@@ -59,3 +59,44 @@ export function buildUserMessage(ctx: PipelineContext): string {
 
   return parts.join('\n');
 }
+
+export function buildWebMCPUserMessage(ctx: PipelineContext, research: string): string {
+  const parts: string[] = [`다음 리서치 데이터를 기반으로 "${ctx.companyName}" 기업의 도출 전략과 현행 전략을 비교해 주세요.`];
+
+  if (ctx.priorityMatrix) {
+    const ranked = [...ctx.priorityMatrix.strategies]
+      .sort((a, b) => a.rank - b.rank)
+      .slice(0, 10);
+    const labels = 'ABCDEFGHIJ';
+    parts.push('\n[우선순위 전략]');
+    ranked.forEach((s, i) => {
+      parts.push(`${labels[i]}. ${s.strategy} (난이도: ${s.difficulty}, 영향력: ${s.impact}, 구간: ${s.quadrant})`);
+    });
+  }
+
+  if (ctx.sevenS) {
+    parts.push('\n[7S 분석 결과]');
+    ctx.sevenS.items.forEach((item) => {
+      parts.push(`- ${item.label}: 현재(${item.currentState}) → 변화 필요(${item.requiredChange})`);
+    });
+  }
+
+  if (ctx.companyOverview) {
+    parts.push(`\n[기업 개요]\n${ctx.companyOverview.description}`);
+    if (ctx.companyOverview.keyStrengths.length > 0) {
+      parts.push(`핵심 강점: ${ctx.companyOverview.keyStrengths.join(', ')}`);
+    }
+  }
+
+  parts.push(
+    '',
+    '=== 리서치 데이터 ===',
+    research.slice(0, 15000),
+    '===',
+    '',
+    '위 데이터에 기반해서만 분석하세요. 데이터에 없는 내용은 추측하지 마세요.',
+    '위 전략들을 기업의 현행 전략과 비교하고 match/supplement/missing으로 판정해 주세요.',
+  );
+
+  return parts.join('\n');
+}

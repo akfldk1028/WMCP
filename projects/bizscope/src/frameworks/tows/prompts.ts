@@ -55,3 +55,34 @@ ${numberedList(swot.threats, 'T')}
 
 위 요소들의 교차점을 분석하여 전략적으로 유의미한 조합을 선별하고 활성화해 주세요.`;
 }
+
+export function buildWebMCPUserMessage(ctx: PipelineContext, research: string): string {
+  const swot = ctx.swot;
+  if (!swot) return `다음 리서치 데이터를 기반으로 "${ctx.companyName}" 기업의 TOWS 교차 매트릭스를 작성해 주세요.\n\n=== 리서치 데이터 ===\n${research.slice(0, 15000)}\n===\n\n위 데이터에 기반해서만 분석하세요.`;
+
+  const numberedList = (items: string[], prefix: string) =>
+    items.map((item, i) => `${prefix}${i + 1}: ${item}`).join('\n');
+
+  return `다음 리서치 데이터를 기반으로 "${ctx.companyName}" 기업의 TOWS 교차 매트릭스를 작성해 주세요.
+
+SWOT 분석 결과:
+
+[강점 - Strengths]
+${numberedList(swot.strengths, 'S')}
+
+[약점 - Weaknesses]
+${numberedList(swot.weaknesses, 'W')}
+
+[기회 - Opportunities]
+${numberedList(swot.opportunities, 'O')}
+
+[위협 - Threats]
+${numberedList(swot.threats, 'T')}
+
+=== 리서치 데이터 ===
+${research.slice(0, 15000)}
+===
+
+위 데이터에 기반해서만 분석하세요. 데이터에 없는 내용은 추측하지 마세요.
+위 요소들의 교차점을 분석하여 전략적으로 유의미한 조합을 선별하고 활성화해 주세요.`;
+}

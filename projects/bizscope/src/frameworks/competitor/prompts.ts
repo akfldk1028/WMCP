@@ -42,3 +42,23 @@ export function buildUserMessage(ctx: PipelineContext): string {
 
 주요 경쟁사를 식별하고, 각 경쟁사의 강점/약점을 분석한 후, 우리 기업과의 Gap 분석을 수행해 주세요.`;
 }
+
+export function buildWebMCPUserMessage(ctx: PipelineContext, research: string): string {
+  const overview = ctx.companyOverview;
+  const overviewText = overview
+    ? `\n\n기업 개요:\n- 산업: ${overview.industry}\n- 설명: ${overview.description}\n- 주력 제품: ${overview.mainProducts.join(', ')}\n- 핵심 강점: ${overview.keyStrengths.join(', ')}`
+    : '';
+
+  const swotText = ctx.swot
+    ? `\n\nSWOT 요약:\n- 강점: ${ctx.swot.strengths.slice(0, 3).join(', ')}\n- 약점: ${ctx.swot.weaknesses.slice(0, 3).join(', ')}`
+    : '';
+
+  return `다음 리서치 데이터를 기반으로 "${ctx.companyName}" 기업의 경쟁사 비교 분석을 수행해 주세요.${overviewText}${swotText}
+
+=== 리서치 데이터 ===
+${research.slice(0, 15000)}
+===
+
+위 데이터에 기반해서만 분석하세요. 데이터에 없는 내용은 추측하지 마세요.
+주요 경쟁사를 식별하고, 각 경쟁사의 강점/약점을 분석한 후, 우리 기업과의 Gap 분석을 수행해 주세요.`;
+}

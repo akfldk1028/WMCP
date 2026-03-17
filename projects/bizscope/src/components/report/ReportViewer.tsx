@@ -98,20 +98,20 @@ export default function ReportViewer({ report }: Props) {
       <aside className="no-print hidden w-72 shrink-0 border-r bg-background lg:block">
         <div className="sticky top-0 flex h-screen flex-col">
           {/* Sidebar header */}
-          <div className="border-b bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-5 py-5">
+          <div className="border-b px-5 py-5">
             <div className="flex items-center gap-3">
-              <div className="flex size-9 items-center justify-center rounded-lg bg-white/20">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-indigo-600">
                 <Building2 className="size-5 text-white" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-white">{report.companyName}</h2>
-                {report.industry && <p className="text-xs text-indigo-200">{report.industry}</p>}
+                <h2 className="text-sm font-bold">{report.companyName}</h2>
+                {report.industry && <p className="text-xs text-muted-foreground">{report.industry}</p>}
               </div>
             </div>
-            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/20">
-              <div className="h-full rounded-full bg-white transition-all duration-700" style={{ width: `${progressPct}%` }} />
+            <div className="mt-3 h-1 overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-indigo-600 transition-all duration-700" style={{ width: `${progressPct}%` }} />
             </div>
-            <p className="mt-1 text-[10px] text-indigo-200">{completedCount}/{report.sections.length} 완료</p>
+            <p className="mt-1 text-[10px] text-muted-foreground">{completedCount}/{report.sections.length} 완료</p>
           </div>
 
           {/* Mode toggle */}
@@ -210,7 +210,7 @@ export default function ReportViewer({ report }: Props) {
             {/* Page header */}
             <div className="no-print mb-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-sm font-bold text-white shadow-md">
+                <span className="flex size-10 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold tabular-nums text-white">
                   {currentPage.pageNumber}
                 </span>
                 <div>
@@ -235,7 +235,7 @@ export default function ReportViewer({ report }: Props) {
             </div>
 
             {/* Page content */}
-            <div className={cn('min-h-[calc(100vh-14rem)] rounded-2xl border bg-card p-6 shadow-sm transition-all duration-150 ease-in-out md:p-10', transitionClass)}>
+            <div className={cn('min-h-[calc(100vh-14rem)] bg-background p-6 transition-all duration-150 ease-in-out md:p-10', transitionClass)}>
               <PageContent page={currentPage} report={report} />
             </div>
           </div>

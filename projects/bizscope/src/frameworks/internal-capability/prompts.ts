@@ -30,3 +30,19 @@ export function buildUserMessage(ctx: PipelineContext): string {
 
 기술력, 브랜드 파워, 재무 건전성, 인적 자원, 운영 효율성, 혁신 역량 등 주요 영역별로 강점과 약점을 분석하고 점수를 매겨 주세요.`;
 }
+
+export function buildWebMCPUserMessage(ctx: PipelineContext, research: string): string {
+  const overview = ctx.companyOverview;
+  const overviewText = overview
+    ? `\n\n기업 개요:\n- 산업: ${overview.industry}\n- 설명: ${overview.description}\n- 주력 제품: ${overview.mainProducts.join(', ')}\n- 핵심 강점: ${overview.keyStrengths.join(', ')}`
+    : '';
+
+  return `다음 리서치 데이터를 기반으로 "${ctx.companyName}" 기업의 내부역량을 평가해 주세요.${overviewText}
+
+=== 리서치 데이터 ===
+${research.slice(0, 15000)}
+===
+
+위 데이터에 기반해서만 분석하세요. 데이터에 없는 내용은 추측하지 마세요.
+기술력, 브랜드 파워, 재무 건전성, 인적 자원, 운영 효율성, 혁신 역량 등 주요 영역별로 강점과 약점을 분석하고 점수를 매겨 주세요.`;
+}

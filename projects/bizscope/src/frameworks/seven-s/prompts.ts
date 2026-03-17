@@ -38,3 +38,26 @@ export function buildUserMessage(ctx: PipelineContext): string {
 위 전략들을 실행하기 위해 7S 각 요소가 어떻게 정렬되어야 하는지 분석해 주세요.
 relatedStrategies에는 관련된 전략의 이름을 넣어 주세요.`;
 }
+
+export function buildWebMCPUserMessage(ctx: PipelineContext, research: string): string {
+  const overview = ctx.companyOverview;
+  const strategies = ctx.strategyCombination?.strategies ?? [];
+
+  const strategyList = strategies.length > 0
+    ? `\n\n도출된 전략:\n${strategies.map((s) => `- [${s.combination}] ${s.strategy}: ${s.description}`).join('\n')}`
+    : '';
+
+  const overviewText = overview
+    ? `\n\n기업 개요:\n- 산업: ${overview.industry}\n- 설명: ${overview.description}`
+    : '';
+
+  return `다음 리서치 데이터를 기반으로 "${ctx.companyName}" 기업의 McKinsey 7S 정렬 분석을 수행해 주세요.${overviewText}${strategyList}
+
+=== 리서치 데이터 ===
+${research.slice(0, 15000)}
+===
+
+위 데이터에 기반해서만 분석하세요. 데이터에 없는 내용은 추측하지 마세요.
+위 전략들을 실행하기 위해 7S 각 요소가 어떻게 정렬되어야 하는지 분석해 주세요.
+relatedStrategies에는 관련된 전략의 이름을 넣어 주세요.`;
+}

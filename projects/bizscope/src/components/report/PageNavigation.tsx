@@ -37,10 +37,10 @@ export default function PageNavigation({ total, currentIndex, onNavigate, pages 
                   key={i}
                   onClick={() => onNavigate(i)}
                   className={cn(
-                    'flex size-7 items-center justify-center rounded-full text-xs font-bold transition-all sm:size-8',
+                    'flex size-7 items-center justify-center rounded-full text-xs font-bold tabular-nums transition-all sm:size-8',
                     isActive
-                      ? 'bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-1'
-                      : 'bg-muted text-muted-foreground hover:ring-2 hover:ring-ring hover:ring-offset-1',
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-muted text-muted-foreground hover:bg-muted-foreground/10',
                   )}
                   title={page.pageTitle}
                 >
@@ -58,7 +58,7 @@ export default function PageNavigation({ total, currentIndex, onNavigate, pages 
               </span>
               <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300"
+                  className="absolute inset-y-0 left-0 rounded-full bg-indigo-600 transition-all duration-300"
                   style={{ width: `${((currentIndex + 1) / total) * 100}%` }}
                 />
               </div>

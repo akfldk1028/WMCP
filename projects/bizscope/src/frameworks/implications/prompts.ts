@@ -56,3 +56,47 @@ export function buildUserMessage(ctx: PipelineContext): string {
 
   return parts.join('\n');
 }
+
+export function buildWebMCPUserMessage(ctx: PipelineContext, research: string): string {
+  const parts: string[] = [`다음 리서치 데이터를 기반으로 "${ctx.companyName}" 기업의 종합 분석 결과를 바탕으로 시사점과 액션 아이템을 도출해 주세요.`];
+
+  if (ctx.companyOverview) {
+    parts.push(`\n기업: ${ctx.companyOverview.industry} - ${ctx.companyOverview.description.slice(0, 200)}`);
+  }
+
+  if (ctx.swot) {
+    parts.push(`\nSWOT 요약:\n- 강점: ${ctx.swot.strengths.slice(0, 3).join(', ')}\n- 약점: ${ctx.swot.weaknesses.slice(0, 3).join(', ')}\n- 기회: ${ctx.swot.opportunities.slice(0, 3).join(', ')}\n- 위협: ${ctx.swot.threats.slice(0, 3).join(', ')}`);
+  }
+
+  if (ctx.priorityMatrix) {
+    const topStrategies = ctx.priorityMatrix.topPicks;
+    parts.push(`\n최우선 전략: ${topStrategies.join(', ')}`);
+  }
+
+  if (ctx.competitor) {
+    const compNames = ctx.competitor.competitors.map((c) => c.name).join(', ');
+    parts.push(`\n주요 경쟁사: ${compNames}`);
+  }
+
+  if (ctx.sevenS) {
+    const highImpact = ctx.sevenS.items
+      .filter((i) => i.impact >= 4)
+      .map((i) => `${i.label}: ${i.requiredChange}`)
+      .slice(0, 3);
+    if (highImpact.length > 0) {
+      parts.push(`\n7S 주요 변화 필요: ${highImpact.join(' / ')}`);
+    }
+  }
+
+  parts.push(
+    '',
+    '=== 리서치 데이터 ===',
+    research.slice(0, 15000),
+    '===',
+    '',
+    '위 데이터에 기반해서만 분석하세요. 데이터에 없는 내용은 추측하지 마세요.',
+    '위 분석 결과를 종합하여 실행 가능한 시사점, 구체적 액션 아이템, 로드맵을 도출해 주세요.',
+  );
+
+  return parts.join('\n');
+}

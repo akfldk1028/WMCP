@@ -34,25 +34,25 @@ export default function FiveForceRadar({ factors }: FiveForceRadarProps) {
   });
 
   return (
-    <div className="w-full h-[360px]">
+    <div className="w-full h-[320px]">
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={data} cx="50%" cy="50%" outerRadius="75%">
-          <PolarGrid stroke="#c7d2fe" />
+          <PolarGrid stroke="#e2e8f0" />
           <PolarAngleAxis
             dataKey="force"
-            tick={{ fontSize: 12, fill: '#4b5563' }}
+            tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 500 }}
           />
           <Radar
             name="Five Forces"
             dataKey="score"
-            stroke="#6366f1"
-            fill="#818cf8"
-            fillOpacity={0.35}
-            strokeWidth={2}
+            stroke="#4f46e5"
+            fill="#6366f1"
+            fillOpacity={0.12}
+            strokeWidth={1.5}
           />
           <Tooltip
             formatter={(value: number) => [value.toFixed(2), 'Score']}
-            contentStyle={{ fontSize: 12 }}
+            contentStyle={{ fontSize: 11, borderRadius: 4, border: '1px solid #e2e8f0' }}
           />
         </RadarChart>
       </ResponsiveContainer>

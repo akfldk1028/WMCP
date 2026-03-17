@@ -1,5 +1,3 @@
-import { BarChart3 } from 'lucide-react';
-
 interface Props {
   companyName: string;
   industry?: string;
@@ -14,39 +12,34 @@ export default function ReportCover({ companyName, industry, createdAt }: Props)
   });
 
   return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center px-8 py-16 text-center">
-      {/* Logo */}
-      <div className="mb-10 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-2xl">
-        <BarChart3 className="size-8 text-white" />
-      </div>
-
+    <div className="flex min-h-[70vh] flex-col justify-center px-4 py-16">
       {/* Subtitle */}
-      <p className="mb-4 text-sm font-bold uppercase tracking-[0.3em] text-muted-foreground">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-indigo-600">
         AI Strategic Analysis Report
       </p>
 
       {/* Company name */}
-      <h1 className="mb-4 text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl">
+      <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
         {companyName}
       </h1>
 
       {/* Industry */}
       {industry && (
-        <p className="mb-8 text-lg text-muted-foreground">{industry}</p>
+        <p className="mt-3 text-lg text-muted-foreground">{industry}</p>
       )}
 
       {/* Divider */}
-      <div className="h-1 w-32 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" />
+      <div className="mt-8 h-0.5 w-20 bg-indigo-600" />
 
       {/* Meta */}
-      <div className="mt-8 space-y-1 text-sm text-muted-foreground">
+      <div className="mt-6 space-y-1 text-sm text-muted-foreground">
         <p>{date}</p>
         <p>12 Frameworks &middot; Comprehensive Analysis</p>
       </div>
 
       {/* Branding */}
-      <p className="mt-12 text-xs font-semibold tracking-widest text-muted-foreground/60">
-        POWERED BY BIZSCOPE AI
+      <p className="mt-auto pt-16 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/40">
+        Powered by BizScope AI
       </p>
     </div>
   );
