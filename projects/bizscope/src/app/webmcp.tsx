@@ -202,6 +202,71 @@ const TOOLS = [
     },
     endpoint: '/api/webmcp/final-implications',
   },
+  // === Idea analysis tools — AI agent uses these for idea feasibility ===
+  {
+    name: 'bizscope-idea-analyze',
+    description:
+      'Start a full idea/app feasibility analysis. Pass the idea description and AI will generate an 8-section report with Go/No-Go verdict. Before calling, gather research about similar apps, market size, and competitors.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ideaName: { type: 'string', description: 'Name of the app/service idea' },
+        ideaDescription: { type: 'string', description: 'Detailed description of what the idea does, problems it solves' },
+        targetMarket: { type: 'string', description: 'Target market/users (optional)' },
+        research: { type: 'string', description: 'Web search results about similar apps, market data, competitors' },
+      },
+      required: ['ideaName', 'ideaDescription'],
+    },
+    endpoint: '/api/webmcp/idea-overview',
+  },
+  {
+    name: 'bizscope-competitor-scan',
+    description:
+      'Scan for existing competitors/similar apps for a business idea. Before calling, search for: similar apps on Product Hunt, Crunchbase, app stores. Pass the search results as research.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ideaName: { type: 'string', description: 'Name of the idea' },
+        ideaDescription: { type: 'string', description: 'What the idea does' },
+        research: { type: 'string', description: 'Web search results about similar apps, competitors, market landscape' },
+        previousSections: { type: 'object', description: 'Results from previous idea analysis tools (ideaOverview)' },
+      },
+      required: ['ideaName', 'research'],
+    },
+    endpoint: '/api/webmcp/competitor-scan',
+  },
+  {
+    name: 'bizscope-market-size',
+    description:
+      'Estimate TAM/SAM/SOM market size for a business idea. Before calling, search for: market research reports, industry size data, growth forecasts.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ideaName: { type: 'string', description: 'Name of the idea' },
+        ideaDescription: { type: 'string', description: 'What the idea does' },
+        research: { type: 'string', description: 'Web search results about market size, industry data, growth forecasts' },
+        previousSections: { type: 'object', description: 'Results from previous idea analysis tools (ideaOverview)' },
+      },
+      required: ['ideaName', 'research'],
+    },
+    endpoint: '/api/webmcp/market-size',
+  },
+  {
+    name: 'bizscope-business-model',
+    description:
+      'Suggest revenue models and unit economics for a business idea. Before calling, search for: similar app pricing, monetization strategies, SaaS/subscription benchmarks.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ideaName: { type: 'string', description: 'Name of the idea' },
+        ideaDescription: { type: 'string', description: 'What the idea does' },
+        research: { type: 'string', description: 'Web search results about pricing models, monetization, unit economics' },
+        previousSections: { type: 'object', description: 'Results from previous idea analysis tools' },
+      },
+      required: ['ideaName', 'research'],
+    },
+    endpoint: '/api/webmcp/business-model',
+  },
   // === Utility tools — AI agent can call these anytime ===
   {
     name: 'bizscope-web-search',
