@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { searchWeb } from '@/lib/search';
+import { getCompanyFinancials, formatFinancialsAsResearch } from '@/lib/finance';
 
 /**
- * Financial data tool — searches for financial metrics of a company.
+ * Financial data tool — returns real financial data from Yahoo Finance.
+ * No API key required. Supports KRX, NASDAQ, NYSE, etc.
  * Used by bizscope-financial-data WebMCP tool.
  */
 export async function POST(request: Request) {
@@ -18,22 +19,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'companyName is required' }, { status: 400 });
   }
 
-  const metrics = (body.metrics as string[]) ?? [
-    'revenue', 'operating profit', 'net income', 'employees', 'market cap',
-  ];
+  const financials = await getCompanyFinancials(companyName);
 
-  // Search for financial data with targeted queries
-  const queries = [
-    `${companyName} annual revenue operating profit net income 2024 2025 financial results`,
-    `${companyName} market capitalization employees headcount ${metrics.join(' ')}`,
-  ];
-
-  const results = await Promise.all(queries.map((q) => searchWeb(q, 8)));
-  const combined = results.filter(Boolean).join('\n\n---\n\n');
+  if (!financials) {
+    return NextResponse.json({
+      companyName,
+      error: 'Company not found in Yahoo Finance',
+      financialData: '',
+    });
+  }
 
   return NextResponse.json({
-    companyName,
-    financialData: combined || 'No financial data found.',
-    requestedMetrics: metrics,
+    companyName: financials.name,
+    ticker: financials.ticker,
+    financialData: formatFinancialsAsResearch(financials),
+    structured: {
+      employees: financials.employees,
+      marketCap: financials.marketCap,
+      revenue: financials.revenue,
+      netIncome: financials.netIncome,
+      profitMargin: financials.profitMargin,
+      debtToEquity: financials.debtToEquity,
+      revenueGrowth: financials.revenueGrowth,
+    },
   });
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { SectionType, PipelineContext, SectionData } from '@/frameworks/types';
 import { SECTION_ORDER } from '@/frameworks/types';
 import { searchForSection } from '@/lib/search';
+import { getCompanyFinancials, formatFinancialsAsResearch } from '@/lib/finance';
 
 // --- IP-based rate limit (20 req/min) ---
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -129,8 +130,18 @@ export async function POST(
       const mod = await COMPUTE_MODULE_MAP[sectionType]();
       data = await mod.generate(ctx);
     } else {
-      // AI-powered section — search the web first
-      const research = await searchForSection(sectionType, companyName);
+      // AI-powered section — search the web + fetch financials
+      const FINANCIAL_SECTIONS: SectionType[] = ['company-overview', 'internal-capability', 'competitor-comparison'];
+      const [webResearch, financials] = await Promise.all([
+        searchForSection(sectionType, companyName),
+        FINANCIAL_SECTIONS.includes(sectionType)
+          ? getCompanyFinancials(companyName).catch(() => null)
+          : Promise.resolve(null),
+      ]);
+
+      // Combine web research + financial data
+      const financialText = financials ? formatFinancialsAsResearch(financials) : '';
+      const research = [financialText, webResearch].filter(Boolean).join('\n\n---\n\n');
 
       if (research) {
         // Research available → use generateWithResearch for grounded results
