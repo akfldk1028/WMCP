@@ -24,6 +24,7 @@ interface SectionSearchConfig {
 }
 
 const SECTION_SEARCH: Record<string, SectionSearchConfig> = {
+  // --- Company sections ---
   'company-overview': {
     queries: (c) => [
       `${c} company revenue employees headquarters founded annual report`,
@@ -84,6 +85,58 @@ const SECTION_SEARCH: Record<string, SectionSearchConfig> = {
       `${c} digital transformation case study benchmark KPI best practices`,
     ],
     exaCategory: 'research paper',
+  },
+  // --- Idea sections ---
+  'idea-overview': {
+    queries: (c) => [
+      `${c} app startup product market fit problem solution`,
+      `${c} startup idea validation user research`,
+    ],
+  },
+  'market-size': {
+    queries: (c) => [
+      `${c} market size TAM SAM SOM 2025 2026`,
+      `${c} industry market research growth forecast report`,
+    ],
+    exaCategory: 'research paper',
+  },
+  'competitor-scan': {
+    queries: (c) => [
+      `${c} similar apps competitors alternatives comparison`,
+      `${c} Product Hunt startup competitors funding Crunchbase`,
+      `${c} market landscape existing solutions review`,
+    ],
+    exaCategory: 'company',
+  },
+  'differentiation': {
+    queries: (c) => [
+      `${c} unique value proposition competitive advantage moat`,
+      `${c} differentiation strategy positioning`,
+    ],
+  },
+  'business-model': {
+    queries: (c) => [
+      `${c} business model revenue pricing SaaS subscription freemium`,
+      `${c} startup monetization strategy unit economics`,
+    ],
+  },
+  'go-to-market': {
+    queries: (c) => [
+      `${c} go to market strategy launch plan growth hacking`,
+      `${c} customer acquisition channels marketing strategy startup`,
+    ],
+  },
+  'risk-assessment': {
+    queries: (c) => [
+      `${c} startup risks challenges failure reasons`,
+      `${c} market risk regulatory compliance barriers to entry`,
+    ],
+  },
+  'action-plan': {
+    queries: (c) => [
+      `${c} startup roadmap milestones MVP launch timeline`,
+      `${c} startup team hiring budget financial projection`,
+    ],
   },
 };
 
@@ -201,11 +254,16 @@ function formatResults(results: SearchResult[]): string {
 export async function searchForSection(
   sectionType: string,
   companyName: string,
+  ideaInput?: { name: string; description: string; targetMarket?: string },
 ): Promise<string> {
   const config = SECTION_SEARCH[sectionType];
   if (!config) return '';
 
-  const queries = config.queries(companyName);
+  // For idea mode, use idea name + description keywords for richer search
+  const searchTerm = ideaInput
+    ? `${ideaInput.name} ${ideaInput.description.slice(0, 100)}`
+    : companyName;
+  const queries = config.queries(searchTerm);
 
   // Run all queries in parallel
   const allResults = await Promise.all(

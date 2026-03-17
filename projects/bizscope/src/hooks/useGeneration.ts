@@ -8,16 +8,19 @@ import type {
   SectionData,
   PipelineContext,
   CompanyOverviewData,
+  ReportMode,
+  IdeaInput,
 } from '@/frameworks/types';
-import { SECTION_ORDER, SECTION_TITLES } from '@/frameworks/types';
+import { SECTION_TITLES, getSectionOrder } from '@/frameworks/types';
 import { CONTEXT_KEYS } from '@/frameworks/shared';
 import { saveReport } from '@/lib/store';
 
-function createEmptyReport(companyName: string): Report {
+function createEmptyReport(name: string, mode: ReportMode, ideaInput?: IdeaInput): Report {
   const now = Date.now();
   const id = `rpt_${now}_${Math.random().toString(36).slice(2, 8)}`;
+  const order = getSectionOrder(mode);
 
-  const sections: ReportSection[] = SECTION_ORDER.map((type) => ({
+  const sections: ReportSection[] = order.map((type) => ({
     type,
     title: SECTION_TITLES[type],
     status: 'pending' as const,
@@ -26,7 +29,9 @@ function createEmptyReport(companyName: string): Report {
 
   return {
     id,
-    companyName,
+    companyName: name,
+    mode,
+    ideaInput,
     createdAt: now,
     updatedAt: now,
     sections,
@@ -49,20 +54,25 @@ export function useGeneration() {
     saveReport(next);
   }, []);
 
-  const startGeneration = useCallback(async (companyName: string): Promise<Report | null> => {
+  const startGeneration = useCallback(async (companyName: string, mode: ReportMode = 'company', ideaInput?: IdeaInput): Promise<Report | null> => {
     setError(null);
     setIsGenerating(true);
 
-    const newReport = createEmptyReport(companyName);
+    const displayName = mode === 'idea' ? (ideaInput?.name ?? companyName) : companyName;
+    const newReport = createEmptyReport(displayName, mode, ideaInput);
     reportRef.current = newReport;
     setReport(newReport);
     saveReport(newReport);
 
-    const ctx: PipelineContext = { companyName };
+    const order = getSectionOrder(mode);
+    const ctx: PipelineContext = {
+      companyName: displayName,
+      ...(ideaInput ? { ideaInput } : {}),
+    };
 
     try {
-      for (let i = 0; i < SECTION_ORDER.length; i++) {
-        const sectionType = SECTION_ORDER[i];
+      for (let i = 0; i < order.length; i++) {
+        const sectionType = order[i];
 
         // Mark section as generating
         updateReport((prev) => {
@@ -75,7 +85,7 @@ export function useGeneration() {
           const res = await fetch(`/api/section/${sectionType}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ companyName, context: ctx }),
+            body: JSON.stringify({ companyName: displayName, context: ctx, mode, ideaInput }),
           });
 
           if (!res.ok) {

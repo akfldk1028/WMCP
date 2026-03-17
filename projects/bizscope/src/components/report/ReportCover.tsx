@@ -1,10 +1,13 @@
+import type { ReportMode } from '@/frameworks/types';
+
 interface Props {
   companyName: string;
   industry?: string;
   createdAt: number;
+  mode?: ReportMode;
 }
 
-export default function ReportCover({ companyName, industry, createdAt }: Props) {
+export default function ReportCover({ companyName, industry, createdAt, mode = 'company' }: Props) {
   const date = new Date(createdAt).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
@@ -15,7 +18,7 @@ export default function ReportCover({ companyName, industry, createdAt }: Props)
     <div className="flex min-h-[70vh] flex-col justify-center px-4 py-16">
       {/* Subtitle */}
       <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-indigo-600">
-        AI Strategic Analysis Report
+        {mode === 'idea' ? 'AI Business Feasibility Report' : 'AI Strategic Analysis Report'}
       </p>
 
       {/* Company name */}
@@ -34,7 +37,7 @@ export default function ReportCover({ companyName, industry, createdAt }: Props)
       {/* Meta */}
       <div className="mt-6 space-y-1 text-sm text-muted-foreground">
         <p>{date}</p>
-        <p>12 Frameworks &middot; Comprehensive Analysis</p>
+        <p>{mode === 'idea' ? '8 Sections' : '12 Frameworks'} &middot; Comprehensive Analysis</p>
       </div>
 
       {/* Branding */}

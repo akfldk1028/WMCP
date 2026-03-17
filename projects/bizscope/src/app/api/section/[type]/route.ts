@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import type { SectionType, PipelineContext, SectionData } from '@/frameworks/types';
-import { SECTION_ORDER } from '@/frameworks/types';
+import type { SectionType, PipelineContext, SectionData, ReportMode, IdeaInput } from '@/frameworks/types';
+import { COMPANY_SECTION_ORDER, IDEA_SECTION_ORDER } from '@/frameworks/types';
 import { searchForSection } from '@/lib/search';
 import { getCompanyFinancials, formatFinancialsAsResearch } from '@/lib/finance';
 
@@ -30,6 +30,8 @@ function getClientIP(request: Request): string {
   return forwarded?.split(',')[0]?.trim() ?? '127.0.0.1';
 }
 
+const ALL_SECTIONS: SectionType[] = [...COMPANY_SECTION_ORDER, ...IDEA_SECTION_ORDER];
+
 /** Pure computation sections — no AI, no search needed. */
 const COMPUTE_SECTIONS: SectionType[] = [
   'possibility-impact-matrix',
@@ -37,8 +39,8 @@ const COMPUTE_SECTIONS: SectionType[] = [
   'priority-matrix',
 ];
 
-/** AI-powered sections that need research for accurate results. */
-const AI_MODULE_MAP: Partial<
+/** AI-powered company sections that need research. */
+const COMPANY_AI_MODULE_MAP: Partial<
   Record<SectionType, () => Promise<{ generateWithResearch: (ctx: PipelineContext, research: string) => Promise<SectionData> }>>
 > = {
   'company-overview': () => import('@/frameworks/company-overview'),
@@ -52,6 +54,20 @@ const AI_MODULE_MAP: Partial<
   'final-implications': () => import('@/frameworks/implications'),
 };
 
+/** AI-powered idea sections that need research. */
+const IDEA_AI_MODULE_MAP: Partial<
+  Record<SectionType, () => Promise<{ generateWithResearch: (ctx: PipelineContext, research: string) => Promise<SectionData> }>>
+> = {
+  'idea-overview': () => import('@/frameworks/idea-overview'),
+  'market-size': () => import('@/frameworks/market-size'),
+  'competitor-scan': () => import('@/frameworks/competitor-scan'),
+  'differentiation': () => import('@/frameworks/differentiation'),
+  'business-model': () => import('@/frameworks/business-model'),
+  'go-to-market': () => import('@/frameworks/go-to-market'),
+  'risk-assessment': () => import('@/frameworks/risk-assessment'),
+  'action-plan': () => import('@/frameworks/action-plan'),
+};
+
 /** Compute section generators. */
 const COMPUTE_MODULE_MAP: Record<
   string,
@@ -62,11 +78,12 @@ const COMPUTE_MODULE_MAP: Record<
   'priority-matrix': () => import('@/frameworks/priority-matrix'),
 };
 
-/** Fallback generators (no research) for when search API is not configured. */
+/** Fallback generators (no research) for all sections. */
 const FALLBACK_MODULE_MAP: Record<
   string,
   () => Promise<{ generate: (ctx: PipelineContext) => Promise<SectionData> }>
 > = {
+  // Company
   'company-overview': () => import('@/frameworks/company-overview'),
   'pest-analysis': () => import('@/frameworks/pest'),
   'internal-capability': () => import('@/frameworks/internal-capability'),
@@ -76,19 +93,26 @@ const FALLBACK_MODULE_MAP: Record<
   'strategy-current-comparison': () => import('@/frameworks/strategy-current'),
   'competitor-comparison': () => import('@/frameworks/competitor'),
   'final-implications': () => import('@/frameworks/implications'),
+  // Idea
+  'idea-overview': () => import('@/frameworks/idea-overview'),
+  'market-size': () => import('@/frameworks/market-size'),
+  'competitor-scan': () => import('@/frameworks/competitor-scan'),
+  'differentiation': () => import('@/frameworks/differentiation'),
+  'business-model': () => import('@/frameworks/business-model'),
+  'go-to-market': () => import('@/frameworks/go-to-market'),
+  'risk-assessment': () => import('@/frameworks/risk-assessment'),
+  'action-plan': () => import('@/frameworks/action-plan'),
 };
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ type: string }> },
 ) {
-  // Rate limit
   const clientIP = getClientIP(request);
   if (!checkRateLimit(clientIP)) {
     return NextResponse.json({ error: 'Rate limit exceeded (20 req/min)' }, { status: 429 });
   }
 
-  // API key auth (optional — enabled when BIZSCOPE_API_KEY is set)
   const apiKey = process.env.BIZSCOPE_API_KEY;
   if (apiKey) {
     const auth = request.headers.get('authorization');
@@ -99,7 +123,7 @@ export async function POST(
 
   const { type } = await params;
 
-  if (!SECTION_ORDER.includes(type as SectionType)) {
+  if (!ALL_SECTIONS.includes(type as SectionType)) {
     return NextResponse.json({ error: `Unknown section type: ${type}` }, { status: 400 });
   }
 
@@ -111,9 +135,12 @@ export async function POST(
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
-  const { companyName, context } = body as {
+
+  const { companyName, context, mode, ideaInput } = body as {
     companyName: string;
     context: PipelineContext;
+    mode?: ReportMode;
+    ideaInput?: IdeaInput;
   };
 
   if (!companyName) {
@@ -121,38 +148,43 @@ export async function POST(
   }
 
   const ctx: PipelineContext = context ?? { companyName };
+  if (ideaInput) ctx.ideaInput = ideaInput;
+
+  const isIdeaMode = mode === 'idea' || IDEA_SECTION_ORDER.includes(sectionType as never);
 
   try {
     let data: SectionData;
 
     if (COMPUTE_SECTIONS.includes(sectionType)) {
-      // Pure computation — no search needed
       const mod = await COMPUTE_MODULE_MAP[sectionType]();
       data = await mod.generate(ctx);
     } else {
-      // AI-powered section — search the web + fetch financials
+      const searchQuery = isIdeaMode
+        ? (ideaInput?.name ?? companyName)
+        : companyName;
+
       const FINANCIAL_SECTIONS: SectionType[] = ['company-overview', 'internal-capability', 'competitor-comparison'];
+      const needsFinancials = !isIdeaMode && FINANCIAL_SECTIONS.includes(sectionType);
+
       const [webResearch, financials] = await Promise.all([
-        searchForSection(sectionType, companyName),
-        FINANCIAL_SECTIONS.includes(sectionType)
+        searchForSection(sectionType, searchQuery, isIdeaMode ? ideaInput : undefined),
+        needsFinancials
           ? getCompanyFinancials(companyName).catch(() => null)
           : Promise.resolve(null),
       ]);
 
-      // Combine web research + financial data
       const financialText = financials ? formatFinancialsAsResearch(financials) : '';
       const research = [financialText, webResearch].filter(Boolean).join('\n\n---\n\n');
 
       if (research) {
-        // Research available → use generateWithResearch for grounded results
-        const loader = AI_MODULE_MAP[sectionType];
+        const aiMap = isIdeaMode ? IDEA_AI_MODULE_MAP : COMPANY_AI_MODULE_MAP;
+        const loader = aiMap[sectionType];
         if (!loader) {
           return NextResponse.json({ error: `No generator for ${sectionType}` }, { status: 500 });
         }
         const mod = await loader();
         data = await mod.generateWithResearch(ctx, research);
       } else {
-        // No search API configured → fallback to generate (AI-only, may hallucinate)
         const mod = await FALLBACK_MODULE_MAP[sectionType]();
         data = await mod.generate(ctx);
       }

@@ -56,6 +56,9 @@ export default function HistoryPage() {
                   {report.companyName}
                 </p>
                 <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${report.mode === 'idea' ? 'bg-indigo-100 text-indigo-700' : 'bg-muted text-muted-foreground'}`}>
+                    {report.mode === 'idea' ? '아이디어' : '기업'}
+                  </span>
                   <span>{new Date(report.createdAt).toLocaleDateString('ko-KR')}</span>
                   <StatusBadge status={report.status} />
                   <span>

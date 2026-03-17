@@ -13,11 +13,21 @@ import PriorityMatrix from '@/components/sections/PriorityMatrix';
 import StrategyCurrentComparison from '@/components/sections/StrategyCurrentComparison';
 import CompetitorComparison from '@/components/sections/CompetitorComparison';
 import FinalImplications from '@/components/sections/FinalImplications';
+import IdeaOverview from '@/components/sections/IdeaOverview';
+import MarketSize from '@/components/sections/MarketSize';
+import CompetitorScan from '@/components/sections/CompetitorScan';
+import Differentiation from '@/components/sections/Differentiation';
+import BusinessModel from '@/components/sections/BusinessModel';
+import GoToMarket from '@/components/sections/GoToMarket';
+import RiskAssessment from '@/components/sections/RiskAssessment';
+import ActionPlan from '@/components/sections/ActionPlan';
 
 import type {
   CompanyOverviewData, PESTData, MatrixData, InternalCapabilityData,
   SWOTData, TOWSData, StrategyCombinationData, SevenSData,
   PriorityMatrixData, StrategyCurrentComparisonData, CompetitorData, ImplicationsData,
+  IdeaOverviewData, MarketSizeData, CompetitorScanData, DifferentiationData,
+  BusinessModelData, GoToMarketData, RiskAssessmentData, ActionPlanData,
 } from '@/frameworks/types';
 
 interface Props {
@@ -100,6 +110,23 @@ function SectionContent({ section, subPage }: Props) {
       return <CompetitorComparison data={section.data as CompetitorData} subPage={sp} />;
     case 'final-implications':
       return <FinalImplications data={section.data as ImplicationsData} subPage={sp} />;
+    // Idea sections
+    case 'idea-overview':
+      return <IdeaOverview data={section.data as IdeaOverviewData} subPage={sp} />;
+    case 'market-size':
+      return <MarketSize data={section.data as MarketSizeData} subPage={sp} />;
+    case 'competitor-scan':
+      return <CompetitorScan data={section.data as CompetitorScanData} subPage={sp} />;
+    case 'differentiation':
+      return <Differentiation data={section.data as DifferentiationData} subPage={sp} />;
+    case 'business-model':
+      return <BusinessModel data={section.data as BusinessModelData} subPage={sp} />;
+    case 'go-to-market':
+      return <GoToMarket data={section.data as GoToMarketData} subPage={sp} />;
+    case 'risk-assessment':
+      return <RiskAssessment data={section.data as RiskAssessmentData} subPage={sp} />;
+    case 'action-plan':
+      return <ActionPlan data={section.data as ActionPlanData} subPage={sp} />;
     default:
       return <div className="py-20 text-center text-sm text-muted-foreground">알 수 없는 섹션 타입</div>;
   }

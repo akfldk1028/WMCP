@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Download, Building2, Layers, LayoutList } from 'lucide-react';
+import { Download, Building2, Lightbulb, Layers, LayoutList } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Report, ReportSection } from '@/frameworks/types';
+import type { Report, ReportSection, ReportMode } from '@/frameworks/types';
 import { generateCompactPages, generateExpandedPages, type PageDef } from '@/lib/pages';
 import SectionRenderer from './SectionRenderer';
 import SectionCover from './SectionCover';
@@ -27,9 +27,10 @@ export default function ReportViewer({ report }: Props) {
   const [direction, setDirection] = useState<'left' | 'right' | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
+  const reportMode = report.mode ?? 'company';
   const pages = useMemo(
-    () => (mode === 'compact' ? generateCompactPages() : generateExpandedPages()),
-    [mode],
+    () => (mode === 'compact' ? generateCompactPages(reportMode) : generateExpandedPages(reportMode)),
+    [mode, reportMode],
   );
 
   const currentPage = pages[currentIndex];
@@ -101,7 +102,7 @@ export default function ReportViewer({ report }: Props) {
           <div className="border-b px-5 py-5">
             <div className="flex items-center gap-3">
               <div className="flex size-9 items-center justify-center rounded-lg bg-indigo-600">
-                <Building2 className="size-5 text-white" />
+                {reportMode === 'idea' ? <Lightbulb className="size-5 text-white" /> : <Building2 className="size-5 text-white" />}
               </div>
               <div>
                 <h2 className="text-sm font-bold">{report.companyName}</h2>
@@ -256,7 +257,7 @@ export default function ReportViewer({ report }: Props) {
 
 function PageContent({ page, report }: { page: PageDef; report: Report }) {
   if (page.kind === 'report-cover') {
-    return <ReportCover companyName={report.companyName} industry={report.industry} createdAt={report.createdAt} />;
+    return <ReportCover companyName={report.companyName} industry={report.industry} createdAt={report.createdAt} mode={report.mode} />;
   }
 
   if (page.kind === 'report-closing') {
