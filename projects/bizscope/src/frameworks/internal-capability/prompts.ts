@@ -18,7 +18,13 @@ JSON 스키마:
   "summary": "내부역량 평가 종합 요약"
 }
 
-6-8개 주요 역량 영역을 평가하세요.`;
+6-8개 주요 역량 영역을 평가하세요.
+
+중요 규칙:
+- 각 영역에 반드시 강점과 약점을 최소 1개씩 도출하세요.
+- "데이터가 부족하다", "평가에 한계가 있다" 같은 메타 코멘트는 절대 쓰지 마세요.
+- 데이터가 제한적이면 해당 산업의 일반적 맥락에서 합리적으로 추론하세요.
+- overallWeaknesses는 반드시 3-5개를 도출하세요. 약점이 없는 기업은 없습니다.`;
 
 export function buildUserMessage(ctx: PipelineContext): string {
   const overview = ctx.companyOverview;

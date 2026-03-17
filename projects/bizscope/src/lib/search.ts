@@ -40,10 +40,10 @@ async function searchTavily(query: string, apiKey: string): Promise<SearchResult
       body: JSON.stringify({
         api_key: apiKey,
         query,
-        max_results: 5,
-        search_depth: 'basic',
+        max_results: 10,
+        search_depth: 'advanced',
       }),
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!res.ok) return [];
@@ -61,13 +61,13 @@ async function searchTavily(query: string, apiKey: string): Promise<SearchResult
 
 async function searchBrave(query: string, apiKey: string): Promise<SearchResult[]> {
   try {
-    const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=5`;
+    const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=10`;
     const res = await fetch(url, {
       headers: {
         'X-Subscription-Token': apiKey,
         Accept: 'application/json',
       },
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!res.ok) return [];

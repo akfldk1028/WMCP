@@ -32,7 +32,7 @@ export default function SevenSPyramid({ items }: SevenSPyramidProps) {
     itemMap.set(item.element, item);
   }
 
-  const svgW = 500;
+  const svgW = 520;
   const svgH = 380;
   const pyramidLeft = 40;
   const pyramidW = 180;
@@ -91,12 +91,12 @@ export default function SevenSPyramid({ items }: SevenSPyramidProps) {
                   />
                   {/* Strategy codes */}
                   <g>
-                    {item.relatedStrategies.slice(0, 3).map((strat, si) => (
+                    {item.relatedStrategies.slice(0, 2).map((strat, si) => (
                       <g key={si}>
                         <rect
-                          x={255 + si * 52}
+                          x={255 + si * 105}
                           y={y + layerH / 2 - 10}
-                          width={48}
+                          width={100}
                           height={20}
                           rx={3}
                           fill="#eef2ff"
@@ -104,14 +104,14 @@ export default function SevenSPyramid({ items }: SevenSPyramidProps) {
                           strokeWidth={0.5}
                         />
                         <text
-                          x={255 + si * 52 + 24}
+                          x={255 + si * 105 + 50}
                           y={y + layerH / 2 + 4}
                           textAnchor="middle"
-                          fontSize={9}
+                          fontSize={8}
                           fill="#4338ca"
                           fontWeight="600"
                         >
-                          {strat.length > 7 ? strat.slice(0, 7) : strat}
+                          {strat.length > 14 ? strat.slice(0, 13) + '…' : strat}
                         </text>
                       </g>
                     ))}
@@ -121,7 +121,7 @@ export default function SevenSPyramid({ items }: SevenSPyramidProps) {
                     const { dLabel, iLabel } = getDifficultyImpactLabel(item.difficulty, item.impact);
                     return (
                       <text
-                        x={440}
+                        x={470}
                         y={y + layerH / 2 + 4}
                         textAnchor="start"
                         fontSize={9}

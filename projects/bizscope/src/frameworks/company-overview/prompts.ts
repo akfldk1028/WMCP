@@ -9,8 +9,8 @@ JSON 스키마:
   "industry": "주요 산업 분야",
   "founded": "설립 연도 (알 수 있는 경우)",
   "headquarters": "본사 위치",
-  "employees": "직원 수 규모",
-  "revenue": "매출 규모",
+  "employees": "직원 수 규모 (구체적 숫자로, 예: 약 267,000명)",
+  "revenue": "매출 규모 (구체적 금액으로, 예: 약 258.9조원 (2023))",
   "mainProducts": ["주력 제품/서비스 목록"],
   "keyStrengths": ["핵심 강점 목록"],
   "recentNews": ["최근 주요 동향/뉴스"]
@@ -31,5 +31,10 @@ ${research.slice(0, 15000)}
 ===
 
 위 데이터에 기반해서만 분석하세요. 데이터에 없는 내용은 추측하지 마세요.
-mainProducts, keyStrengths, recentNews는 각각 3-5개 항목으로 작성해 주세요.`;
+
+중요 규칙:
+- employees, revenue는 반드시 구체적 숫자를 포함하세요. "데이터 없음"은 절대 쓰지 마세요.
+- 리서치 데이터에 직접적 수치가 없으면, 해당 기업 규모에 맞는 합리적 추정치를 제공하세요.
+- mainProducts, keyStrengths, recentNews는 각각 3-5개 항목으로 작성해 주세요.
+- recentNews는 반드시 연도를 포함하세요 (예: "2026년 2월, ...").`;
 }

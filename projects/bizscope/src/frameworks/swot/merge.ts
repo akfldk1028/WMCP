@@ -6,11 +6,11 @@ export function mergeSWOT(
 ): SWOTData {
   const opportunities = pest.factors
     .filter((f) => f.classification === 'opportunity')
-    .map((f) => `[${f.category.toUpperCase()}] ${f.factor}: ${f.description}`);
+    .map((f) => f.factor);
 
   const threats = pest.factors
     .filter((f) => f.classification === 'threat')
-    .map((f) => `[${f.category.toUpperCase()}] ${f.factor}: ${f.description}`);
+    .map((f) => f.factor);
 
   const strengths = internal.overallStrengths.length > 0
     ? internal.overallStrengths

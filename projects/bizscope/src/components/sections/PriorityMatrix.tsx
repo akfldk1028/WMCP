@@ -6,8 +6,6 @@ interface Props {
   subPage?: number;
 }
 
-const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
 export default function PriorityMatrix({ data, subPage }: Props) {
   const all = subPage === undefined;
   const topSet = new Set(data.topPicks);
@@ -19,24 +17,7 @@ export default function PriorityMatrix({ data, subPage }: Props) {
           <p className="mb-8 text-[15px] leading-relaxed text-muted-foreground">
             도출된 전략을 <strong className="text-foreground">실행 난이도</strong>와 <strong className="text-foreground">기대 효과</strong> 기준으로 우선순위를 산정합니다.
           </p>
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-5">
-            <div className="lg:col-span-3">
-              <PriorityMatrixChart strategies={data.strategies} />
-            </div>
-            <div className="divide-y lg:col-span-2">
-              {data.strategies.sort((a, b) => a.rank - b.rank).map((s, i) => {
-                const isTop = topSet.has(s.strategy);
-                return (
-                  <div key={s.id} className="flex gap-3 py-2.5">
-                    <span className={`w-6 shrink-0 text-sm font-bold tabular-nums ${isTop ? 'text-indigo-600' : 'text-muted-foreground/50'}`}>
-                      {ALPHA[i]}
-                    </span>
-                    <span className={`text-sm leading-relaxed ${isTop ? 'font-medium' : 'text-muted-foreground'}`}>{s.strategy}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <PriorityMatrixChart strategies={data.strategies} />
         </>
       )}
 
