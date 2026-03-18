@@ -116,6 +116,20 @@ export async function POST(request: Request) {
     }
 
     case 'order_created': {
+      // Subscription orders also fire order_created — skip them.
+      // Check: if any line item is a subscription (has subscription_id), ignore.
+      const lineItems = (attrs.first_order_item ?? attrs.urls) as Record<string, unknown> | undefined;
+      const productId = String(attrs.product_id || '');
+      const productName = String(attrs.product_name || '');
+      const isSubscriptionOrder = productName.toLowerCase().includes('pro') ||
+        productName.toLowerCase().includes('monthly') ||
+        productName.toLowerCase().includes('annual');
+
+      if (isSubscriptionOrder) {
+        console.log(`[bsai:webhook] Skipping order_created for subscription product: ${productName}`);
+        return NextResponse.json({ ok: true, ignored: 'subscription_order' });
+      }
+
       // One-time purchase — add credits
       const credits = parseCredits(variantName);
       const licenseKey = existingKey || generateLicenseKey();

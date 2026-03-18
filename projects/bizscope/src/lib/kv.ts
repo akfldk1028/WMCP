@@ -98,9 +98,9 @@ export async function addCredits(
   const existingOrder = await redis.get<string>(ORDER(orderId));
   if (existingOrder) return;
 
-  const existing = await redis.get<string>(KEY(licenseKey));
+  const existing = await redis.get(KEY(licenseKey));
   if (existing) {
-    const record: LicenseRecord = JSON.parse(existing);
+    const record = parseRecord(existing);
     if (record.plan === 'pro') return; // Pro has unlimited, no-op
     record.credits += amount;
     await redis.set(KEY(licenseKey), JSON.stringify(record));
@@ -117,12 +117,17 @@ export async function addCredits(
   await redis.set(ORDER(orderId), licenseKey);
 }
 
+function parseRecord(raw: unknown): LicenseRecord {
+  if (typeof raw === 'object' && raw !== null) return raw as LicenseRecord;
+  return JSON.parse(raw as string);
+}
+
 /** Use one credit. Returns true if allowed, false if insufficient. */
 export async function useCredit(licenseKey: string): Promise<boolean> {
-  const raw = await redis.get<string>(KEY(licenseKey));
+  const raw = await redis.get(KEY(licenseKey));
   if (!raw) return false;
 
-  const record: LicenseRecord = JSON.parse(raw);
+  const record = parseRecord(raw);
   if (record.plan === 'pro') return true; // unlimited
   if (record.credits <= 0) return false;
 
@@ -133,7 +138,7 @@ export async function useCredit(licenseKey: string): Promise<boolean> {
 
 /** Get license info for a key. Returns null if invalid. */
 export async function getLicenseInfo(licenseKey: string): Promise<LicenseRecord | null> {
-  const raw = await redis.get<string>(KEY(licenseKey));
+  const raw = await redis.get(KEY(licenseKey));
   if (!raw) return null;
-  return JSON.parse(raw);
+  return parseRecord(raw);
 }
