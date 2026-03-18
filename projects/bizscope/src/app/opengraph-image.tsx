@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-export const alt = 'BizScope — AI 비즈니스 전략 보고서';
+export const alt = 'BizScope AI — AI 비즈니스 전략 보고서';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -36,7 +36,7 @@ export default function OGImage() {
 
         {/* Title */}
         <div style={{ fontSize: 72, fontWeight: 700, letterSpacing: -2, display: 'flex' }}>
-          BizScope
+          BizScope AI
         </div>
 
         {/* Subtitle */}
@@ -46,7 +46,7 @@ export default function OGImage() {
 
         {/* Tags */}
         <div style={{ fontSize: 20, opacity: 0.7, marginTop: 24, display: 'flex' }}>
-          12 Frameworks · Consulting-Grade Analysis
+          20 Frameworks · Consulting-Grade Analysis
         </div>
       </div>
     ),

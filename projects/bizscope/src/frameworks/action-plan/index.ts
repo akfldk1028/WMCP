@@ -1,4 +1,4 @@
-import { generateSection } from '@/lib/claude';
+import { generateSection, generateWithEnsemble } from '@/lib/claude';
 import { extractJSON } from '../parse-json';
 import type {
   ActionPlanData,
@@ -7,12 +7,16 @@ import type {
   TeamRequirement,
   YearProjection,
   Verdict,
+  ScoreCard,
+  ScoreDimension,
   PipelineContext,
 } from '../types';
 import { SYSTEM_PROMPT, buildUserMessage, buildWebMCPUserMessage } from './prompts';
 
 const VALID_TEAM_PRIORITIES = ['critical', 'important', 'nice-to-have'] as const;
 const VALID_RECOMMENDATIONS = ['strong-go', 'go', 'conditional', 'no-go'] as const;
+const VALID_DIM_VERDICTS = ['strong', 'adequate', 'weak', 'critical'] as const;
+const VALID_CONFIDENCE = ['high', 'medium', 'low'] as const;
 
 function clamp(val: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, Math.round(val ?? min)));
@@ -67,9 +71,48 @@ function normalizeVerdict(raw: Verdict | undefined): Verdict {
   };
 }
 
+function normalizeDimension(raw: ScoreDimension): ScoreDimension {
+  const verdict = VALID_DIM_VERDICTS.includes(raw?.verdict as (typeof VALID_DIM_VERDICTS)[number])
+    ? (raw.verdict as ScoreDimension['verdict'])
+    : 'adequate';
+
+  return {
+    dimension: raw?.dimension ?? '',
+    score: clamp(raw?.score ?? 5, 1, 10),
+    evidence: raw?.evidence ?? '',
+    verdict,
+  };
+}
+
+function normalizeScoreCard(raw: ScoreCard | undefined): ScoreCard | undefined {
+  if (!raw || !Array.isArray(raw.dimensions) || raw.dimensions.length === 0) {
+    return undefined;
+  }
+
+  const dimensions = raw.dimensions.map(normalizeDimension);
+  const avg = dimensions.reduce((sum, d) => sum + d.score, 0) / dimensions.length;
+  const totalScore = Math.round(avg * 10) / 10;
+
+  const confidence = VALID_CONFIDENCE.includes(raw.confidence as (typeof VALID_CONFIDENCE)[number])
+    ? (raw.confidence as ScoreCard['confidence'])
+    : 'medium';
+
+  return { dimensions, totalScore, confidence };
+}
+
+async function callAI(ctx: PipelineContext, systemPrompt: string, userMessage: string): Promise<string> {
+  if (ctx.ensembleEnabled === true) {
+    const { text } = await generateWithEnsemble(systemPrompt, userMessage);
+    return text;
+  }
+  return generateSection(systemPrompt, userMessage);
+}
+
 export async function generate(ctx: PipelineContext): Promise<ActionPlanData> {
-  const raw = await generateSection(SYSTEM_PROMPT, buildUserMessage(ctx));
+  const raw = await callAI(ctx, SYSTEM_PROMPT, buildUserMessage(ctx));
   const parsed = extractJSON<Omit<ActionPlanData, 'type'>>(raw);
+
+  const scoreCard = normalizeScoreCard(parsed.scoreCard);
 
   return {
     type: 'action-plan',
@@ -82,6 +125,7 @@ export async function generate(ctx: PipelineContext): Promise<ActionPlanData> {
       year3: normalizeProjection(parsed.financialProjection?.year3),
     },
     verdict: normalizeVerdict(parsed.verdict),
+    ...(scoreCard && { scoreCard }),
     summary: parsed.summary ?? '',
   };
 }
@@ -90,8 +134,10 @@ export async function generateWithResearch(
   ctx: PipelineContext,
   research: string,
 ): Promise<ActionPlanData> {
-  const raw = await generateSection(SYSTEM_PROMPT, buildWebMCPUserMessage(ctx, research));
+  const raw = await callAI(ctx, SYSTEM_PROMPT, buildWebMCPUserMessage(ctx, research));
   const parsed = extractJSON<Omit<ActionPlanData, 'type'>>(raw);
+
+  const scoreCard = normalizeScoreCard(parsed.scoreCard);
 
   return {
     type: 'action-plan',
@@ -104,6 +150,7 @@ export async function generateWithResearch(
       year3: normalizeProjection(parsed.financialProjection?.year3),
     },
     verdict: normalizeVerdict(parsed.verdict),
+    ...(scoreCard && { scoreCard }),
     summary: parsed.summary ?? '',
   };
 }

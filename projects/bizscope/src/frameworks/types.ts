@@ -108,6 +108,8 @@ export interface IdeaInput {
   name: string;
   description: string;
   targetMarket?: string;
+  /** Full markdown document (기획서) — when provided, AI parses this instead of short description */
+  document?: string;
 }
 
 export interface Report {
@@ -515,6 +517,19 @@ export interface Verdict {
   reasoning: string;
 }
 
+export interface ScoreDimension {
+  dimension: string;
+  score: number; // 1-10
+  evidence: string;
+  verdict: 'strong' | 'adequate' | 'weak' | 'critical';
+}
+
+export interface ScoreCard {
+  dimensions: ScoreDimension[];
+  totalScore: number; // weighted average
+  confidence: 'high' | 'medium' | 'low';
+}
+
 export interface ActionPlanData {
   type: 'action-plan';
   milestones: Milestone[];
@@ -526,6 +541,7 @@ export interface ActionPlanData {
     year3: YearProjection;
   };
   verdict: Verdict;
+  scoreCard?: ScoreCard;
   summary: string;
 }
 
@@ -534,6 +550,7 @@ export interface ActionPlanData {
 export interface PipelineContext {
   companyName: string;
   mode?: ReportMode;
+  ensembleEnabled?: boolean;
   // Company mode
   companyOverview?: CompanyOverviewData;
   pest?: PESTData;
@@ -557,4 +574,5 @@ export interface PipelineContext {
   goToMarket?: GoToMarketData;
   riskAssessment?: RiskAssessmentData;
   actionPlan?: ActionPlanData;
+  scoreCard?: ScoreCard;
 }

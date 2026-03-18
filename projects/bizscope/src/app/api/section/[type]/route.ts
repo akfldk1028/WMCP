@@ -3,6 +3,7 @@ import type { SectionType, PipelineContext, SectionData, ReportMode, IdeaInput }
 import { COMPANY_SECTION_ORDER, IDEA_SECTION_ORDER } from '@/frameworks/types';
 import { searchForSection } from '@/lib/search';
 import { getCompanyFinancials, formatFinancialsAsResearch } from '@/lib/finance';
+import { getLicenseInfo, useCredit } from '@/lib/kv';
 
 // --- IP-based rate limit (20 req/min) ---
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -113,11 +114,20 @@ export async function POST(
     return NextResponse.json({ error: 'Rate limit exceeded (20 req/min)' }, { status: 429 });
   }
 
-  const apiKey = process.env.BIZSCOPE_API_KEY;
-  if (apiKey) {
-    const auth = request.headers.get('authorization');
-    if (auth !== `Bearer ${apiKey}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // License key check — if provided, verify it's valid
+  const licenseKey = request.headers.get('x-license-key') || '';
+  let licensePlan: string | null = null;
+
+  if (licenseKey) {
+    try {
+      const info = await getLicenseInfo(licenseKey);
+      if (!info) {
+        return NextResponse.json({ error: 'Invalid license key' }, { status: 403 });
+      }
+      licensePlan = info.plan;
+      // Credit deduction happens once per report in /api/license/use, not per section
+    } catch {
+      // KV unavailable — allow request (graceful degradation)
     }
   }
 
@@ -149,6 +159,7 @@ export async function POST(
 
   const ctx: PipelineContext = context ?? { companyName };
   if (ideaInput) ctx.ideaInput = ideaInput;
+  ctx.ensembleEnabled = licensePlan === 'pro';
 
   const isIdeaMode = mode === 'idea' || IDEA_SECTION_ORDER.includes(sectionType as never);
 

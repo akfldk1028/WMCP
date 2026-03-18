@@ -34,7 +34,7 @@ const TOOLS = [
       properties: {
         companyName: { type: 'string', description: 'Company name to analyze' },
         research: { type: 'string', description: 'Web search results about the company (founding, revenue, products, news, etc.)' },
-        previousSections: { type: 'object', description: 'Results from previous BizScope tool calls' },
+        previousSections: { type: 'object', description: 'Results from previous BizScope AI tool calls' },
       },
       required: ['companyName', 'research'],
     },
@@ -49,7 +49,7 @@ const TOOLS = [
       properties: {
         companyName: { type: 'string', description: 'Company name to analyze' },
         research: { type: 'string', description: 'Web search results about political, economic, social, technological factors and industry competition' },
-        previousSections: { type: 'object', description: 'Results from previous BizScope tool calls' },
+        previousSections: { type: 'object', description: 'Results from previous BizScope AI tool calls' },
       },
       required: ['companyName', 'research'],
     },
@@ -78,7 +78,7 @@ const TOOLS = [
       properties: {
         companyName: { type: 'string', description: 'Company name to analyze' },
         research: { type: 'string', description: 'Web search results about R&D, brand, financials, talent, operations, innovation' },
-        previousSections: { type: 'object', description: 'Results from previous BizScope tool calls' },
+        previousSections: { type: 'object', description: 'Results from previous BizScope AI tool calls' },
       },
       required: ['companyName', 'research'],
     },
@@ -181,7 +181,7 @@ const TOOLS = [
       properties: {
         companyName: { type: 'string', description: 'Company name to analyze' },
         research: { type: 'string', description: 'Web search results about competitors: revenue, strengths, weaknesses, market share, differentiators' },
-        previousSections: { type: 'object', description: 'Results from previous BizScope tool calls' },
+        previousSections: { type: 'object', description: 'Results from previous BizScope AI tool calls' },
       },
       required: ['companyName', 'research'],
     },
@@ -266,6 +266,22 @@ const TOOLS = [
       required: ['ideaName', 'research'],
     },
     endpoint: '/api/webmcp/business-model',
+  },
+  {
+    name: 'bizscope-scorecard',
+    description:
+      'Run a full idea feasibility verdict and return only the 9-dimension scorecard with Go/No-Go recommendation. Requires prior idea analysis data in previousSections (at minimum businessModel and riskAssessment).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ideaName: { type: 'string', description: 'Name of the app/service idea' },
+        ideaDescription: { type: 'string', description: 'Detailed description of what the idea does' },
+        research: { type: 'string', description: 'Additional research data to improve accuracy' },
+        previousSections: { type: 'object', description: 'Must include results from prior idea analysis tools (especially businessModel and riskAssessment)' },
+      },
+      required: ['ideaName', 'previousSections'],
+    },
+    endpoint: '/api/webmcp/scorecard',
   },
   // === Utility tools — AI agent can call these anytime ===
   {
