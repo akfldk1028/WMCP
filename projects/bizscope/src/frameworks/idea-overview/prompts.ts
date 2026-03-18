@@ -29,8 +29,20 @@ export function buildUserMessage(ctx: PipelineContext): string {
     `다음 사업 아이디어를 분석해 주세요.`,
     '',
     `아이디어 이름: ${idea.name}`,
-    `설명: ${idea.description}`,
   ];
+
+  if (idea.document) {
+    parts.push(
+      '',
+      '=== 기획서 전문 ===',
+      idea.document.slice(0, 20000),
+      '===',
+      '',
+      '위 기획서에서 문제 정의, 솔루션, 타겟 사용자, 핵심 기능, 수익 모델 등을 자동 추출하여 분석해 주세요.',
+    );
+  } else {
+    parts.push(`설명: ${idea.description}`);
+  }
 
   if (idea.targetMarket) {
     parts.push(`타겟 시장: ${idea.targetMarket}`);
@@ -54,8 +66,17 @@ export function buildWebMCPUserMessage(ctx: PipelineContext, research: string): 
     parts.push(
       '',
       `아이디어 이름: ${idea.name}`,
-      `설명: ${idea.description}`,
     );
+    if (idea.document) {
+      parts.push(
+        '',
+        '=== 기획서 전문 ===',
+        idea.document.slice(0, 20000),
+        '===',
+      );
+    } else {
+      parts.push(`설명: ${idea.description}`);
+    }
     if (idea.targetMarket) {
       parts.push(`타겟 시장: ${idea.targetMarket}`);
     }

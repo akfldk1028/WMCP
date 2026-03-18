@@ -115,6 +115,49 @@ export async function POST(
 
   const { type } = await params;
 
+  // Special: scorecard tool — runs action-plan and returns only scoreCard + verdict
+  if (type === 'scorecard') {
+    let body: Record<string, unknown>;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    const { ideaName, ideaDescription, research, previousSections } = body as {
+      ideaName?: string;
+      ideaDescription?: string;
+      research?: string;
+      previousSections?: Record<string, unknown>;
+    };
+
+    if (!ideaName) {
+      return NextResponse.json({ error: 'ideaName is required' }, { status: 400 });
+    }
+
+    const ctx = buildContext(ideaName.slice(0, 200), previousSections, {
+      name: ideaName,
+      description: ideaDescription ?? '',
+    });
+
+    try {
+      const mod = await import('@/frameworks/action-plan');
+      const trimmedResearch = (research ?? '').slice(0, RESEARCH_MAX_LENGTH);
+      const data = trimmedResearch
+        ? await mod.generateWithResearch(ctx, trimmedResearch)
+        : await mod.generate(ctx);
+
+      return NextResponse.json({
+        scoreCard: data.scoreCard ?? null,
+        verdict: data.verdict,
+        summary: data.summary,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  }
+
   const ALL_SECTIONS: SectionType[] = [...COMPANY_SECTION_ORDER, ...IDEA_SECTION_ORDER];
   if (!ALL_SECTIONS.includes(type as SectionType)) {
     return NextResponse.json({ error: `Unknown section type: ${type}` }, { status: 400 });
@@ -149,9 +192,11 @@ export async function POST(
   const safeName = name.slice(0, 200);
   const isCompute = COMPUTE_SECTIONS.includes(sectionType);
 
+  const { document: ideaDocument } = body as { document?: string };
+
   // Build ideaInput for idea sections
   const ideaInput: IdeaInput | undefined = isIdeaSection && ideaName
-    ? { name: ideaName, description: ideaDescription ?? '', targetMarket }
+    ? { name: ideaName, description: ideaDescription ?? '', targetMarket, document: ideaDocument }
     : undefined;
 
   // AI-powered sections require research (except optional/compute ones)

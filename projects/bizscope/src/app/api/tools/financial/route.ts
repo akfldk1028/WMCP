@@ -7,6 +7,15 @@ import { getCompanyFinancials, formatFinancialsAsResearch } from '@/lib/finance'
  * Used by bizscope-financial-data WebMCP tool.
  */
 export async function POST(request: Request) {
+  // API key auth (optional — enabled when BIZSCOPE_API_KEY is set)
+  const apiKey = process.env.BIZSCOPE_API_KEY;
+  if (apiKey) {
+    const auth = request.headers.get('authorization');
+    if (auth !== `Bearer ${apiKey}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();

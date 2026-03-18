@@ -1,4 +1,5 @@
 import type { PipelineContext } from '../types';
+import { buildIdeaLines } from '../shared';
 
 export const SYSTEM_PROMPT = `당신은 비즈니스 타당성 분석가입니다. 사업 아이디어의 실행 계획을 수립하고 최종 판정을 내립니다.
 장밋빛 전망 금지. 솔직하고 현실적으로 평가하세요.
@@ -33,6 +34,66 @@ JSON 스키마:
     "year2": { "revenue": "매출", "cost": "비용", "profit": "손익" },
     "year3": { "revenue": "매출", "cost": "비용", "profit": "손익" }
   },
+  "scoreCard": {
+    "dimensions": [
+      {
+        "dimension": "Problem Severity (문제 심각도)",
+        "score": 1-10,
+        "evidence": "근거 1문장",
+        "verdict": "strong|adequate|weak|critical"
+      },
+      {
+        "dimension": "Market Size (시장 규모)",
+        "score": 1-10,
+        "evidence": "근거 1문장",
+        "verdict": "strong|adequate|weak|critical"
+      },
+      {
+        "dimension": "Timing (타이밍)",
+        "score": 1-10,
+        "evidence": "근거 1문장",
+        "verdict": "strong|adequate|weak|critical"
+      },
+      {
+        "dimension": "Competitive Moat (경쟁 해자)",
+        "score": 1-10,
+        "evidence": "근거 1문장",
+        "verdict": "strong|adequate|weak|critical"
+      },
+      {
+        "dimension": "Unit Economics (단위 경제성)",
+        "score": 1-10,
+        "evidence": "근거 1문장",
+        "verdict": "strong|adequate|weak|critical"
+      },
+      {
+        "dimension": "Feasibility (실현 가능성)",
+        "score": 1-10,
+        "evidence": "근거 1문장",
+        "verdict": "strong|adequate|weak|critical"
+      },
+      {
+        "dimension": "GTM Clarity (시장 진입 명확성)",
+        "score": 1-10,
+        "evidence": "근거 1문장",
+        "verdict": "strong|adequate|weak|critical"
+      },
+      {
+        "dimension": "Risk Level (리스크 수준)",
+        "score": 1-10,
+        "evidence": "근거 1문장 (역점수: 리스크가 낮을수록 높은 점수)",
+        "verdict": "strong|adequate|weak|critical"
+      },
+      {
+        "dimension": "Scalability (확장성)",
+        "score": 1-10,
+        "evidence": "근거 1문장",
+        "verdict": "strong|adequate|weak|critical"
+      }
+    ],
+    "totalScore": 소수점 1자리 평균,
+    "confidence": "high|medium|low"
+  },
   "verdict": {
     "score": 1~10,
     "recommendation": "strong-go" | "go" | "conditional" | "no-go",
@@ -41,13 +102,21 @@ JSON 스키마:
   "summary": "실행 계획 종합 요약 (2-3문장)"
 }
 
+스코어카드 채점 기준:
+- 8-10: strong — 강력한 근거가 있는 강점
+- 5-7: adequate — 보통이나 개선 여지 있음
+- 3-4: weak — 약점, 보완 필요
+- 1-2: critical — 치명적 약점, 사업 진행 전 반드시 해결 필요
+- totalScore = 9개 dimension score의 평균 (소수점 1자리)
+- confidence: 리서치 데이터 풍부도에 따라 high/medium/low
+
 분석 기준:
 - 마일스톤 3-5단계 (12-18개월 로드맵)
 - 핵심 지표(KPI) 5-8개
 - 팀 구성은 소규모 스타트업 기준 (1인 개발자도 가능)
 - 재무 추정은 보수적으로. 낙관적 시나리오 금지
 - verdict.score: 1(사업 불가) ~ 10(즉시 실행)
-- verdict는 지금까지의 모든 분석을 종합한 최종 판단
+- verdict는 scoreCard의 9개 차원 평가를 종합한 최종 판단
 - no-go 판정도 주저하지 말 것. 솔직한 판단이 가장 중요`;
 
 export function buildUserMessage(ctx: PipelineContext): string {
@@ -63,7 +132,7 @@ export function buildUserMessage(ctx: PipelineContext): string {
   const parts = [`다음 사업 아이디어의 실행 계획을 수립하고 최종 판정을 내려주세요.`];
 
   if (idea) {
-    parts.push('', `아이디어: ${idea.name}`, `설명: ${idea.description}`);
+    parts.push('', ...buildIdeaLines(idea));
   }
 
   if (overview) {
@@ -133,7 +202,12 @@ export function buildUserMessage(ctx: PipelineContext): string {
 
   parts.push(
     '',
-    '위 모든 분석을 종합하여 실행 계획과 최종 판정(verdict)을 내려주세요.',
+    '위 모든 분석을 종합하여:',
+    '1. 실행 계획(milestones, keyMetrics, teamRequirements, financialProjection)을 수립하고',
+    '2. 9개 차원 스코어카드(scoreCard)를 채점한 뒤',
+    '3. 최종 판정(verdict)을 내려주세요.',
+    '',
+    'scoreCard의 9개 차원을 각각 독립적으로 평가하세요. 근거 없는 높은 점수는 금지.',
     'no-go 판정도 주저하지 마세요. 솔직한 판단이 가장 가치 있습니다.',
   );
 
@@ -152,6 +226,7 @@ export function buildWebMCPUserMessage(ctx: PipelineContext, research: string): 
     '===',
     '',
     '위 분석 결과와 리서치 데이터를 모두 종합하여 판단하세요.',
+    '리서치 데이터가 풍부하면 confidence를 "high"로, 부족하면 "low"로 설정하세요.',
   ];
 
   return parts.join('\n');

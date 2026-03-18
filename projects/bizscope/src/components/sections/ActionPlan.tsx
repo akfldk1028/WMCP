@@ -1,4 +1,4 @@
-import type { ActionPlanData } from '@/frameworks/types';
+import type { ActionPlanData, ScoreDimension } from '@/frameworks/types';
 
 interface Props {
   data: ActionPlanData;
@@ -17,6 +17,45 @@ const VERDICT_STYLE: Record<string, { bg: string; text: string; label: string }>
   conditional: { bg: 'bg-amber-500', text: 'text-amber-600', label: 'CONDITIONAL' },
   'no-go': { bg: 'bg-rose-500', text: 'text-rose-500', label: 'NO-GO' },
 };
+
+const DIM_VERDICT_STYLE: Record<string, { bar: string; badge: string; label: string }> = {
+  strong: { bar: 'bg-emerald-500', badge: 'bg-emerald-500/15 text-emerald-600', label: 'STRONG' },
+  adequate: { bar: 'bg-amber-400', badge: 'bg-amber-400/15 text-amber-600', label: 'ADEQUATE' },
+  weak: { bar: 'bg-orange-500', badge: 'bg-orange-500/15 text-orange-600', label: 'WEAK' },
+  critical: { bar: 'bg-rose-500', badge: 'bg-rose-500/15 text-rose-500', label: 'CRITICAL' },
+};
+
+const CONFIDENCE_STYLE: Record<string, { bg: string; label: string }> = {
+  high: { bg: 'bg-emerald-500/15 text-emerald-600', label: 'HIGH CONFIDENCE' },
+  medium: { bg: 'bg-amber-400/15 text-amber-600', label: 'MEDIUM CONFIDENCE' },
+  low: { bg: 'bg-rose-500/15 text-rose-500', label: 'LOW CONFIDENCE' },
+};
+
+function ScoreBar({ dim }: { dim: ScoreDimension }) {
+  const style = DIM_VERDICT_STYLE[dim.verdict] ?? DIM_VERDICT_STYLE.adequate;
+  const pct = dim.score * 10;
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium">{dim.dimension}</span>
+        <div className="flex items-center gap-2">
+          <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${style.badge}`}>
+            {style.label}
+          </span>
+          <span className="w-6 text-right text-sm font-bold tabular-nums">{dim.score}</span>
+        </div>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className={`h-full rounded-full transition-all ${style.bar}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <p className="text-xs leading-relaxed text-muted-foreground">{dim.evidence}</p>
+    </div>
+  );
+}
 
 export default function ActionPlan({ data, subPage }: Props) {
   const all = subPage === undefined;
@@ -131,11 +170,14 @@ export default function ActionPlan({ data, subPage }: Props) {
         </div>
       )}
 
-      {/* Sub 2: Verdict */}
+      {/* Sub 2: ScoreCard + Verdict */}
       {(all || subPage === 2) && (
         <div className={all ? 'mt-14' : ''}>
           {(() => {
             const vs = VERDICT_STYLE[data.verdict.recommendation] ?? VERDICT_STYLE.conditional;
+            const sc = data.scoreCard;
+            const conf = sc ? (CONFIDENCE_STYLE[sc.confidence] ?? CONFIDENCE_STYLE.medium) : null;
+
             return (
               <div className="space-y-8">
                 {/* Big score */}
@@ -145,22 +187,41 @@ export default function ActionPlan({ data, subPage }: Props) {
                       종합 점수
                     </p>
                     <p className={`mt-1 text-5xl font-black tabular-nums tracking-tighter ${vs.text}`}>
-                      {data.verdict.score}
+                      {sc ? sc.totalScore : data.verdict.score}
                       <span className="text-lg font-medium text-muted-foreground/50">/10</span>
                     </p>
                   </div>
                   <span className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white ${vs.bg}`}>
                     {vs.label}
                   </span>
+                  {sc && conf && (
+                    <span className={`rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${conf.bg}`}>
+                      {conf.label}
+                    </span>
+                  )}
                 </div>
 
                 {/* Score bar */}
                 <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div
                     className={`h-full rounded-full ${vs.bg}`}
-                    style={{ width: `${data.verdict.score * 10}%` }}
+                    style={{ width: `${(sc ? sc.totalScore : data.verdict.score) * 10}%` }}
                   />
                 </div>
+
+                {/* 9-dimension scorecard */}
+                {sc && sc.dimensions.length > 0 && (
+                  <div>
+                    <h3 className="mb-5 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
+                      9-Dimension Scorecard
+                    </h3>
+                    <div className="space-y-4">
+                      {sc.dimensions.map((dim, i) => (
+                        <ScoreBar key={i} dim={dim} />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Reasoning */}
                 <div className="border-l-2 border-indigo-600 pl-5">

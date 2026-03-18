@@ -1,4 +1,5 @@
 import type { PipelineContext } from '../types';
+import { buildIdeaLines } from '../shared';
 
 export const SYSTEM_PROMPT = `당신은 비즈니스 타당성 분석가입니다. 사업 아이디어의 Go-to-Market 전략을 수립합니다.
 장밋빛 전망 금지. 솔직하고 현실적으로 평가하세요.
@@ -42,7 +43,7 @@ export function buildUserMessage(ctx: PipelineContext): string {
   const parts = [`다음 사업 아이디어의 GTM(Go-to-Market) 전략을 수립해 주세요.`];
 
   if (idea) {
-    parts.push('', `아이디어: ${idea.name}`, `설명: ${idea.description}`);
+    parts.push('', ...buildIdeaLines(idea));
   }
 
   if (overview) {
@@ -90,7 +91,7 @@ export function buildWebMCPUserMessage(ctx: PipelineContext, research: string): 
   ];
 
   if (idea) {
-    parts.push('', `아이디어: ${idea.name}`, `설명: ${idea.description}`);
+    parts.push('', ...buildIdeaLines(idea));
   }
 
   if (overview) {

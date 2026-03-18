@@ -102,6 +102,20 @@ export const DEPENDENCY_MAP: Partial<Record<SectionType, SectionType[]>> = {
   'action-plan': ['business-model', 'risk-assessment'],
 };
 
+/** Build idea context lines for prompts — handles both simple and document modes. */
+export function buildIdeaLines(idea: { name: string; description: string; document?: string; targetMarket?: string }): string[] {
+  const lines = [`아이디어: ${idea.name}`];
+  if (idea.document) {
+    lines.push('', '=== 기획서 (요약) ===', idea.document.slice(0, 8000), '===');
+  } else {
+    lines.push(`설명: ${idea.description}`);
+  }
+  if (idea.targetMarket) {
+    lines.push(`타겟 시장: ${idea.targetMarket}`);
+  }
+  return lines;
+}
+
 /** Check if all required upstream deps are present in context. */
 export function checkDependencies(
   sectionType: SectionType,
