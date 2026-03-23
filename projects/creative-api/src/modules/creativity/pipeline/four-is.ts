@@ -1,4 +1,25 @@
-/** 4I's 풀 파이프라인: Immersion → Inspiration → Isolation → Iteration */
+/** 4I's 풀 파이프라인: Immersion → Inspiration → Isolation → Iteration
+ *
+ * 학술 근거: Digital Creativity 수업자료 섹션 4 (슬라이드 10-16)
+ *
+ * Isolation 재해석 노트:
+ * 원래 4I's에서 Isolation = "마음을 비우고, 명상처럼, 억지로 하지 않기" (슬라이드 13)
+ * 이는 인간의 잠재의식 처리를 위한 의도적 비활동.
+ *
+ * AI 에이전트는 "명상"이 불가능하므로, 우리는 Isolation을 다음과 같이 재해석:
+ * → "다른 에이전트의 편향 없이 독립적으로 사고" (Independent Evaluation)
+ * → 각 evaluator가 다른 에이전트의 결과를 보지 않고 독립 평가
+ * → Amabile의 3요소 기준으로 객관적 점수 부여
+ *
+ * 이 재해석은 Isolation의 핵심 의도(편향 제거, 새로운 관점)를 보존하면서
+ * 계산적으로 구현 가능한 형태로 변환한 것.
+ *
+ * 참고 문헌:
+ * - Guilford, J.P. (1967). The Nature of Human Intelligence.
+ * - Amabile, T.M. (1996). Creativity in Context.
+ * - Csikszentmihalyi, M. (1996). Creativity: Flow and the Psychology of Discovery.
+ * - Finke, R.A., Ward, T.B., & Smith, S.M. (1992). Creative Cognition.
+ */
 
 import type { CreativeSession, PhaseResult } from '@/types/session';
 import type { Idea } from '@/types/creativity';
