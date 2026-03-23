@@ -1,7 +1,7 @@
 /** Memgraph 쿼리 결과 → react-force-graph-3d 데이터 변환 */
 
 import type { GraphNode, GraphEdge, Graph3DData, Graph3DNode, Graph3DLink, NodeType, EdgeType } from '@/types/graph';
-import { NODE_STYLES, EDGE_STYLES } from '@/config/graph-styles';
+import { NODE_STYLES, getEdgeStyle } from '@/config/graph-styles';
 
 export function toGraph3D(nodes: GraphNode[], edges: GraphEdge[]): Graph3DData {
   const graph3dNodes: Graph3DNode[] = nodes.map((n) => {
@@ -22,7 +22,7 @@ export function toGraph3D(nodes: GraphNode[], edges: GraphEdge[]): Graph3DData {
   const graph3dLinks: Graph3DLink[] = edges
     .filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target))
     .map((e) => {
-      const style = EDGE_STYLES[e.type] ?? EDGE_STYLES.RELATED_TO;
+      const style = getEdgeStyle(e.type);
       return {
         source: e.source,
         target: e.target,

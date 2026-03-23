@@ -2,7 +2,7 @@
 
 import { useRef, useCallback, useEffect, useState } from 'react';
 import type { Graph3DData, Graph3DNode } from '@/types/graph';
-import { GRAPH_BG, NODE_STYLES, EDGE_STYLES, BLOOM_CONFIG, CAMERA_CONFIG } from '@/config/graph-styles';
+import { GRAPH_BG, NODE_STYLES, EDGE_STYLES, getEdgeStyle, BLOOM_CONFIG, CAMERA_CONFIG } from '@/config/graph-styles';
 
 // react-force-graph-3d는 SSR 불가 → next/dynamic으로 로드
 // 이 컴포넌트 자체가 'use client'이고, 부모에서 dynamic import
@@ -144,24 +144,24 @@ export default function ForceGraph3DComponent({
         nodeOpacity={0.9}
         // 엣지
         linkColor={(link: any) => {
-          const style = EDGE_STYLES[link.type as keyof typeof EDGE_STYLES];
+          const style = getEdgeStyle(link.type);
           return style?.color ?? '#333';
         }}
         linkWidth={(link: any) => {
-          const style = EDGE_STYLES[link.type as keyof typeof EDGE_STYLES];
+          const style = getEdgeStyle(link.type);
           return style?.width ?? 1;
         }}
         linkDirectionalParticles={(link: any) => {
-          const style = EDGE_STYLES[link.type as keyof typeof EDGE_STYLES];
+          const style = getEdgeStyle(link.type);
           return style?.particles ?? 0;
         }}
         linkDirectionalParticleSpeed={(link: any) => {
-          const style = EDGE_STYLES[link.type as keyof typeof EDGE_STYLES];
+          const style = getEdgeStyle(link.type);
           return style?.particleSpeed ?? 0;
         }}
         linkDirectionalParticleWidth={2}
         linkDirectionalParticleColor={(link: any) => {
-          const style = EDGE_STYLES[link.type as keyof typeof EDGE_STYLES];
+          const style = getEdgeStyle(link.type);
           return style?.color ?? '#666';
         }}
         linkOpacity={0.6}

@@ -1,42 +1,23 @@
-/** Graph DB 노드/엣지 타입 정의 — Memgraph Cypher 호환
+/** Graph DB 타입 정의 — 4계층 온톨로지 + 3D 시각화
  *
  * 온톨로지 설계 근거:
- * - Barrios et al. (2020). "Multi-agent system and ontology to manage ideas" (arxiv:2009.05282)
- *   → 아이디어 간 의미 관계 정형화: similarity, opposition, causation, composition
- * - Csikszentmihalyi (1996). Domain의 "규칙, 상징, 관습"을 그래프 구조로 표현
+ * - Barrios et al. (2020) — 아이디어 온톨로지 (arxiv:2009.05282)
+ * - Csikszentmihalyi (1996) — Domain의 규칙/관습을 그래프로 표현
+ * - Rhodes (1961) — 4P's: Person(Agent), Process(Session), Product(Artifact), Press(Domain)
+ * - Finke et al. (1992) — Geneplore maturity stages (raw→explored→refined→validated)
+ *
+ * 상세 스키마 + 노드별 인터페이스: modules/graph/schema.ts
  */
 
-export type NodeType = 'Idea' | 'Concept' | 'Domain' | 'Output' | 'Session';
+import type { EdgeType as SchemaEdgeType } from '@/modules/graph/schema';
 
-/** 엣지 타입 — 창의성 관계 + 의미 관계 (온톨로지)
- *
- * 창의성 관계 (이론 기반):
- *   INSPIRED_BY, ITERATED_FROM, COMBINES, SCAMPER_OF — 아이디어 생성 과정 추적
- *
- * 의미 관계 (온톨로지, Barrios et al. 2020):
- *   CONTRADICTS, CAUSES, PART_OF, SIMILAR_TO, GENERALIZES, SPECIALIZES — 아이디어 간 의미 구조
- *
- * 소속 관계:
- *   BELONGS_TO, PRODUCED_IN, RELATED_TO — 도메인/세션 연결
- */
-export type EdgeType =
-  // 창의성 관계 (이론 기반)
-  | 'INSPIRED_BY'       // ~에서 영감 (4I's Inspiration)
-  | 'ITERATED_FROM'     // ~의 변주/진화 (4I's Iteration, Geneplore Explore)
-  | 'COMBINES'          // 두 아이디어 결합 (SCAMPER Combine)
-  | 'SCAMPER_OF'        // SCAMPER 기법 적용 결과
-  // 의미 관계 (온톨로지)
-  | 'CONTRADICTS'       // 반대/모순 관계
-  | 'CAUSES'            // 인과 관계
-  | 'PART_OF'           // 부분-전체 (composition)
-  | 'SIMILAR_TO'        // 유사 관계
-  | 'GENERALIZES'       // 일반화 (하위→상위)
-  | 'SPECIALIZES'       // 특수화 (상위→하위)
-  // 소속 관계
-  | 'BELONGS_TO'        // 도메인/세션 소속
-  | 'PRODUCED_IN'       // 세션에서 생성됨
-  | 'RELATED_TO';       // 일반 관계
+/** 노드 타입 — 4계층(Domain>Topic>Idea>Artifact) + 보조(Concept, Session, Agent) */
+export type NodeType = 'Domain' | 'Topic' | 'Idea' | 'Artifact' | 'Concept' | 'Session' | 'Agent';
 
+/** 엣지 타입 — schema.ts에서 정의된 3계층 union */
+export type EdgeType = SchemaEdgeType;
+
+/** 범용 그래프 노드 (시각화/API용) */
 export interface GraphNode {
   id: string;
   type: NodeType;
@@ -44,25 +25,31 @@ export interface GraphNode {
   description?: string;
   metadata?: Record<string, unknown>;
   createdAt: string;
-  /** 생성에 사용된 기법 */
   method?: string;
-  /** 생성한 에이전트 */
   authorAgent?: string;
-  /** 점수 (0-100) */
   score?: number;
+  /** 계층 레벨 (0=Domain, 1=Topic, 2=Idea, 3=Artifact) */
+  level?: number;
+  /** 부모 노드 ID (계층 구조) */
+  parentId?: string;
 }
 
 export interface GraphEdge {
   id: string;
   source: string;
   target: string;
-  type: EdgeType;
+  type: string;
   label?: string;
   weight?: number;
+  /** 엣지 카테고리 */
+  category?: 'creation' | 'semantic' | 'structural';
   createdAt: string;
 }
 
-/** react-force-graph-3d 렌더링용 변환 데이터 */
+// ═══════════════════════════════════════════
+// 3D 시각화용 타입
+// ═══════════════════════════════════════════
+
 export interface Graph3DData {
   nodes: Graph3DNode[];
   links: Graph3DLink[];
@@ -72,25 +59,26 @@ export interface Graph3DNode {
   id: string;
   name: string;
   type: NodeType;
-  val: number;       // 노드 크기
+  val: number;
   color: string;
   description?: string;
   score?: number;
   method?: string;
+  level?: number;
 }
 
 export interface Graph3DLink {
   source: string;
   target: string;
-  type: EdgeType;
+  type: string;
   color: string;
   width: number;
   curvature?: number;
   particles?: number;
   particleSpeed?: number;
+  category?: 'creation' | 'semantic' | 'structural';
 }
 
-/** Memgraph 쿼리 결과 래퍼 */
 export interface GraphQueryResult {
   nodes: GraphNode[];
   edges: GraphEdge[];

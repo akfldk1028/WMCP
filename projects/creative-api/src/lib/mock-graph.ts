@@ -1,11 +1,11 @@
 /** 목업 그래프 데이터 — Neo4j 연결 전 시각 확인용 */
 
 import type { Graph3DData } from '@/types/graph';
-import { NODE_STYLES, EDGE_STYLES } from '@/config/graph-styles';
+import { NODE_STYLES, EDGE_STYLES, getEdgeStyle } from '@/config/graph-styles';
 
 export function generateMockGraph(nodeCount = 60, edgeCount = 90): Graph3DData {
-  const types = ['Idea', 'Concept', 'Domain', 'Output', 'Session'] as const;
-  const edgeTypes = ['INSPIRED_BY', 'ITERATED_FROM', 'COMBINES', 'SCAMPER_OF', 'BELONGS_TO', 'PRODUCED_IN'] as const;
+  const types = ['Idea', 'Concept', 'Domain', 'Topic', 'Artifact', 'Session', 'Agent'] as const;
+  const edgeTypes = ['INSPIRED_BY', 'ITERATED_FROM', 'COMBINED_FROM', 'SCAMPER_OF', 'BELONGS_TO', 'PRODUCED_IN', 'SIMILAR_TO', 'ADDRESSES_TOPIC', 'USES_CONCEPT'] as const;
 
   const ideaNames = [
     'AI 요리 비서', '음악 생성 에이전트', '코드 리뷰 봇', '자동 번역 파이프라인',
@@ -66,13 +66,13 @@ export function generateMockGraph(nodeCount = 60, edgeCount = 90): Graph3DData {
     });
   }
 
-  // Output 노드
+  // Artifact 노드
   for (let i = 0; i < 5; i++) {
-    const style = NODE_STYLES.Output;
+    const style = NODE_STYLES.Artifact;
     nodes.push({
       id: `output-${i}`,
-      name: `Final Output #${i + 1}`,
-      type: 'Output',
+      name: `Final Artifact #${i + 1}`,
+      type: 'Artifact',
       val: style.size,
       color: style.color,
       score: Math.floor(80 + Math.random() * 20),
@@ -102,7 +102,7 @@ export function generateMockGraph(nodeCount = 60, edgeCount = 90): Graph3DData {
       target = nodeIds[Math.floor(Math.random() * nodeIds.length)];
     }
     const edgeType = edgeTypes[Math.floor(Math.random() * edgeTypes.length)];
-    const style = EDGE_STYLES[edgeType];
+    const style = getEdgeStyle(edgeType);
 
     links.push({
       source,
@@ -127,19 +127,19 @@ export const SEED_ITERATION_CHAIN: Graph3DData = {
     { id: 'art-4', name: 'Dejeuner sur l\'Herbe (Picasso, 1961)', type: 'Idea', val: 10, color: NODE_STYLES.Idea.color, description: 'Cubist reinterpretation — Iteration of Manet', score: 92 },
     { id: 'art-5', name: 'Dejeuner sur l\'Herbe (Deandrea, 1982)', type: 'Idea', val: 8, color: NODE_STYLES.Idea.color, description: 'Hyperrealist sculpture — Iteration to 3D medium' },
     { id: 'art-6', name: 'New Luncheon (Ron English, 1994)', type: 'Idea', val: 7, color: NODE_STYLES.Idea.color, description: 'Pop art parody — Iteration with cultural commentary' },
-    { id: 'art-7', name: 'YSL Advertisement', type: 'Output', val: 12, color: NODE_STYLES.Output.color, description: 'Commercial application — Fashion industry appropriation', score: 88 },
+    { id: 'art-7', name: 'YSL Advertisement', type: 'Artifact', val: 12, color: NODE_STYLES.Artifact.color, description: 'Commercial application — Fashion industry appropriation', score: 88 },
     { id: 'concept-iter', name: 'Iteration (Creative Theory)', type: 'Concept', val: 6, color: NODE_STYLES.Concept.color },
     { id: 'domain-art', name: 'Fine Art', type: 'Domain', val: 5, color: NODE_STYLES.Domain.color },
   ],
   links: [
-    { source: 'art-2', target: 'art-1', type: 'ITERATED_FROM', color: EDGE_STYLES.ITERATED_FROM.color, width: 2.5, particles: 5, particleSpeed: 0.008 },
-    { source: 'art-2', target: 'art-3', type: 'INSPIRED_BY', color: EDGE_STYLES.INSPIRED_BY.color, width: 1.5, particles: 3, particleSpeed: 0.004 },
-    { source: 'art-4', target: 'art-2', type: 'ITERATED_FROM', color: EDGE_STYLES.ITERATED_FROM.color, width: 2.5, particles: 5, particleSpeed: 0.008 },
-    { source: 'art-5', target: 'art-2', type: 'ITERATED_FROM', color: EDGE_STYLES.ITERATED_FROM.color, width: 2.5, particles: 5, particleSpeed: 0.008 },
-    { source: 'art-6', target: 'art-2', type: 'ITERATED_FROM', color: EDGE_STYLES.ITERATED_FROM.color, width: 2.5, particles: 5, particleSpeed: 0.008 },
-    { source: 'art-7', target: 'art-2', type: 'ITERATED_FROM', color: EDGE_STYLES.ITERATED_FROM.color, width: 2.5, particles: 5, particleSpeed: 0.008 },
-    { source: 'art-1', target: 'concept-iter', type: 'RELATED_TO', color: EDGE_STYLES.RELATED_TO.color, width: 0.8 },
-    { source: 'art-1', target: 'domain-art', type: 'BELONGS_TO', color: EDGE_STYLES.BELONGS_TO.color, width: 1.0 },
-    { source: 'art-2', target: 'domain-art', type: 'BELONGS_TO', color: EDGE_STYLES.BELONGS_TO.color, width: 1.0 },
+    { source: 'art-2', target: 'art-1', type: 'ITERATED_FROM', color: getEdgeStyle('ITERATED_FROM').color, width: 2.5, particles: 5, particleSpeed: 0.008 },
+    { source: 'art-2', target: 'art-3', type: 'INSPIRED_BY', color: getEdgeStyle('INSPIRED_BY').color, width: 1.5, particles: 3, particleSpeed: 0.004 },
+    { source: 'art-4', target: 'art-2', type: 'ITERATED_FROM', color: getEdgeStyle('ITERATED_FROM').color, width: 2.5, particles: 5, particleSpeed: 0.008 },
+    { source: 'art-5', target: 'art-2', type: 'ITERATED_FROM', color: getEdgeStyle('ITERATED_FROM').color, width: 2.5, particles: 5, particleSpeed: 0.008 },
+    { source: 'art-6', target: 'art-2', type: 'ITERATED_FROM', color: getEdgeStyle('ITERATED_FROM').color, width: 2.5, particles: 5, particleSpeed: 0.008 },
+    { source: 'art-7', target: 'art-2', type: 'ITERATED_FROM', color: getEdgeStyle('ITERATED_FROM').color, width: 2.5, particles: 5, particleSpeed: 0.008 },
+    { source: 'art-1', target: 'concept-iter', type: 'RELATED_TO', color: getEdgeStyle('USES_CONCEPT').color, width: 0.8 },
+    { source: 'art-1', target: 'domain-art', type: 'BELONGS_TO', color: getEdgeStyle('BELONGS_TO').color, width: 1.0 },
+    { source: 'art-2', target: 'domain-art', type: 'BELONGS_TO', color: getEdgeStyle('BELONGS_TO').color, width: 1.0 },
   ],
 };
