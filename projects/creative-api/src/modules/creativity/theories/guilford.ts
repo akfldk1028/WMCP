@@ -1,4 +1,20 @@
-/** Guilford SI Model — 발산/수렴 사고 엔진 */
+/** Guilford's Structure of Intellect (SI) Model — 발산/수렴 사고 엔진
+ *
+ * 학술 근거: Guilford, J.P. (1967). The Nature of Human Intelligence.
+ * 수업자료 슬라이드 3: SI 모델의 6가지 인지 작업
+ *
+ * 구현 범위:
+ *   1. Cognition (이해) — 시스템 전반의 context 파싱으로 암묵적 구현
+ *   2. Memory recording (인코딩) — Graph DB에 아이디어 저장으로 구현
+ *   3. Memory retention (회상) — Graph DB에서 관련 아이디어 검색으로 구현
+ *   4. Divergent production ← divergentGenerate() ✅ 핵심 구현
+ *   5. Convergent production ← convergentSelect() ✅ 핵심 구현
+ *   6. Evaluation (판단) — Amabile 3요소 평가 체계로 대체 구현
+ *      (Guilford의 Evaluation = "정보가 정확/일관적인지 판단"
+ *       → Amabile의 domainRelevance + creativeThinking으로 더 세분화)
+ *
+ * Key Idea: "양이 질보다 먼저" — 발산 단계에서는 비판 없이 최대한 많이 생성
+ */
 
 import Anthropic from '@anthropic-ai/sdk';
 import { CREATIVE_SYSTEM_PROMPT } from '../prompts/system';

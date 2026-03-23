@@ -22,10 +22,19 @@ export const EDGE_STYLES: Record<EdgeType, {
   particleSpeed: number;
   dash?: boolean;
 }> = {
+  // 창의성 관계
   INSPIRED_BY:    { color: '#4FC3F7', width: 1.5, particles: 3, particleSpeed: 0.004, dash: true },
   ITERATED_FROM:  { color: '#FFD700', width: 2.5, particles: 5, particleSpeed: 0.008 },
   COMBINES:       { color: '#E040FB', width: 2.0, particles: 4, particleSpeed: 0.006 },
   SCAMPER_OF:     { color: '#FF5252', width: 1.5, particles: 3, particleSpeed: 0.005, dash: true },
+  // 의미 관계 (온톨로지)
+  CONTRADICTS:    { color: '#F44336', width: 2.0, particles: 2, particleSpeed: 0.003, dash: true },
+  CAUSES:         { color: '#FF9800', width: 1.8, particles: 3, particleSpeed: 0.005 },
+  PART_OF:        { color: '#8BC34A', width: 1.2, particles: 0, particleSpeed: 0 },
+  SIMILAR_TO:     { color: '#00BCD4', width: 1.0, particles: 1, particleSpeed: 0.002, dash: true },
+  GENERALIZES:    { color: '#9C27B0', width: 1.3, particles: 0, particleSpeed: 0 },
+  SPECIALIZES:    { color: '#673AB7', width: 1.3, particles: 0, particleSpeed: 0 },
+  // 소속 관계
   BELONGS_TO:     { color: '#66BB6A', width: 1.0, particles: 0, particleSpeed: 0 },
   PRODUCED_IN:    { color: '#AB47BC', width: 1.0, particles: 2, particleSpeed: 0.003 },
   RELATED_TO:     { color: '#9E9E9E', width: 0.8, particles: 0, particleSpeed: 0 },

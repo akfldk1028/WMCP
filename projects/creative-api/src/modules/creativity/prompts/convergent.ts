@@ -22,11 +22,12 @@ ${ideasList}
 Evaluation criteria: ${criteriaText}
 
 For each idea, score on Amabile's 3 components (0-100):
-- domainRelevance: How well does it fit the domain's knowledge and standards?
-- creativeThinking: How novel, surprising, and non-obvious is it?
-- motivation: How feasible and motivating is it to implement?
+- domainRelevance: How well does it fit the domain's knowledge, technical skills, and standards? (Amabile: "Domain-relevant skills")
+- creativeThinking: How novel, surprising, and non-obvious is it? Does it show cognitive flexibility and willingness to take risks? (Amabile: "Creative thinking skills")
+- motivation: How intrinsically interesting and compelling is this idea? Would someone pursue it out of genuine curiosity and enjoyment, not just for rewards? (Amabile: "Intrinsic motivation" — intrinsic > extrinsic)
 
 overall = domainRelevance * 0.3 + creativeThinking * 0.5 + motivation * 0.2
+NOTE: creativeThinking is weighted highest (50%) because Amabile emphasizes that creative thinking skills — cognitive flexibility, openness to new ideas — are the primary differentiator.
 
 ${JSON_INSTRUCTION}
 
