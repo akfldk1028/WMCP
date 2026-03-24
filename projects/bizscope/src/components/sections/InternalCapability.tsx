@@ -26,7 +26,7 @@ export default function InternalCapability({ data, subPage }: Props) {
                 <div>
                   {cap.strengths.map((s, i) => (
                     <p key={i} className="py-1 text-sm text-muted-foreground">
-                      <span className="mr-2 text-xs font-bold text-sky-600">S{i + 1}</span>{s}
+                      <span className="mr-2 text-xs font-bold text-sky-600">{s.id}</span>{s.description}
                     </p>
                   ))}
                   {cap.strengths.length === 0 && <p className="py-1 text-sm text-muted-foreground/50">—</p>}
@@ -34,7 +34,7 @@ export default function InternalCapability({ data, subPage }: Props) {
                 <div>
                   {cap.weaknesses.map((w, i) => (
                     <p key={i} className="py-1 text-sm text-muted-foreground">
-                      <span className="mr-2 text-xs font-bold text-rose-500">W{i + 1}</span>{w}
+                      <span className="mr-2 text-xs font-bold text-rose-500">{w.id}</span>{w.description}
                     </p>
                   ))}
                   {cap.weaknesses.length === 0 && <p className="py-1 text-sm text-muted-foreground/50">—</p>}
@@ -53,8 +53,8 @@ export default function InternalCapability({ data, subPage }: Props) {
             <div className="mt-3 divide-y">
               {data.overallStrengths.map((s, i) => (
                 <div key={i} className="flex gap-3 py-3">
-                  <span className="w-5 shrink-0 text-sm font-bold tabular-nums text-sky-600">{String(i + 1).padStart(2, '0')}</span>
-                  <p className="text-sm leading-relaxed">{s}</p>
+                  <span className="w-5 shrink-0 text-sm font-bold tabular-nums text-sky-600">{s.id}</span>
+                  <p className="text-sm leading-relaxed">{s.description}</p>
                 </div>
               ))}
             </div>
@@ -64,8 +64,8 @@ export default function InternalCapability({ data, subPage }: Props) {
             <div className="mt-3 divide-y">
               {data.overallWeaknesses.map((w, i) => (
                 <div key={i} className="flex gap-3 py-3">
-                  <span className="w-5 shrink-0 text-sm font-bold tabular-nums text-rose-500">{String(i + 1).padStart(2, '0')}</span>
-                  <p className="text-sm leading-relaxed">{w}</p>
+                  <span className="w-5 shrink-0 text-sm font-bold tabular-nums text-rose-500">{w.id}</span>
+                  <p className="text-sm leading-relaxed">{w.description}</p>
                 </div>
               ))}
             </div>

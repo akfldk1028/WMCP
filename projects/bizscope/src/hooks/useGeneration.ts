@@ -11,7 +11,7 @@ import type {
   ReportMode,
   IdeaInput,
 } from '@/frameworks/types';
-import { SECTION_TITLES, getSectionOrder } from '@/frameworks/types';
+import { SECTION_TITLES, getSectionTitles, getSectionOrder } from '@/frameworks/types';
 import { CONTEXT_KEYS, DEPENDENCY_MAP } from '@/frameworks/shared';
 import { saveReport } from '@/lib/store';
 import {
@@ -20,15 +20,17 @@ import {
   incrementUsage,
   FREE_REPORT_LIMIT,
 } from '@/lib/license-client';
+import { useLocale } from '@/i18n';
 
-function createEmptyReport(name: string, mode: ReportMode, ideaInput?: IdeaInput): Report {
+function createEmptyReport(name: string, mode: ReportMode, ideaInput?: IdeaInput, locale?: string): Report {
   const now = Date.now();
   const id = `rpt_${now}_${Math.random().toString(36).slice(2, 8)}`;
   const order = getSectionOrder(mode);
+  const titles = locale ? getSectionTitles(locale) : SECTION_TITLES;
 
   const sections: ReportSection[] = order.map((type) => ({
     type,
-    title: SECTION_TITLES[type],
+    title: titles[type],
     status: 'pending' as const,
     data: null,
   }));
@@ -70,6 +72,7 @@ function buildExecutionLevels(order: SectionType[]): SectionType[][] {
 }
 
 export function useGeneration() {
+  const { locale, t } = useLocale();
   const [report, setReport] = useState<Report | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +95,7 @@ export function useGeneration() {
     if (!licenseKey) {
       // Free user — check localStorage counter
       if (getUsageCount() >= FREE_REPORT_LIMIT) {
-        setError('무료 분석 한도(2건)를 초과했습니다. 가격 페이지에서 업그레이드하세요.');
+        setError(`[PRICING] ${t.ui.errors.freeLimitExceeded}`);
         return null;
       }
     } else {
@@ -105,11 +108,11 @@ export function useGeneration() {
         });
         const checkData = await checkRes.json();
         if (!checkData.valid) {
-          setError('라이선스 키가 유효하지 않습니다. 가격 페이지에서 확인하세요.');
+          setError(`[PRICING] ${t.ui.errors.invalidLicense}`);
           return null;
         }
         if (checkData.plan === 'credits' && checkData.credits <= 0) {
-          setError('크레딧이 부족합니다. 추가 구매가 필요합니다.');
+          setError(`[PRICING] ${t.ui.errors.insufficientCredits}`);
           return null;
         }
         // Deduct one credit for credits-plan users
@@ -120,7 +123,7 @@ export function useGeneration() {
             body: JSON.stringify({ licenseKey }),
           });
           if (!useRes.ok) {
-            setError('크레딧 차감에 실패했습니다. 다시 시도해주세요.');
+            setError(t.ui.errors.creditDeductionFailed);
             return null;
           }
         }
@@ -132,7 +135,7 @@ export function useGeneration() {
     setIsGenerating(true);
 
     const displayName = mode === 'idea' ? (ideaInput?.name ?? companyName) : companyName;
-    const newReport = createEmptyReport(displayName, mode, ideaInput);
+    const newReport = createEmptyReport(displayName, mode, ideaInput, locale);
     reportRef.current = newReport;
     setReport(newReport);
     saveReport(newReport);
@@ -144,79 +147,23 @@ export function useGeneration() {
     };
 
     try {
-      if (mode === 'idea') {
-        // Parallel level-based execution for idea mode
-        const levels = buildExecutionLevels(order);
+      // Parallel level-based execution for BOTH company and idea modes
+      const levels = buildExecutionLevels(order);
 
-        for (const level of levels) {
-          // Mark all sections in this level as generating
-          for (const sectionType of level) {
-            const idx = order.indexOf(sectionType);
-            updateReport((prev) => {
-              const sections = [...prev.sections];
-              sections[idx] = { ...sections[idx], status: 'generating' };
-              return { ...prev, sections, updatedAt: Date.now() };
-            });
-          }
-
-          // Run all sections in this level in parallel
-          const results = await Promise.allSettled(
-            level.map(async (sectionType) => {
-              const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-              if (licenseKey) headers['x-license-key'] = licenseKey;
-              const res = await fetch(`/api/section/${sectionType}`, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({ companyName: displayName, context: ctx, mode, ideaInput }),
-              });
-              if (!res.ok) {
-                const errBody = await res.json().catch(() => ({ error: res.statusText }));
-                throw new Error(errBody.error ?? `HTTP ${res.status}`);
-              }
-              return { sectionType, data: (await res.json()) as SectionData };
-            }),
-          );
-
-          // Process results and accumulate context for the next level
-          for (let r = 0; r < results.length; r++) {
-            const result = results[r];
-            if (result.status === 'fulfilled') {
-              const { sectionType, data } = result.value;
-              const idx = order.indexOf(sectionType);
-              const ctxKey = CONTEXT_KEYS[sectionType];
-              if (ctxKey) {
-                (ctx as unknown as Record<string, unknown>)[ctxKey] = data;
-              }
-              updateReport((prev) => {
-                const sections = [...prev.sections];
-                sections[idx] = { ...sections[idx], status: 'completed', data };
-                return { ...prev, sections, updatedAt: Date.now() };
-              });
-            } else {
-              const failedSection = level[r];
-              const idx = order.indexOf(failedSection);
-              const message = result.reason instanceof Error ? result.reason.message : 'Unknown error';
-              updateReport((prev) => {
-                const sections = [...prev.sections];
-                sections[idx] = { ...sections[idx], status: 'error', error: message };
-                return { ...prev, sections, updatedAt: Date.now() };
-              });
-            }
-          }
-        }
-      } else {
-        // Sequential execution for company mode
-        for (let i = 0; i < order.length; i++) {
-          const sectionType = order[i];
-
-          // Mark section as generating
+      for (const level of levels) {
+        // Mark all sections in this level as generating
+        for (const sectionType of level) {
+          const idx = order.indexOf(sectionType);
           updateReport((prev) => {
             const sections = [...prev.sections];
-            sections[i] = { ...sections[i], status: 'generating' };
+            sections[idx] = { ...sections[idx], status: 'generating' };
             return { ...prev, sections, updatedAt: Date.now() };
           });
+        }
 
-          try {
+        // Run all sections in this level in parallel
+        const results = await Promise.allSettled(
+          level.map(async (sectionType) => {
             const headers: Record<string, string> = { 'Content-Type': 'application/json' };
             if (licenseKey) headers['x-license-key'] = licenseKey;
             const res = await fetch(`/api/section/${sectionType}`, {
@@ -224,30 +171,34 @@ export function useGeneration() {
               headers,
               body: JSON.stringify({ companyName: displayName, context: ctx, mode, ideaInput }),
             });
-
             if (!res.ok) {
               const errBody = await res.json().catch(() => ({ error: res.statusText }));
               throw new Error(errBody.error ?? `HTTP ${res.status}`);
             }
+            return { sectionType, data: (await res.json()) as SectionData };
+          }),
+        );
 
-            const data: SectionData = await res.json();
-
-            // Accumulate context for subsequent sections
+        // Process results and accumulate context
+        for (let r = 0; r < results.length; r++) {
+          const result = results[r];
+          if (result.status === 'fulfilled') {
+            const { sectionType, data } = result.value;
+            const idx = order.indexOf(sectionType);
             const ctxKey = CONTEXT_KEYS[sectionType];
             if (ctxKey) {
               (ctx as unknown as Record<string, unknown>)[ctxKey] = data;
             }
 
-            // Update industry from company overview
+            // Extract industry from company overview
             const industry =
               sectionType === 'company-overview'
                 ? (data as CompanyOverviewData).industry
                 : undefined;
 
-            // Mark section as completed
             updateReport((prev) => {
               const sections = [...prev.sections];
-              sections[i] = { ...sections[i], status: 'completed', data };
+              sections[idx] = { ...sections[idx], status: 'completed', data };
               return {
                 ...prev,
                 sections,
@@ -255,13 +206,13 @@ export function useGeneration() {
                 ...(industry ? { industry } : {}),
               };
             });
-          } catch (err) {
-            const message = err instanceof Error ? err.message : 'Unknown error';
-
-            // Mark section as error but continue to next
+          } else {
+            const failedSection = level[r];
+            const idx = order.indexOf(failedSection);
+            const message = result.reason instanceof Error ? result.reason.message : 'Unknown error';
             updateReport((prev) => {
               const sections = [...prev.sections];
-              sections[i] = { ...sections[i], status: 'error', error: message };
+              sections[idx] = { ...sections[idx], status: 'error', error: message };
               return { ...prev, sections, updatedAt: Date.now() };
             });
           }
@@ -293,7 +244,7 @@ export function useGeneration() {
 
     setIsGenerating(false);
     return reportRef.current;
-  }, [updateReport]);
+  }, [updateReport, locale, t]);
 
   const progress = report
     ? {

@@ -46,6 +46,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Validate deviceId format (UUID or alphanumeric, max 64 chars)
+  if (typeof body.deviceId !== 'string' || body.deviceId.length > 64 || !/^[a-zA-Z0-9_-]+$/.test(body.deviceId)) {
+    return NextResponse.json(
+      { error: 'Invalid deviceId format.' },
+      { status: 400 },
+    );
+  }
+
   // Pro license check — if valid, skip rate limit
   let isPro = false;
   if (body.licenseKey && typeof body.licenseKey === 'string') {

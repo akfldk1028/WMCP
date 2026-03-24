@@ -1,11 +1,9 @@
 /** SCAMPER 7기법 구현 */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { llmGenerateJSON } from '@/modules/llm/client';
 import type { Idea, ScamperType } from '@/types/creativity';
 import { CREATIVE_SYSTEM_PROMPT } from '../prompts/system';
 import { buildScamperPrompt, buildFullScamperPrompt } from '../prompts/scamper';
-
-const anthropic = new Anthropic();
 
 /** 단일 SCAMPER 기법 적용 */
 export async function scamperTransform(idea: Idea, technique: ScamperType): Promise<Idea> {
@@ -14,20 +12,12 @@ export async function scamperTransform(idea: Idea, technique: ScamperType): Prom
     technique
   );
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1024,
-    system: CREATIVE_SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: prompt }],
-  });
-
-  const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  const parsed = JSON.parse(text) as {
+  const parsed = await llmGenerateJSON<{
     title: string;
     description: string;
     transformation: string;
     noveltyScore: number;
-  };
+  }>({ prompt, system: CREATIVE_SYSTEM_PROMPT, maxTokens: 1024 });
 
   return {
     id: `scamper-${technique}-${Date.now()}`,
@@ -53,17 +43,9 @@ export async function scamperFullSweep(idea: Idea): Promise<Idea[]> {
     description: idea.description,
   });
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
-    system: CREATIVE_SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: prompt }],
-  });
-
-  const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  const parsed = JSON.parse(text) as {
+  const parsed = await llmGenerateJSON<{
     results: { technique: ScamperType; title: string; description: string; transformation: string }[];
-  };
+  }>({ prompt, system: CREATIVE_SYSTEM_PROMPT, maxTokens: 4096 });
 
   return parsed.results.map((r) => ({
     id: `scamper-${r.technique}-${Date.now()}`,

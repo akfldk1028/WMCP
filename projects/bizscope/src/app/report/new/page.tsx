@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Loader2, Building2, Lightbulb, FileText, Type, Settings, CreditCard } from 'lucide-react';
@@ -11,6 +11,8 @@ import ReportViewer from '@/components/report/ReportViewer';
 import { useGeneration } from '@/hooks/useGeneration';
 import type { ReportMode, IdeaInput } from '@/frameworks/types';
 import { getLicenseKey, setLicenseKey, removeLicenseKey, getFreeRemaining } from '@/lib/license-client';
+import { useLocale } from '@/i18n';
+import LocaleSwitcher from '@/components/LocaleSwitcher';
 
 // SSR disabled — @base-ui/react Popover generates random IDs that cause hydration mismatch
 const CompanyInput = dynamic(() => import('@/components/ui/CompanyInput'), {
@@ -18,9 +20,52 @@ const CompanyInput = dynamic(() => import('@/components/ui/CompanyInput'), {
   loading: () => <div className="h-12 w-full max-w-xl animate-pulse rounded-lg bg-muted" />,
 });
 
+/** Reads URL search params and auto-starts analysis from Chrome extension deep-links */
+function DeepLinkHandler({ setMode, setIdeaName, setIdeaDescription, startGeneration, router }: {
+  setMode: (m: ReportMode) => void;
+  setIdeaName: (s: string) => void;
+  setIdeaDescription: (s: string) => void;
+  startGeneration: (name: string, mode: ReportMode, idea?: IdeaInput) => Promise<{ id: string } | null>;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const searchParams = useSearchParams();
+  const done = useRef(false);
+  useEffect(() => {
+    if (done.current) return;
+    const paramMode = searchParams.get('mode');
+    const company = searchParams.get('company');
+    const idea = searchParams.get('idea');
+    const desc = searchParams.get('desc');
+    const autostart = searchParams.get('autostart');
+
+    if (paramMode === 'idea' && idea) {
+      setMode('idea');
+      setIdeaName(idea);
+      if (desc) setIdeaDescription(desc);
+      if (autostart === '1') {
+        done.current = true;
+        startGeneration(idea, 'idea', { name: idea, description: desc || idea }).then((r) => {
+          if (r) router.push(`/report/${r.id}`);
+        });
+      }
+    } else if (company) {
+      setMode('company');
+      if (autostart === '1') {
+        done.current = true;
+        startGeneration(company, 'company').then((r) => {
+          if (r) router.push(`/report/${r.id}`);
+        });
+      }
+    }
+  }, [searchParams]);
+  return null;
+}
+
 export default function NewReportPage() {
   const router = useRouter();
   const { report, isGenerating, error, startGeneration, progress } = useGeneration();
+  const { t } = useLocale();
+  const { ui } = t;
   const [mode, setMode] = useState<ReportMode>('company');
 
   // Idea input state
@@ -79,7 +124,7 @@ export default function NewReportPage() {
     const ideaInput: IdeaInput = {
       name: ideaName.trim(),
       description: inputMode === 'doc'
-        ? `[기획서 첨부됨] ${ideaDocument.trim().slice(0, 200)}`
+        ? `${ui.reportNew.documentAttached} ${ideaDocument.trim().slice(0, 200)}`
         : ideaDescription.trim(),
       targetMarket: ideaTarget.trim() || undefined,
       document: inputMode === 'doc' ? ideaDocument.trim() : undefined,
@@ -101,19 +146,19 @@ export default function NewReportPage() {
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1.5 text-sm font-bold text-primary">
                 <img src="/logo.png" alt="BS" className="h-9 w-auto" />
-                BizScope AI
+                {ui.appName}
               </span>
               {isGenerating && (
                 <Badge variant="secondary" className="gap-1.5">
                   <Loader2 className="size-3 animate-spin" />
-                  분석 중... {progress.completed}/{progress.total}
+                  {ui.report.progressLabel(progress.completed, progress.total)}
                 </Badge>
               )}
               {!isGenerating && report.status === 'completed' && (
-                <Badge>완료</Badge>
+                <Badge>{ui.report.completed}</Badge>
               )}
               {!isGenerating && report.status === 'error' && (
-                <Badge variant="destructive">오류</Badge>
+                <Badge variant="destructive">{ui.report.error}</Badge>
               )}
             </div>
             <span className="text-sm font-medium text-muted-foreground">{report.companyName}</span>
@@ -140,19 +185,29 @@ export default function NewReportPage() {
   // Initial state: mode selection + input
   return (
     <div className="flex min-h-screen flex-col">
+      <Suspense>
+        <DeepLinkHandler
+          setMode={setMode}
+          setIdeaName={setIdeaName}
+          setIdeaDescription={setIdeaDescription}
+          startGeneration={startGeneration}
+          router={router}
+        />
+      </Suspense>
       <header className="border-b bg-background">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold text-primary">
             <img src="/logo.png" alt="BS" className="h-9 w-auto" />
-            BizScope AI
+            {ui.appName}
           </Link>
           <nav className="flex items-center gap-4">
             <Link href="/pricing" className="text-sm font-medium text-muted-foreground transition hover:text-primary">
-              가격
+              {ui.nav.pricing}
             </Link>
             <Link href="/history" className="text-sm font-medium text-muted-foreground transition hover:text-primary">
-              분석 기록
+              {ui.nav.history}
             </Link>
+            <LocaleSwitcher />
           </nav>
         </div>
       </header>
@@ -165,12 +220,12 @@ export default function NewReportPage() {
               <span className="inline-flex items-center gap-1.5 rounded-full border bg-emerald-500/10 px-3 py-1 text-emerald-600">
                 <CreditCard className="size-3.5" />
                 {licenseInfo?.plan === 'pro' || currentKey
-                  ? (licenseInfo?.plan === 'pro' ? 'Pro 무제한' : `${licenseInfo?.credits ?? '?'}건 남음`)
-                  : '키 활성화됨'}
+                  ? (licenseInfo?.plan === 'pro' ? ui.license.proUnlimited : ui.license.creditsRemaining(licenseInfo?.credits ?? '?'))
+                  : ui.license.keyActivated}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-muted-foreground">
-                Free — {freeRemaining}건 남음
+                {ui.license.freeRemaining(freeRemaining)}
               </span>
             )}
             <button
@@ -178,7 +233,7 @@ export default function NewReportPage() {
               className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition hover:bg-accent hover:text-foreground"
             >
               <Settings className="size-3.5" />
-              {currentKey ? '키 변경' : '키 입력'}
+              {currentKey ? ui.license.changeKey : ui.license.enterKey}
             </button>
           </div>
 
@@ -198,7 +253,7 @@ export default function NewReportPage() {
                   disabled={licenseStatus === 'checking' || !licenseInput.trim()}
                   className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition hover:bg-foreground/90 disabled:opacity-50"
                 >
-                  {licenseStatus === 'checking' ? '확인 중...' : '확인'}
+                  {licenseStatus === 'checking' ? ui.license.checking : ui.license.confirm}
                 </button>
                 {currentKey && (
                   <button
@@ -206,16 +261,16 @@ export default function NewReportPage() {
                     onClick={() => { removeLicenseKey(); setShowLicenseDialog(false); setLicenseInfo(null); }}
                     className="rounded-lg border px-3 py-2 text-sm text-destructive transition hover:bg-destructive/10"
                   >
-                    삭제
+                    {ui.license.remove}
                   </button>
                 )}
               </form>
               {licenseStatus === 'invalid' && (
-                <p className="mt-2 text-xs text-destructive">유효하지 않은 키입니다.</p>
+                <p className="mt-2 text-xs text-destructive">{ui.license.invalidKey}</p>
               )}
               <p className="mt-2 text-xs text-muted-foreground">
-                키가 없으신가요?{' '}
-                <Link href="/pricing" className="text-indigo-600 underline">가격 페이지</Link>에서 구매하세요.
+                {ui.license.noKey}
+                <Link href="/pricing" className="text-indigo-600 underline">{ui.nav.pricing}</Link>{ui.license.buyLink}
               </p>
             </div>
           )}
@@ -231,7 +286,7 @@ export default function NewReportPage() {
               }`}
             >
               <Building2 className="size-4" />
-              기업 분석
+              {ui.reportNew.companyMode}
             </button>
             <button
               onClick={() => setMode('idea')}
@@ -242,15 +297,15 @@ export default function NewReportPage() {
               }`}
             >
               <Lightbulb className="size-4" />
-              아이디어 분석
+              {ui.reportNew.ideaMode}
             </button>
           </div>
 
           {mode === 'company' ? (
             <>
-              <h1 className="text-3xl font-extrabold tracking-tight">기업 전략 분석</h1>
+              <h1 className="text-3xl font-extrabold tracking-tight">{ui.reportNew.companyTitle}</h1>
               <p className="mt-3 text-base text-muted-foreground">
-                NASDAQ / KOSPI 기업을 선택하면 AI가 12개 프레임워크로 보고서를 생성합니다.
+                {ui.reportNew.companySubtitle}
               </p>
 
               <div className="mt-8 flex justify-center">
@@ -259,15 +314,10 @@ export default function NewReportPage() {
 
               {/* Framework preview */}
               <div className="mt-14 grid grid-cols-2 gap-3 text-left sm:grid-cols-4">
-                {[
-                  { num: '1-2', label: 'PEST + 5 Forces', desc: '외부 환경' },
-                  { num: '3-5', label: 'SWOT 종합', desc: '강점/약점/기회/위협' },
-                  { num: '6-9', label: 'TOWS + 전략 우선순위', desc: '교차 전략 도출' },
-                  { num: '10-12', label: '현전략 비교 + 시사점', desc: '실행 계획' },
-                ].map((fw) => (
+                {ui.reportNew.companyChapters.map((fw) => (
                   <Card key={fw.num} size="sm">
                     <CardContent>
-                      <div className="text-xs font-bold text-primary">섹션 {fw.num}</div>
+                      <div className="text-xs font-bold text-primary">{ui.reportNew.sectionLabel} {fw.num}</div>
                       <div className="mt-1 text-sm font-semibold">{fw.label}</div>
                       <div className="mt-0.5 text-xs text-muted-foreground">{fw.desc}</div>
                     </CardContent>
@@ -277,21 +327,21 @@ export default function NewReportPage() {
             </>
           ) : (
             <>
-              <h1 className="text-3xl font-extrabold tracking-tight">아이디어 비즈니스 분석</h1>
+              <h1 className="text-3xl font-extrabold tracking-tight">{ui.reportNew.ideaTitle}</h1>
               <p className="mt-3 text-base text-muted-foreground">
-                앱/서비스 아이디어를 입력하면 AI가 비즈니스 타당성을 분석합니다.
+                {ui.reportNew.ideaSubtitle}
               </p>
 
               <form onSubmit={handleIdeaSubmit} className="mt-8 space-y-4 text-left">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium">
-                    아이디어 이름 <span className="text-destructive">*</span>
+                    {ui.reportNew.ideaNameLabel} <span className="text-destructive">*</span>
                   </label>
                   <input
                     type="text"
                     value={ideaName}
                     onChange={(e) => setIdeaName(e.target.value)}
-                    placeholder="예: AI 가격 비교 에이전트"
+                    placeholder={ui.reportNew.ideaNamePlaceholder}
                     className="w-full rounded-lg border bg-background px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
                     required
                     data-testid="idea-name"
@@ -310,7 +360,7 @@ export default function NewReportPage() {
                     }`}
                   >
                     <Type className="size-3.5" />
-                    간단 입력
+                    {ui.reportNew.inputSimple}
                   </button>
                   <button
                     type="button"
@@ -323,7 +373,7 @@ export default function NewReportPage() {
                     data-testid="doc-mode-btn"
                   >
                     <FileText className="size-3.5" />
-                    기획서 입력
+                    {ui.reportNew.inputDoc}
                   </button>
                 </div>
 
@@ -331,12 +381,12 @@ export default function NewReportPage() {
                   <>
                     <div>
                       <label className="mb-1.5 block text-sm font-medium">
-                        아이디어 설명 <span className="text-destructive">*</span>
+                        {ui.reportNew.ideaDescLabel} <span className="text-destructive">*</span>
                       </label>
                       <textarea
                         value={ideaDescription}
                         onChange={(e) => setIdeaDescription(e.target.value)}
-                        placeholder="어떤 문제를 해결하나요? 어떤 기능이 있나요? 누가 사용하나요?"
+                        placeholder={ui.reportNew.ideaDescPlaceholder}
                         rows={4}
                         className="w-full resize-none rounded-lg border bg-background px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
                         required
@@ -346,13 +396,13 @@ export default function NewReportPage() {
 
                     <div>
                       <label className="mb-1.5 block text-sm font-medium">
-                        타겟 시장 <span className="text-muted-foreground">(선택)</span>
+                        {ui.reportNew.ideaTargetLabel}
                       </label>
                       <input
                         type="text"
                         value={ideaTarget}
                         onChange={(e) => setIdeaTarget(e.target.value)}
-                        placeholder="예: 한국 20-30대 온라인 쇼핑 유저"
+                        placeholder={ui.reportNew.ideaTargetPlaceholder}
                         className="w-full rounded-lg border bg-background px-4 py-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
                         data-testid="idea-target"
                       />
@@ -361,22 +411,22 @@ export default function NewReportPage() {
                 ) : (
                   <div>
                     <label className="mb-1.5 block text-sm font-medium">
-                      마크다운 기획서 <span className="text-destructive">*</span>
+                      {ui.reportNew.ideaDocLabel} <span className="text-destructive">*</span>
                     </label>
                     <p className="mb-2 text-xs text-muted-foreground">
-                      기획서 전체를 붙여넣으세요. AI가 자동으로 파싱하여 분석합니다.
+                      {ui.reportNew.ideaDocHint}
                     </p>
                     <textarea
                       value={ideaDocument}
                       onChange={(e) => setIdeaDocument(e.target.value)}
-                      placeholder={`# 프로젝트명\n\n## 문제 정의\n해결하려는 문제를 설명...\n\n## 솔루션\n제안하는 해결책...\n\n## 타겟 사용자\n주요 사용자 그룹...\n\n## 주요 기능\n- 기능 1\n- 기능 2\n\n## 수익 모델\n가격 정책, 과금 방식...`}
+                      placeholder={ui.reportNew.ideaDocTemplatePlaceholder}
                       rows={14}
                       className="w-full resize-y rounded-lg border bg-background px-4 py-3 font-mono text-sm leading-relaxed outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
                       required
                       data-testid="idea-document"
                     />
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {ideaDocument.length > 0 ? `${ideaDocument.length.toLocaleString()}자` : ''}
+                      {ideaDocument.length > 0 ? ui.reportNew.charCount(ideaDocument.length.toLocaleString()) : ''}
                     </p>
                   </div>
                 )}
@@ -395,25 +445,20 @@ export default function NewReportPage() {
                   {isGenerating ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
-                      분석 중...
+                      {ui.report.analyzing}
                     </>
                   ) : (
-                    '비즈니스 타당성 분석 시작'
+                    ui.reportNew.ideaSubmit
                   )}
                 </button>
               </form>
 
               {/* Idea framework preview */}
               <div className="mt-10 grid grid-cols-2 gap-3 text-left sm:grid-cols-4">
-                {[
-                  { num: '1', label: '아이디어 개요', desc: '문제/솔루션 핏' },
-                  { num: '2-3', label: '시장 & 경쟁', desc: 'TAM/SAM/SOM + 경쟁사' },
-                  { num: '4-5', label: '차별화 & 수익', desc: 'Moat + 비즈니스 모델' },
-                  { num: '6-8', label: 'GTM & 실행', desc: '전략 + 리스크 + 판정' },
-                ].map((fw) => (
+                {ui.reportNew.ideaChapters.map((fw) => (
                   <Card key={fw.num} size="sm">
                     <CardContent>
-                      <div className="text-xs font-bold text-indigo-600">섹션 {fw.num}</div>
+                      <div className="text-xs font-bold text-indigo-600">{ui.reportNew.sectionLabel} {fw.num}</div>
                       <div className="mt-1 text-sm font-semibold">{fw.label}</div>
                       <div className="mt-0.5 text-xs text-muted-foreground">{fw.desc}</div>
                     </CardContent>
@@ -426,9 +471,9 @@ export default function NewReportPage() {
           {error && (
             <div className="mt-6 text-sm text-destructive">
               <p>{error}</p>
-              {error.includes('한도') || error.includes('크레딧') || error.includes('라이선스') ? (
+              {error.includes('[PRICING]') ? (
                 <Link href="/pricing" className="mt-1 inline-block text-indigo-600 underline">
-                  가격 페이지로 이동 →
+                  {ui.errors.goToPricing}
                 </Link>
               ) : null}
             </div>

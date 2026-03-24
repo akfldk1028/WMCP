@@ -3,7 +3,9 @@
  * No API key required. Supports KRX (005930.KS), NASDAQ, NYSE, etc.
  */
 
-import yahooFinance from 'yahoo-finance2';
+import YahooFinanceModule from 'yahoo-finance2';
+
+const yahooFinance = new YahooFinanceModule({ suppressNotices: ['yahooSurvey'] });
 
 export interface CompanyFinancials {
   name: string;
@@ -176,6 +178,204 @@ export function formatFinancialsAsResearch(data: CompanyFinancials): string {
 
   if (data.description) {
     lines.push(``, `[Business Description]`, data.description.slice(0, 2000));
+  }
+
+  return lines.join('\n');
+}
+
+// --- Detailed financial data types ---
+
+export interface IncomeStatementYear {
+  year: string;
+  endDate: string;
+  revenue: number | null;
+  costOfRevenue: number | null;
+  grossProfit: number | null;
+  operatingIncome: number | null;
+  netIncome: number | null;
+  ebitda: number | null;
+}
+
+export interface BalanceSheetYear {
+  year: string;
+  endDate: string;
+  totalAssets: number | null;
+  totalLiabilities: number | null;
+  totalEquity: number | null;
+  totalDebt: number | null;
+  cash: number | null;
+  currentRatio: number | null;
+}
+
+export interface StockPricePoint {
+  date: string; // YYYY-MM-DD
+  close: number;
+  volume: number;
+}
+
+export interface DetailedFinancials {
+  basic: CompanyFinancials;
+  incomeHistory: IncomeStatementYear[];
+  balanceSheet: BalanceSheetYear[];
+  stockHistory: StockPricePoint[];
+}
+
+// --- Detailed financial data functions ---
+
+/**
+ * Get 3-year income statement history.
+ */
+export async function getIncomeHistory(companyName: string): Promise<IncomeStatementYear[]> {
+  const ticker = await findTicker(companyName);
+  if (!ticker) return [];
+
+  try {
+    const threeYearsAgo = new Date();
+    threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 4);
+    const results = await yahooFinance.fundamentalsTimeSeries(ticker, {
+      period1: threeYearsAgo.toISOString().slice(0, 10),
+      type: 'annual',
+      module: 'financials',
+    }) as any[];
+
+    return (results ?? [])
+      .filter((s: any) => s.totalRevenue != null || s.netIncome != null)
+      .map((s: any) => {
+        const date = s.date ? new Date(s.date) : null;
+        return {
+          year: date ? String(date.getFullYear()) : '',
+          endDate: date ? date.toISOString().slice(0, 10) : '',
+          revenue: s.totalRevenue ?? null,
+          costOfRevenue: s.costOfRevenue ?? null,
+          grossProfit: s.grossProfit ?? null,
+          operatingIncome: s.operatingIncome ?? null,
+          netIncome: s.netIncome ?? s.netIncomeCommonStockholders ?? null,
+          ebitda: s.EBITDA ?? s.normalizedEBITDA ?? null,
+        };
+      });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get balance sheet data.
+ */
+export async function getBalanceSheet(companyName: string): Promise<BalanceSheetYear[]> {
+  const ticker = await findTicker(companyName);
+  if (!ticker) return [];
+
+  try {
+    const threeYearsAgo = new Date();
+    threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 4);
+    const results = await yahooFinance.fundamentalsTimeSeries(ticker, {
+      period1: threeYearsAgo.toISOString().slice(0, 10),
+      type: 'annual',
+      module: 'balance-sheet',
+    }) as any[];
+
+    return (results ?? [])
+      .filter((s: any) => s.totalAssets != null || s.commonStockEquity != null)
+      .map((s: any) => {
+        const date = s.date ? new Date(s.date) : null;
+        const totalAssets = s.totalAssets ?? null;
+        const totalLiabilities = s.totalLiabilitiesNetMinorityInterest ?? s.totalNonCurrentLiabilitiesNetMinorityInterest ?? null;
+        const totalEquity = s.stockholdersEquity ?? s.commonStockEquity ?? null;
+        const currentAssets = s.currentAssets ?? null;
+        const currentLiabilities = s.currentLiabilities ?? null;
+        return {
+          year: date ? String(date.getFullYear()) : '',
+          endDate: date ? date.toISOString().slice(0, 10) : '',
+          totalAssets,
+          totalLiabilities,
+          totalEquity,
+          totalDebt: s.totalDebt ?? s.longTermDebt ?? null,
+          cash: s.cashAndCashEquivalents ?? s.cashCashEquivalentsAndShortTermInvestments ?? null,
+          currentRatio: currentAssets && currentLiabilities ? Math.round((currentAssets / currentLiabilities) * 100) / 100 : null,
+        };
+      });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get 1 year of stock price history (monthly).
+ */
+export async function getStockHistory(companyName: string): Promise<StockPricePoint[]> {
+  const ticker = await findTicker(companyName);
+  if (!ticker) return [];
+
+  try {
+    const now = new Date();
+    const oneYearAgo = new Date(now);
+    oneYearAgo.setFullYear(now.getFullYear() - 1);
+
+    const result = await yahooFinance.chart(ticker, {
+      period1: oneYearAgo.toISOString().slice(0, 10),
+      period2: now.toISOString().slice(0, 10),
+      interval: '1mo',
+    }) as any;
+
+    const quotes = result?.quotes ?? [];
+    return quotes
+      .filter((q: any) => q.close != null)
+      .map((q: any) => ({
+        date: new Date(q.date).toISOString().slice(0, 10),
+        close: Math.round(q.close * 100) / 100,
+        volume: q.volume ?? 0,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get all detailed financials at once.
+ */
+export async function getDetailedFinancials(companyName: string): Promise<DetailedFinancials | null> {
+  const basic = await getCompanyFinancials(companyName);
+  if (!basic) return null;
+
+  const [incomeHistory, balanceSheet, stockHistory] = await Promise.all([
+    getIncomeHistory(companyName),
+    getBalanceSheet(companyName),
+    getStockHistory(companyName),
+  ]);
+
+  return { basic, incomeHistory, balanceSheet, stockHistory };
+}
+
+/**
+ * Format detailed financials for AI prompts.
+ */
+export function formatDetailedFinancialsAsResearch(data: DetailedFinancials): string {
+  const lines = [formatFinancialsAsResearch(data.basic)];
+  const c = data.basic.currency;
+
+  if (data.incomeHistory.length > 0) {
+    lines.push('', '[Income Statement History]');
+    for (const yr of data.incomeHistory) {
+      lines.push(
+        `${yr.year}: Revenue=${formatNumber(yr.revenue, c)}, OpIncome=${formatNumber(yr.operatingIncome, c)}, NetIncome=${formatNumber(yr.netIncome, c)}`,
+      );
+    }
+  }
+
+  if (data.balanceSheet.length > 0) {
+    lines.push('', '[Balance Sheet History]');
+    for (const yr of data.balanceSheet) {
+      lines.push(
+        `${yr.year}: Assets=${formatNumber(yr.totalAssets, c)}, Liabilities=${formatNumber(yr.totalLiabilities, c)}, Equity=${formatNumber(yr.totalEquity, c)}, Debt=${formatNumber(yr.totalDebt, c)}`,
+      );
+    }
+  }
+
+  if (data.stockHistory.length > 0) {
+    lines.push('', '[Stock Price (Monthly)]');
+    for (const pt of data.stockHistory) {
+      lines.push(`${pt.date}: ${formatNumber(pt.close, c)} (vol: ${pt.volume.toLocaleString()})`);
+    }
   }
 
   return lines.join('\n');

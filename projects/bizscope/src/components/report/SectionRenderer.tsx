@@ -1,9 +1,15 @@
 import { Loader2, Clock, X } from 'lucide-react';
 import type { ReportSection } from '@/frameworks/types';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { useLocale } from '@/i18n';
 import CompanyOverview from '@/components/sections/CompanyOverview';
+import BusinessModelDetail from '@/components/sections/BusinessModelDetail';
+import KPIPerformance from '@/components/sections/KPIPerformance';
+import FinancialAnalysis from '@/components/sections/FinancialAnalysis';
 import PESTAnalysis from '@/components/sections/PESTAnalysis';
-import PossibilityImpactMatrix from '@/components/sections/PossibilityImpactMatrix';
+import FiveForceDetail from '@/components/sections/FiveForceDetail';
+import PESTForcesMatrix from '@/components/sections/PESTForcesMatrix';
+import KeyEnvVariables from '@/components/sections/KeyEnvVariables';
 import InternalCapability from '@/components/sections/InternalCapability';
 import SWOTSummary from '@/components/sections/SWOTSummary';
 import TOWSCrossMatrix from '@/components/sections/TOWSCrossMatrix';
@@ -14,20 +20,33 @@ import StrategyCurrentComparison from '@/components/sections/StrategyCurrentComp
 import CompetitorComparison from '@/components/sections/CompetitorComparison';
 import FinalImplications from '@/components/sections/FinalImplications';
 import IdeaOverview from '@/components/sections/IdeaOverview';
+import IdeaTargetCustomer from '@/components/sections/IdeaTargetCustomer';
 import MarketSize from '@/components/sections/MarketSize';
+import MarketEnvironment from '@/components/sections/MarketEnvironment';
 import CompetitorScan from '@/components/sections/CompetitorScan';
+import CompetitorPositioning from '@/components/sections/CompetitorPositioning';
 import Differentiation from '@/components/sections/Differentiation';
 import BusinessModel from '@/components/sections/BusinessModel';
+import UnitEconomics from '@/components/sections/UnitEconomics';
 import GoToMarket from '@/components/sections/GoToMarket';
+import GrowthStrategy from '@/components/sections/GrowthStrategy';
+import FinancialProjection from '@/components/sections/FinancialProjection';
 import RiskAssessment from '@/components/sections/RiskAssessment';
+import IdeaReferenceCase from '@/components/sections/IdeaReferenceCase';
 import ActionPlan from '@/components/sections/ActionPlan';
+import ReferenceCase from '@/components/sections/ReferenceCase';
 
 import type {
-  CompanyOverviewData, PESTData, MatrixData, InternalCapabilityData,
+  CompanyOverviewData, BusinessModelDetailData, KPIPerformanceData, FinancialAnalysisData,
+  PESTData, FiveForceDetailData, PESTForcesMatrixData, KeyEnvVariablesData,
+  InternalCapabilityData,
   SWOTData, TOWSData, StrategyCombinationData, SevenSData,
   PriorityMatrixData, StrategyCurrentComparisonData, CompetitorData, ImplicationsData,
-  IdeaOverviewData, MarketSizeData, CompetitorScanData, DifferentiationData,
-  BusinessModelData, GoToMarketData, RiskAssessmentData, ActionPlanData,
+  IdeaOverviewData, IdeaTargetCustomerData, MarketSizeData, MarketEnvironmentData,
+  CompetitorScanData, CompetitorPositioningData, DifferentiationData,
+  BusinessModelData, UnitEconomicsData, GoToMarketData, GrowthStrategyData,
+  FinancialProjectionData, RiskAssessmentData, IdeaReferenceCaseData, ActionPlanData,
+  ReferenceCaseData,
 } from '@/frameworks/types';
 
 interface Props {
@@ -36,12 +55,15 @@ interface Props {
 }
 
 export default function SectionRenderer({ section, subPage }: Props) {
+  const { t } = useLocale();
+  const s = t.ui.section;
+
   if (section.status === 'pending') {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center text-muted-foreground">
         <div className="rounded-full bg-muted p-4"><Clock className="size-8 text-muted-foreground/50" /></div>
-        <p className="mt-3 text-sm font-medium">대기 중...</p>
-        <p className="mt-1 text-xs text-muted-foreground/60">이전 섹션이 완료되면 자동으로 시작됩니다</p>
+        <p className="mt-3 text-sm font-medium">{s.pending}</p>
+        <p className="mt-1 text-xs text-muted-foreground/60">{s.pendingHint}</p>
       </div>
     );
   }
@@ -50,8 +72,8 @@ export default function SectionRenderer({ section, subPage }: Props) {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4">
         <Loader2 className="size-10 animate-spin text-primary" />
-        <p className="text-sm font-medium">분석 생성 중...</p>
-        <p className="text-xs text-muted-foreground">AI가 데이터를 분석하고 있습니다</p>
+        <p className="text-sm font-medium">{s.generating}</p>
+        <p className="text-xs text-muted-foreground">{s.generatingHint}</p>
       </div>
     );
   }
@@ -63,7 +85,7 @@ export default function SectionRenderer({ section, subPage }: Props) {
           <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-full bg-destructive/10">
             <X className="size-5 text-destructive" />
           </div>
-          <p className="text-sm font-semibold text-destructive">오류 발생</p>
+          <p className="text-sm font-semibold text-destructive">{s.errorTitle}</p>
           {section.error && <p className="mt-2 text-xs text-destructive/80">{section.error}</p>}
         </div>
       </div>
@@ -71,7 +93,7 @@ export default function SectionRenderer({ section, subPage }: Props) {
   }
 
   if (!section.data) {
-    return <div className="flex min-h-[40vh] flex-col items-center justify-center text-sm text-muted-foreground">데이터 없음</div>;
+    return <div className="flex min-h-[40vh] flex-col items-center justify-center text-sm text-muted-foreground">{s.noData}</div>;
   }
 
   return (
@@ -88,10 +110,20 @@ function SectionContent({ section, subPage }: Props) {
   switch (section.type) {
     case 'company-overview':
       return <CompanyOverview data={section.data as CompanyOverviewData} subPage={sp} />;
+    case 'business-model-detail':
+      return <BusinessModelDetail data={section.data as BusinessModelDetailData} subPage={sp} />;
+    case 'kpi-performance':
+      return <KPIPerformance data={section.data as KPIPerformanceData} subPage={sp} />;
+    case 'financial-analysis':
+      return <FinancialAnalysis data={section.data as FinancialAnalysisData} subPage={sp} />;
     case 'pest-analysis':
       return <PESTAnalysis data={section.data as PESTData} subPage={sp} />;
-    case 'possibility-impact-matrix':
-      return <PossibilityImpactMatrix data={section.data as MatrixData} subPage={sp} />;
+    case 'five-forces-detail':
+      return <FiveForceDetail data={section.data as FiveForceDetailData} subPage={sp} />;
+    case 'pest-forces-matrix':
+      return <PESTForcesMatrix data={section.data as PESTForcesMatrixData} subPage={sp} />;
+    case 'key-env-variables':
+      return <KeyEnvVariables data={section.data as KeyEnvVariablesData} subPage={sp} />;
     case 'internal-capability':
       return <InternalCapability data={section.data as InternalCapabilityData} subPage={sp} />;
     case 'swot-summary':
@@ -113,21 +145,37 @@ function SectionContent({ section, subPage }: Props) {
     // Idea sections
     case 'idea-overview':
       return <IdeaOverview data={section.data as IdeaOverviewData} subPage={sp} />;
+    case 'idea-target-customer':
+      return <IdeaTargetCustomer data={section.data as IdeaTargetCustomerData} subPage={sp} />;
     case 'market-size':
       return <MarketSize data={section.data as MarketSizeData} subPage={sp} />;
+    case 'market-environment':
+      return <MarketEnvironment data={section.data as MarketEnvironmentData} subPage={sp} />;
     case 'competitor-scan':
       return <CompetitorScan data={section.data as CompetitorScanData} subPage={sp} />;
+    case 'competitor-positioning':
+      return <CompetitorPositioning data={section.data as CompetitorPositioningData} subPage={sp} />;
     case 'differentiation':
       return <Differentiation data={section.data as DifferentiationData} subPage={sp} />;
     case 'business-model':
       return <BusinessModel data={section.data as BusinessModelData} subPage={sp} />;
+    case 'unit-economics':
+      return <UnitEconomics data={section.data as UnitEconomicsData} subPage={sp} />;
     case 'go-to-market':
       return <GoToMarket data={section.data as GoToMarketData} subPage={sp} />;
+    case 'growth-strategy':
+      return <GrowthStrategy data={section.data as GrowthStrategyData} subPage={sp} />;
+    case 'financial-projection':
+      return <FinancialProjection data={section.data as FinancialProjectionData} subPage={sp} />;
     case 'risk-assessment':
       return <RiskAssessment data={section.data as RiskAssessmentData} subPage={sp} />;
+    case 'idea-reference-case':
+      return <IdeaReferenceCase data={section.data as IdeaReferenceCaseData} subPage={sp} />;
     case 'action-plan':
       return <ActionPlan data={section.data as ActionPlanData} subPage={sp} />;
+    case 'reference-case':
+      return <ReferenceCase data={section.data as ReferenceCaseData} subPage={sp} />;
     default:
-      return <div className="py-20 text-center text-sm text-muted-foreground">알 수 없는 섹션 타입</div>;
+      return <div className="py-20 text-center text-sm text-muted-foreground">Unknown section type: {section.type}</div>;
   }
 }

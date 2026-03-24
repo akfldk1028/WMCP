@@ -7,3 +7,6 @@ export { default as SevenSPyramid } from './SevenSPyramid';
 export { default as ScoreBar } from './ScoreBar';
 export { default as FiveForceRadar } from './FiveForceRadar';
 export { default as PriorityMatrixChart } from './PriorityMatrixChart';
+export { default as IncomeChart } from './IncomeChart';
+export { default as StockPriceChart } from './StockPriceChart';
+export { default as BalanceSheetChart } from './BalanceSheetChart';

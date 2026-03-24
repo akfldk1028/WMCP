@@ -36,11 +36,16 @@ export default async function BlogPostPage({ params }: Props) {
   if (!post) notFound();
 
   // Simple markdown-to-HTML: headings, bold, links, lists, paragraphs
+  // Content is hardcoded in posts.ts but we sanitize href to prevent XSS
   const html = post.content
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, text: string, url: string) => {
+      if (!/^https?:\/\//i.test(url)) return text;
+      const safeUrl = url.replace(/"/g, '&quot;');
+      return `<a href="${safeUrl}" target="_blank" rel="noopener">${text}</a>`;
+    })
     .replace(/^- (.+)$/gm, '<li>$1</li>')
     .replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>')
     .replace(/\n\n/g, '</p><p>')

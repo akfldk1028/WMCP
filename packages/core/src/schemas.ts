@@ -7,7 +7,7 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 // ===== Tool Registration Schema =====
 
 export const toolAnnotationsSchema = z.object({
-  title: z.string().optional(),
+  // title removed in Chrome 148 (toolparamtitle attribute dropped, issue #76)
   readOnlyHint: z.boolean().optional(),
   destructiveHint: z.boolean().optional(),
   idempotentHint: z.boolean().optional(),

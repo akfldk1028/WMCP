@@ -8,6 +8,8 @@
  */
 
 import type { AgentTool } from './registry';
+import { getMemoryStore } from './graph-tools';
+import { calculateNoveltyInMemory } from '@/modules/graph/queries/novelty';
 
 /** 경로 길이 → novelty score 변환 */
 export function pathLengthToNovelty(pathLength: number | null): number {
@@ -26,25 +28,49 @@ export const noveltyTool: AgentTool = {
     idea_description: { type: 'string', description: 'Description of the idea' },
   },
   execute: async (params) => {
-    // TODO: Memgraph 연결 후 실제 최단 경로 계산
-    // MATCH (a:Idea {title: $title}), (b:Idea)
-    // WHERE a <> b
-    // MATCH path = shortestPath((a)-[*..5]-(b))
-    // RETURN min(length(path)) as minDistance
-    return {
-      framework: 'Knowledge Distance (Luo et al., KBS 2022)',
-      instruction: `Estimate the novelty of "${params.idea_title}" by considering:
-1. How many existing ideas in the graph are SIMILAR_TO this one? (more similar = less novel)
-2. Does this idea connect concepts from DIFFERENT domains? (cross-domain = more novel)
-3. Has anything like this been done before? (web_search to verify)
+    const title = (params.idea_title as string).toLowerCase();
+    const store = getMemoryStore();
 
-Score 0-100:
-- 0-20: Derivative (minor variation of existing idea)
-- 21-50: Incremental (meaningful improvement but same domain)
-- 51-80: Cross-domain (applies ideas from one field to another)
-- 81-100: Paradigm-shifting (fundamentally new connection)`,
-      scoringFormula: 'novelty = f(shortest_path_length_to_nearest_existing_idea)',
-      note: 'When Memgraph is connected, this will calculate actual graph distances.',
+    // Find the node in the store by title match
+    const targetNode = store.nodes.find((n) =>
+      n.title.toLowerCase().includes(title) || title.includes(n.title.toLowerCase())
+    );
+
+    if (!targetNode) {
+      // Idea not in graph yet — completely novel by definition
+      return {
+        noveltyScore: 95,
+        reasoning: 'Idea not found in the knowledge graph — no prior art detected.',
+        totalNodesInGraph: store.nodes.length,
+        framework: 'Knowledge Distance (Luo et al., KBS 2022)',
+      };
+    }
+
+    // Calculate actual novelty via BFS on in-memory edges
+    const noveltyScore = calculateNoveltyInMemory(
+      targetNode.id,
+      store.edges.map((e) => ({ source: e.source, target: e.target }))
+    );
+
+    // Count similar nodes by keyword overlap
+    const titleTokens = title.split(/\s+/).filter((t) => t.length > 2);
+    const similarCount = store.nodes.filter((n) => {
+      if (n.id === targetNode.id) return false;
+      const nTitle = n.title.toLowerCase();
+      return titleTokens.some((t) => nTitle.includes(t));
+    }).length;
+
+    return {
+      noveltyScore,
+      ideaId: targetNode.id,
+      similarIdeasFound: similarCount,
+      totalNodesInGraph: store.nodes.length,
+      totalEdgesInGraph: store.edges.length,
+      interpretation: noveltyScore >= 80 ? 'Highly novel — cross-domain or paradigm-shifting'
+        : noveltyScore >= 50 ? 'Moderately novel — meaningful differentiation'
+        : noveltyScore >= 20 ? 'Incremental — builds on existing ideas'
+        : 'Derivative — very close to existing ideas',
+      framework: 'Knowledge Distance (Luo et al., KBS 2022)',
     };
   },
 };

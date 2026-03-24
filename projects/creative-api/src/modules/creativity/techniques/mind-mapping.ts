@@ -1,9 +1,7 @@
 /** Mind Mapping — 마인드맵 구조 생성 (Graph DB에 매핑) */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { llmGenerateJSON } from '@/modules/llm/client';
 import { JSON_INSTRUCTION, CREATIVE_SYSTEM_PROMPT } from '../prompts/system';
-
-const anthropic = new Anthropic();
 
 export interface MindMapNode {
   id: string;
@@ -44,14 +42,10 @@ Format:
 
 Generate 4-6 branches at level 1, 2-3 sub-topics per branch at level 2, and 1-2 at level 3.`;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 2048,
+  const parsed = await llmGenerateJSON<{ nodes: MindMapNode[] }>({
+    prompt,
     system: CREATIVE_SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: prompt }],
+    maxTokens: 2048,
   });
-
-  const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  const parsed = JSON.parse(text) as { nodes: MindMapNode[] };
   return parsed.nodes;
 }

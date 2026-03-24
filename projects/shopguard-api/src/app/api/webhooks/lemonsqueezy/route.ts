@@ -25,9 +25,10 @@ async function verifySignature(body: string, signature: string): Promise<boolean
 }
 
 /** Map Lemonsqueezy variant/product to our plan tier */
-function resolvePlan(variantName: string): Plan {
-  const lower = variantName.toLowerCase();
-  if (lower.includes('developer')) return 'developer';
+function resolvePlan(variantName: string, productName: string): Plan {
+  const combined = `${variantName} ${productName}`.toLowerCase();
+  if (combined.includes('developer')) return 'developer';
+  if (combined.includes('seller')) return 'seller';
   return 'consumer';
 }
 
@@ -57,12 +58,13 @@ export async function POST(req: NextRequest) {
 
   const subscriptionId = String(data?.id || '');
   const email = String(attrs.user_email || '');
-  const variantName = String(attrs.variant_name || attrs.product_name || 'consumer');
+  const variantName = String(attrs.variant_name || '');
+  const productName = String(attrs.product_name || '');
 
   switch (eventName) {
     case 'subscription_created':
     case 'subscription_resumed': {
-      const plan = resolvePlan(variantName);
+      const plan = resolvePlan(variantName, productName);
       const apiKey = generateApiKey(plan);
       await provisionKey(apiKey, plan, email, subscriptionId);
 
@@ -80,7 +82,7 @@ export async function POST(req: NextRequest) {
 
     case 'subscription_updated': {
       // Plan change — revoke old, provision new
-      const plan = resolvePlan(variantName);
+      const plan = resolvePlan(variantName, productName);
       await revokeBySubscription(subscriptionId);
       const apiKey = generateApiKey(plan);
       await provisionKey(apiKey, plan, email, subscriptionId);

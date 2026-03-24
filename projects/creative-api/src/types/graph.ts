@@ -32,6 +32,8 @@ export interface GraphNode {
   level?: number;
   /** 부모 노드 ID (계층 구조) */
   parentId?: string;
+  /** 생성한 사용자 ID (My Brain vs Collective Brain 필터링) */
+  userId?: string;
 }
 
 export interface GraphEdge {

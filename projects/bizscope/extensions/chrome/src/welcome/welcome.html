@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>BizScope AI 설치 완료</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0f0f17;
+      color: #e0e0e0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      padding: 60px 24px;
+    }
+    .container { max-width: 520px; text-align: center; }
+    .logo { width: 64px; height: 64px; border-radius: 16px; margin-bottom: 20px; }
+    h1 { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .subtitle { font-size: 15px; color: #888; margin-bottom: 36px; }
+
+    .steps {
+      text-align: left;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .step {
+      display: flex;
+      gap: 14px;
+      padding: 12px 0;
+    }
+    .step + .step { border-top: 1px solid rgba(255,255,255,0.04); }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(99,102,241,0.15);
+      color: #a5b4fc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .step-text h3 { font-size: 14px; font-weight: 600; color: #ddd; margin-bottom: 3px; }
+    .step-text p { font-size: 12px; color: #777; line-height: 1.5; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 28px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn-primary { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; }
+    .btn-ghost { background: rgba(255,255,255,0.06); color: #aaa; margin-left: 8px; }
+
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 28px;
+      text-align: left;
+    }
+    .feature {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .feature h4 { font-size: 12px; font-weight: 600; color: #ccc; margin-bottom: 4px; }
+    .feature p { font-size: 11px; color: #666; line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="icons/icon128.png" alt="BizScope AI" class="logo">
+    <h1>BizScope AI 설치 완료!</h1>
+    <p class="subtitle">AI가 생성하는 컨설팅급 비즈니스 전략 보고서</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">
+          <h3>툴바 아이콘 클릭</h3>
+          <p>브라우저 우측 상단의 BizScope AI 아이콘을 클릭하여 기업명이나 아이디어를 입력하세요.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">
+          <h3>텍스트 선택 → 우클릭</h3>
+          <p>웹 페이지에서 기업명을 선택하고 우클릭하면 바로 분석을 시작할 수 있습니다.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">
+          <h3>AI 보고서 확인</h3>
+          <p>PEST, SWOT, 7S 등 20개 프레임워크로 분석된 전략 보고서가 자동 생성됩니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <a href="https://bizscope-rho.vercel.app/report/new" target="_blank" class="btn btn-primary">첫 분석 시작하기</a>
+    <a href="https://bizscope-rho.vercel.app/pricing" target="_blank" class="btn btn-ghost">가격 보기</a>
+
+    <div class="features">
+      <div class="feature">
+        <h4>기업 전략 분석</h4>
+        <p>PEST, SWOT, TOWS, 7S, Porter 등 12개 프레임워크</p>
+      </div>
+      <div class="feature">
+        <h4>아이디어 검증</h4>
+        <p>시장 규모, 경쟁 스캔, 수익 모델, Go/No-Go 판정</p>
+      </div>
+      <div class="feature">
+        <h4>멀티모델 앙상블</h4>
+        <p>Claude, GPT, Grok, Gemini 교차검증 (Pro)</p>
+      </div>
+      <div class="feature">
+        <h4>9차원 스코어카드</h4>
+        <p>객관적 점수 기반 투자 판단 근거</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

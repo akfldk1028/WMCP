@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Check, Zap, ArrowRight } from 'lucide-react';
 import { getLicenseKey, setLicenseKey } from '@/lib/license-client';
+import { useLocale } from '@/i18n';
+import LocaleSwitcher from '@/components/LocaleSwitcher';
 
 const CHECKOUT_URLS = {
   perReport: 'https://clickaround.lemonsqueezy.com/checkout/buy/f9a4d916-d88b-4636-9117-51e501f0853c',
@@ -12,6 +14,10 @@ const CHECKOUT_URLS = {
 };
 
 export default function PricingPage() {
+  const { t } = useLocale();
+  const { ui } = t;
+  const p = ui.pricing;
+
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
   const [keyInput, setKeyInput] = useState('');
   const [keyStatus, setKeyStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
@@ -49,15 +55,16 @@ export default function PricingPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight">
             <img src="/logo.png" alt="BS" className="h-9 w-auto" />
-            BizScope AI
+            {ui.appName}
           </Link>
           <nav className="flex items-center gap-4">
             <Link href="/report/new" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">
-              분석 시작
+              {p.startAnalysis}
             </Link>
             <Link href="/history" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">
-              분석 기록
+              {ui.nav.history}
             </Link>
+            <LocaleSwitcher />
           </nav>
         </div>
       </header>
@@ -66,10 +73,8 @@ export default function PricingPage() {
         <div className="mx-auto max-w-4xl">
           {/* Header */}
           <div className="text-center">
-            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">가격 정책</h1>
-            <p className="mt-3 text-muted-foreground">
-              무료로 시작하고, 필요할 때 업그레이드하세요
-            </p>
+            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">{p.title}</h1>
+            <p className="mt-3 text-muted-foreground">{p.subtitle}</p>
           </div>
 
           {/* Billing toggle */}
@@ -83,7 +88,7 @@ export default function PricingPage() {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                월간
+                {p.monthly}
               </button>
               <button
                 onClick={() => setBilling('annual')}
@@ -93,7 +98,7 @@ export default function PricingPage() {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                연간 <span className="text-xs text-emerald-600">34% 할인</span>
+                {p.annual} <span className="text-xs text-emerald-600">{p.annualDiscount}</span>
               </button>
             </div>
           </div>
@@ -102,73 +107,53 @@ export default function PricingPage() {
           <div className="mt-10 grid gap-6 sm:grid-cols-2">
             {/* Free */}
             <div className="rounded-2xl border bg-card p-8">
-              <h3 className="text-lg font-semibold">Free</h3>
-              <p className="mt-1 text-sm text-muted-foreground">빠르게 체험해보세요</p>
+              <h3 className="text-lg font-semibold">{p.freePlan.name}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{p.freePlan.desc}</p>
               <div className="mt-6">
                 <span className="text-4xl font-bold">$0</span>
               </div>
               <ul className="mt-8 space-y-3 text-sm">
-                <li className="flex items-start gap-2">
-                  <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
-                  보고서 2건 무료 생성
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
-                  기업 분석 12개 프레임워크
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
-                  아이디어 분석 8개 프레임워크
-                </li>
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <Check className="mt-0.5 size-4 shrink-0 opacity-30" />
-                  <span>단일 AI 모델 (앙상블 미지원)</span>
-                </li>
+                {p.freePlan.features.map((f, i) => (
+                  <li key={i} className={`flex items-start gap-2 ${i === p.freePlan.features.length - 1 ? 'text-muted-foreground' : ''}`}>
+                    <Check className={`mt-0.5 size-4 shrink-0 ${i === p.freePlan.features.length - 1 ? 'opacity-30' : 'text-emerald-500'}`} />
+                    {f}
+                  </li>
+                ))}
               </ul>
               <Link
                 href="/report/new"
                 className="mt-8 flex w-full items-center justify-center rounded-lg border px-6 py-2.5 text-sm font-semibold transition hover:bg-accent"
               >
-                무료로 시작
+                {p.freePlan.cta}
               </Link>
             </div>
 
             {/* Pro */}
             <div className="relative rounded-2xl border-2 border-indigo-500 bg-card p-8">
               <div className="absolute -top-3 left-6 rounded-full bg-indigo-600 px-3 py-0.5 text-xs font-semibold text-white">
-                추천
+                {p.proPlan.badge}
               </div>
-              <h3 className="text-lg font-semibold">Pro</h3>
-              <p className="mt-1 text-sm text-muted-foreground">무제한 분석 + 앙상블</p>
+              <h3 className="text-lg font-semibold">{p.proPlan.name}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{p.proPlan.desc}</p>
               <div className="mt-6">
                 <span className="text-4xl font-bold">
                   ${billing === 'annual' ? '19' : '29'}
                 </span>
-                <span className="text-muted-foreground">/월</span>
+                <span className="text-muted-foreground">{p.proPlan.perMonth}</span>
                 {billing === 'annual' && (
-                  <span className="ml-2 text-sm text-muted-foreground line-through">$29/월</span>
+                  <span className="ml-2 text-sm text-muted-foreground line-through">$29{p.proPlan.perMonth}</span>
                 )}
               </div>
               {billing === 'annual' && (
-                <p className="mt-1 text-xs text-muted-foreground">연 $228 결제</p>
+                <p className="mt-1 text-xs text-muted-foreground">{p.proPlan.billedAnnually('228')}</p>
               )}
               <ul className="mt-8 space-y-3 text-sm">
-                <li className="flex items-start gap-2">
-                  <Check className="mt-0.5 size-4 shrink-0 text-indigo-500" />
-                  <strong>무제한</strong> 보고서 생성
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="mt-0.5 size-4 shrink-0 text-indigo-500" />
-                  기업 분석 12개 + 아이디어 8개 프레임워크
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="mt-0.5 size-4 shrink-0 text-indigo-500" />
-                  <span><strong>멀티모델 앙상블</strong> (4개 AI 교차검증)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="mt-0.5 size-4 shrink-0 text-indigo-500" />
-                  9차원 스코어카드 (앙상블 전용)
-                </li>
+                {p.proPlan.features.map((f, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <Check className="mt-0.5 size-4 shrink-0 text-indigo-500" />
+                    <span dangerouslySetInnerHTML={{ __html: f.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                  </li>
+                ))}
               </ul>
               <a
                 href={billing === 'annual' ? CHECKOUT_URLS.proAnnual : CHECKOUT_URLS.proMonthly}
@@ -177,36 +162,34 @@ export default function PricingPage() {
                 className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
               >
                 <Zap className="size-4" />
-                Pro 시작하기
+                {p.proPlan.cta}
               </a>
             </div>
           </div>
 
           {/* Per-report option */}
           <div className="mt-8 rounded-xl border bg-card p-6 text-center">
-            <h3 className="font-semibold">건당 구매</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              구독 없이 필요할 때만 — <strong>$5/건</strong> (단일 모델)
-            </p>
+            <h3 className="font-semibold">{p.perReport.name}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{p.perReport.desc}</p>
             <a
               href={CHECKOUT_URLS.perReport}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-4 inline-flex items-center gap-1.5 rounded-lg border px-5 py-2 text-sm font-medium transition hover:bg-accent"
             >
-              1건 구매하기
+              {p.perReport.cta}
               <ArrowRight className="size-3.5" />
             </a>
           </div>
 
           {/* License key input */}
           <div className="mt-12 rounded-xl border bg-muted/30 p-6">
-            <h3 className="font-semibold">라이선스 키 입력</h3>
+            <h3 className="font-semibold">{p.licenseSection.title}</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              구매 후 이메일로 받은 라이선스 키를 입력하세요.
+              {p.licenseSection.desc}
               {existingKey && (
                 <span className="ml-1 text-emerald-600">
-                  (현재 키: {existingKey.slice(0, 12)}...)
+                  ({p.licenseSection.currentKey}: {existingKey.slice(0, 12)}...)
                 </span>
               )}
             </p>
@@ -223,25 +206,23 @@ export default function PricingPage() {
                 disabled={keyStatus === 'checking' || !keyInput.trim()}
                 className="rounded-lg bg-foreground px-5 py-2.5 text-sm font-medium text-background transition hover:bg-foreground/90 disabled:opacity-50"
               >
-                {keyStatus === 'checking' ? '확인 중...' : '확인'}
+                {keyStatus === 'checking' ? ui.license.checking : ui.license.confirm}
               </button>
             </form>
             {keyStatus === 'valid' && keyInfo && (
               <p className="mt-2 text-sm text-emerald-600">
-                유효한 키입니다 — {keyInfo.plan === 'pro' ? 'Pro (무제한)' : `${keyInfo.credits}건 남음`}
+                {p.licenseSection.validKey(keyInfo.plan, keyInfo.credits)}
               </p>
             )}
             {keyStatus === 'invalid' && (
-              <p className="mt-2 text-sm text-destructive">
-                유효하지 않은 키입니다. 다시 확인해주세요.
-              </p>
+              <p className="mt-2 text-sm text-destructive">{p.licenseSection.invalidKey}</p>
             )}
           </div>
         </div>
       </main>
 
       <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-        BizScope AI &copy; {new Date().getFullYear()} &middot; Powered by AI
+        {ui.appName} &copy; {new Date().getFullYear()} &middot; {ui.landing.footer}
       </footer>
     </div>
   );

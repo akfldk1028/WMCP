@@ -5,6 +5,7 @@ import { Download, Building2, Lightbulb, Layers, LayoutList } from 'lucide-react
 import { cn } from '@/lib/utils';
 import type { Report, ReportSection, ReportMode } from '@/frameworks/types';
 import { generateCompactPages, generateExpandedPages, type PageDef } from '@/lib/pages';
+import { useLocale } from '@/i18n';
 import SectionRenderer from './SectionRenderer';
 import SectionCover from './SectionCover';
 import ReportCover from './ReportCover';
@@ -22,6 +23,8 @@ function handleExportPDF() {
 }
 
 export default function ReportViewer({ report }: Props) {
+  const { locale, t } = useLocale();
+  const v = t.ui.viewer;
   const [mode, setMode] = useState<ViewMode>('compact');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<'left' | 'right' | null>(null);
@@ -29,9 +32,11 @@ export default function ReportViewer({ report }: Props) {
 
   const reportMode = report.mode ?? 'company';
   const pages = useMemo(
-    () => (mode === 'compact' ? generateCompactPages(reportMode) : generateExpandedPages(reportMode)),
-    [mode, reportMode],
+    () => (mode === 'compact' ? generateCompactPages(reportMode, locale) : generateExpandedPages(reportMode, locale)),
+    [mode, reportMode, locale],
   );
+  const compactCount = useMemo(() => generateCompactPages(reportMode).length, [reportMode]);
+  const expandedCount = useMemo(() => generateExpandedPages(reportMode).length, [reportMode]);
 
   const currentPage = pages[currentIndex];
   const total = pages.length;
@@ -82,9 +87,9 @@ export default function ReportViewer({ report }: Props) {
 
     pages.forEach((p, i) => {
       if (p.kind === 'report-cover' || p.kind === 'report-closing') {
-        groups.push({ sectionIndex: -1, sectionTitle: p.kind === 'report-cover' ? 'Cover' : 'Closing', pages: [{ pageIndex: i, title: p.pageTitle, kind: p.kind }] });
+        groups.push({ sectionIndex: -1, sectionTitle: p.kind === 'report-cover' ? v.cover : v.closing, pages: [{ pageIndex: i, title: p.pageTitle, kind: p.kind }] });
       } else if (p.kind === 'section-cover') {
-        currentGroup = { sectionIndex: p.sectionIndex, sectionTitle: p.sectionTitle, pages: [{ pageIndex: i, title: 'Cover', kind: p.kind }] };
+        currentGroup = { sectionIndex: p.sectionIndex, sectionTitle: p.sectionTitle, pages: [{ pageIndex: i, title: v.cover, kind: p.kind }] };
         groups.push(currentGroup);
       } else if (p.kind === 'section-content' && currentGroup && currentGroup.sectionIndex === p.sectionIndex) {
         currentGroup.pages.push({ pageIndex: i, title: p.pageTitle, kind: p.kind });
@@ -112,7 +117,7 @@ export default function ReportViewer({ report }: Props) {
             <div className="mt-3 h-1 overflow-hidden rounded-full bg-muted">
               <div className="h-full rounded-full bg-indigo-600 transition-all duration-700" style={{ width: `${progressPct}%` }} />
             </div>
-            <p className="mt-1 text-[10px] text-muted-foreground">{completedCount}/{report.sections.length} 완료</p>
+            <p className="mt-1 text-[10px] text-muted-foreground">{v.complete(completedCount, report.sections.length)}</p>
           </div>
 
           {/* Mode toggle */}
@@ -123,7 +128,7 @@ export default function ReportViewer({ report }: Props) {
                 mode === 'compact' ? 'bg-indigo-50 text-indigo-700' : 'text-muted-foreground hover:bg-muted')}
             >
               <LayoutList className="size-3.5" />
-              12p
+              {compactCount}p
             </button>
             <button
               onClick={() => handleModeSwitch('expanded')}
@@ -131,7 +136,7 @@ export default function ReportViewer({ report }: Props) {
                 mode === 'expanded' ? 'bg-indigo-50 text-indigo-700' : 'text-muted-foreground hover:bg-muted')}
             >
               <Layers className="size-3.5" />
-              {pages.length}p
+              {expandedCount}p
             </button>
           </div>
 
@@ -197,7 +202,7 @@ export default function ReportViewer({ report }: Props) {
           <div className="border-t px-5 py-3">
             {report.status === 'completed' && (
               <button onClick={handleExportPDF} className="flex w-full items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition hover:bg-foreground/90">
-                <Download className="size-4" />PDF 내보내기
+                <Download className="size-4" />{v.exportPdf}
               </button>
             )}
           </div>
@@ -217,15 +222,15 @@ export default function ReportViewer({ report }: Props) {
                 <div>
                   <h1 className="text-lg font-bold md:text-xl">{currentPage.pageTitle}</h1>
                   <p className="text-xs text-muted-foreground">
-                    {report.companyName} &middot; Page {currentPage.pageNumber} of {total}
+                    {report.companyName} &middot; {v.pageOf(currentPage.pageNumber, total)}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 {/* Mobile mode toggle */}
                 <div className="flex rounded-lg border lg:hidden">
-                  <button onClick={() => handleModeSwitch('compact')} className={cn('px-2.5 py-1.5 text-xs font-medium', mode === 'compact' ? 'bg-indigo-50 text-indigo-700' : 'text-muted-foreground')}>12p</button>
-                  <button onClick={() => handleModeSwitch('expanded')} className={cn('px-2.5 py-1.5 text-xs font-medium', mode === 'expanded' ? 'bg-indigo-50 text-indigo-700' : 'text-muted-foreground')}>{pages.length}p</button>
+                  <button onClick={() => handleModeSwitch('compact')} className={cn('px-2.5 py-1.5 text-xs font-medium', mode === 'compact' ? 'bg-indigo-50 text-indigo-700' : 'text-muted-foreground')}>{compactCount}p</button>
+                  <button onClick={() => handleModeSwitch('expanded')} className={cn('px-2.5 py-1.5 text-xs font-medium', mode === 'expanded' ? 'bg-indigo-50 text-indigo-700' : 'text-muted-foreground')}>{expandedCount}p</button>
                 </div>
                 {report.status === 'completed' && (
                   <button onClick={handleExportPDF} className="no-print flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground lg:hidden">

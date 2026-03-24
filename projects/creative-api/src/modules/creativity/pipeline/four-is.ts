@@ -23,14 +23,16 @@
 
 import type { CreativeSession, PhaseResult } from '@/types/session';
 import type { Idea } from '@/types/creativity';
-import Anthropic from '@anthropic-ai/sdk';
+import { llmGenerateJSON } from '@/modules/llm/client';
 import { divergentGenerate, convergentSelect } from '../theories/guilford';
 import { scamperFullSweep } from '../techniques/scamper';
 import { CREATIVE_SYSTEM_PROMPT } from '../prompts/system';
 import { buildIterationPrompt } from '../prompts/iteration';
 import { DEFAULTS } from '@/config/creativity';
-
-const anthropic = new Anthropic();
+import { getImmersionContext } from '@/modules/graph/service';
+import { getMemoryStore } from '@/modules/agents/tools/graph-tools';
+import { emitNodeCreated } from '@/modules/graph/events';
+import { scheduleAutoSave } from '@/modules/graph/persistence';
 
 /**
  * 4I's 풀 창의 파이프라인
@@ -48,41 +50,102 @@ export async function runFourIsPipeline(
 
   const phases: CreativeSession['phases'] = {};
 
-  // Phase 1: IMMERSION — 도메인 리서치 (Graph DB 검색)
-  // TODO: Memgraph 연결 후 구현. 지금은 패스스루.
+  // Phase 1: IMMERSION — Graph DB에서 기존 지식 검색 → context로 주입
+  // Csikszentmihalyi: "Immersion in a problematic issue that is interesting and arouses curiosity"
+  // 슬라이드 12: Graph DB 검색 + 슬라이드 22: Digital Methods (웹 검색)
+  const immersionStart = new Date().toISOString();
+  let graphContext = '';
+  try {
+    graphContext = await getImmersionContext(topic, domain);
+  } catch {
+    graphContext = 'Graph search unavailable — proceeding with topic context only.';
+  }
+
+  // 슬라이드 22: Digital Methods — 웹 검색으로 외부 지식 주입
+  let webContext = '';
+  const searchApiKey = process.env.GOOGLE_SEARCH_API_KEY;
+  const searchCx = process.env.GOOGLE_SEARCH_CX;
+  if (searchApiKey && searchCx) {
+    try {
+      const url = new URL('https://www.googleapis.com/customsearch/v1');
+      url.searchParams.set('key', searchApiKey);
+      url.searchParams.set('cx', searchCx);
+      url.searchParams.set('q', `${topic} ${domain} trends innovation`);
+      url.searchParams.set('num', '3');
+      const res = await fetch(url.toString());
+      if (res.ok) {
+        const data = await res.json();
+        const snippets = (data.items ?? []).map((item: { title: string; snippet: string }) =>
+          `- ${item.title}: ${item.snippet}`
+        ).join('\n');
+        if (snippets) webContext = `\n\nWeb research findings:\n${snippets}`;
+      }
+    } catch { /* 검색 실패 시 스킵 */ }
+  }
+
+  const fullContext = graphContext + webContext;
+
   phases.immersion = {
     phase: 'immersion',
     status: 'completed',
     ideas: [],
-    metadata: { note: 'Graph DB search pending — using topic context only' },
-    startedAt: new Date().toISOString(),
+    metadata: {
+      graphContext: graphContext.slice(0, 500),
+      webContext: webContext.slice(0, 500),
+      priorKnowledgeFound: !graphContext.includes('No prior knowledge') && !graphContext.includes('unavailable'),
+      webSearchUsed: !!webContext,
+    },
+    startedAt: immersionStart,
     completedAt: new Date().toISOString(),
   };
 
-  // Phase 2: INSPIRATION — 발산적 아이디어 대량 생성
-  const divergent = await divergentGenerate(topic, domain, divergentCount);
+  // Phase 2: INSPIRATION — 발산적 아이디어 대량 생성 (Graph context 주입)
+  // 슬라이드 11: "즉시 기록" — 생성된 아이디어를 바로 Graph에 저장
+  const inspirationStart = new Date().toISOString();
+  const divergent = await divergentGenerate(topic, domain, divergentCount, fullContext);
+
+  // 실시간 Graph 저장 (light mode도 즉시 저장 — "ideas compound forever")
+  // 기존 idea.id를 보존하여 persistSession과 중복 방지
+  const store = getMemoryStore();
+  for (const idea of divergent.ideas) {
+    if (!store.nodes.some((n) => n.id === idea.id)) {
+      store.nodes.push({
+        id: idea.id,
+        type: 'Idea',
+        title: idea.title,
+        description: idea.description,
+        method: idea.method ?? 'divergent',
+        createdAt: idea.createdAt,
+      });
+      emitNodeCreated({ id: idea.id, type: 'Idea', title: idea.title, description: idea.description, method: idea.method });
+    }
+  }
+  scheduleAutoSave();
+
   phases.inspiration = {
     phase: 'inspiration',
     status: 'completed',
     ideas: divergent.ideas,
-    startedAt: new Date().toISOString(),
+    startedAt: inspirationStart,
     completedAt: new Date().toISOString(),
   };
 
   // Phase 3: ISOLATION — 독립 평가 (편향 없이)
+  const isolationStart = new Date().toISOString();
   const convergent = await convergentSelect(divergent.ideas, domain);
   phases.isolation = {
     phase: 'isolation',
     status: 'completed',
     ideas: convergent.ranked,
     metadata: { eliminated: convergent.eliminated },
-    startedAt: new Date().toISOString(),
+    startedAt: isolationStart,
     completedAt: new Date().toISOString(),
   };
 
   // Phase 4: ITERATION — 2단계 (4I's Iteration + Geneplore Exploratory)
   // Step A: 의미적 변주 — buildIterationPrompt로 "universal themes" 기반 변주 (슬라이드 14)
   // Step B: 구조적 변환 — SCAMPER 기법으로 체계적 변환 (슬라이드 9)
+  const iterationStart = new Date().toISOString();
   const topIdeas = convergent.ranked.slice(0, DEFAULTS.convergentTopK);
   const iterated: Idea[] = [];
 
@@ -94,15 +157,12 @@ export async function runFourIsPipeline(
       topIdeas.filter((t) => t.id !== idea.id).map((t) => ({ title: t.title, description: t.description })),
       domain
     );
-    const iterResponse = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2048,
-      system: CREATIVE_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: iterPrompt }],
-    });
-    const iterText = iterResponse.content[0].type === 'text' ? iterResponse.content[0].text : '{"iterations":[]}';
     try {
-      const parsed = JSON.parse(iterText) as { iterations: { title: string; description: string }[] };
+      const parsed = await llmGenerateJSON<{ iterations: { title: string; description: string }[] }>({
+        prompt: iterPrompt,
+        system: CREATIVE_SYSTEM_PROMPT,
+        maxTokens: 2048,
+      });
       for (const iter of parsed.iterations) {
         iterated.push({
           id: `iter-${Date.now()}-${iterated.length}`,
@@ -128,7 +188,7 @@ export async function runFourIsPipeline(
     status: 'completed',
     ideas: iterated,
     metadata: { rounds: iterationRounds },
-    startedAt: new Date().toISOString(),
+    startedAt: iterationStart,
     completedAt: new Date().toISOString(),
   };
 

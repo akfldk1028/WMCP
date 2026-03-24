@@ -1,6 +1,6 @@
 /**
  * WebMCP core type definitions
- * Based on the WebMCP spec (index.bs) and Chrome 146 implementation
+ * Based on the WebMCP spec (index.bs) and Chrome 148 implementation
  */
 
 // ===== WebMCP Tool Definition =====
@@ -17,7 +17,7 @@ export interface WebMCPTool extends WebMCPToolInput {
 }
 
 export interface ToolAnnotations {
-  title?: string;
+  // title removed in Chrome 148 (toolparamtitle attribute dropped, issue #76)
   readOnlyHint?: boolean;
   destructiveHint?: boolean;
   idempotentHint?: boolean;

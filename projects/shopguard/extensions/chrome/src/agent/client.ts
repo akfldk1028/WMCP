@@ -96,7 +96,10 @@ async function fetchWithRetry(
       });
       clearTimeout(timeoutId);
     } catch (err: unknown) {
-      // Network-level failure (offline, DNS, timeout, etc.)
+      // Distinguish timeout from other network failures
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        throw new AgentError('network', `Request timed out after ${FETCH_TIMEOUT_MS}ms`);
+      }
       const message =
         err instanceof Error ? err.message : 'Unknown network error';
       throw new AgentError('network', message);

@@ -2,10 +2,8 @@
 
 import { useRef, useCallback, useEffect, useState } from 'react';
 import type { Graph3DData, Graph3DNode } from '@/types/graph';
-import { GRAPH_BG, NODE_STYLES, EDGE_STYLES, getEdgeStyle, BLOOM_CONFIG, CAMERA_CONFIG } from '@/config/graph-styles';
+import { GRAPH_BG, NODE_STYLES, getEdgeStyle, BLOOM_CONFIG, CAMERA_CONFIG, PHYSICS_CONFIG, getLinkDistance } from '@/config/graph-styles';
 
-// react-force-graph-3d는 SSR 불가 → next/dynamic으로 로드
-// 이 컴포넌트 자체가 'use client'이고, 부모에서 dynamic import
 interface ForceGraph3DProps {
   data: Graph3DData;
   width?: number;
@@ -29,7 +27,7 @@ export default function ForceGraph3DComponent({
   const [ForceGraph, setForceGraph] = useState<any>(null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
-  // Dynamic import (브라우저 전용)
+  // Dynamic import
   useEffect(() => {
     import('react-force-graph-3d').then((mod) => {
       setForceGraph(() => mod.default);
@@ -46,20 +44,35 @@ export default function ForceGraph3DComponent({
     }
   }, [autoRotate, ForceGraph]);
 
+  // 물리엔진 — 퍼지는 뇌 형태
+  useEffect(() => {
+    if (!graphRef.current) return;
+    const fg = graphRef.current;
+
+    // 반발력 — 노드를 멀리 밀어냄
+    fg.d3Force('charge')?.strength(PHYSICS_CONFIG.chargeStrength);
+
+    // 링크 거리 — 관계 타입별 다른 거리
+    fg.d3Force('link')?.distance((link: any) => {
+      return getLinkDistance(link.type ?? '');
+    });
+
+    // 중심력 약화 — 더 넓게 퍼짐
+    fg.d3Force('center')?.strength(0.03);
+  }, [ForceGraph, data]);
+
   // Bloom 후처리
   useEffect(() => {
     if (!graphRef.current) return;
     const renderer = graphRef.current.renderer();
     if (!renderer) return;
 
-    // Three.js post-processing (UnrealBloomPass)
     import('three/examples/jsm/postprocessing/EffectComposer.js').then(({ EffectComposer }) => {
       import('three/examples/jsm/postprocessing/RenderPass.js').then(({ RenderPass }) => {
         import('three/examples/jsm/postprocessing/UnrealBloomPass.js').then(({ UnrealBloomPass }) => {
           import('three').then((THREE) => {
             const scene = graphRef.current.scene();
             const camera = graphRef.current.camera();
-
             const composer = new EffectComposer(renderer);
             composer.addPass(new RenderPass(scene, camera));
             composer.addPass(
@@ -70,21 +83,16 @@ export default function ForceGraph3DComponent({
                 BLOOM_CONFIG.threshold
               )
             );
-
-            // 렌더 루프 교체
             graphRef.current.postProcessingComposer(composer);
           });
         });
       });
-    }).catch(() => {
-      // post-processing 없이 fallback
-    });
+    }).catch(() => {});
   }, [ForceGraph]);
 
   const handleNodeClick = useCallback((node: any) => {
-    // 카메라 줌인
     if (graphRef.current) {
-      const distance = 80;
+      const distance = 100;
       const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z);
       graphRef.current.cameraPosition(
         { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio },
@@ -98,7 +106,6 @@ export default function ForceGraph3DComponent({
   const handleNodeHover = useCallback((node: any) => {
     setHoveredNode(node?.id ?? null);
     onNodeHover?.(node ?? null);
-    // 커서 변경
     if (typeof document !== 'undefined') {
       document.body.style.cursor = node ? 'pointer' : 'default';
     }
@@ -107,72 +114,81 @@ export default function ForceGraph3DComponent({
   if (!ForceGraph) {
     return (
       <div className="flex items-center justify-center" style={{ width: width || '100%', height: height || '100vh', background: GRAPH_BG }}>
-        <div className="text-white/40 text-lg font-mono pulse-glow">Loading graph...</div>
+        <div className="text-white/30 text-sm font-mono animate-pulse">Initializing neural graph...</div>
       </div>
     );
   }
 
   return (
-    <div className="graph-canvas">
+    <div style={{ width: width || '100%', height: height || '100vh' }}>
       <ForceGraph
-        ref={graphRef}
-        graphData={data}
-        width={width}
-        height={height}
-        backgroundColor={GRAPH_BG}
-        // 노드
-        nodeVal={(node: Graph3DNode) => node.val}
-        nodeColor={(node: Graph3DNode) => {
-          if (hoveredNode && hoveredNode !== node.id) {
-            // 연결되지 않은 노드 dimming
-            const isLinked = data.links.some(
-              (l) =>
-                (l.source === hoveredNode && l.target === node.id) ||
-                (l.target === hoveredNode && l.source === node.id)
-            );
-            return isLinked ? node.color : 'rgba(255,255,255,0.08)';
-          }
-          return node.color;
-        }}
-        nodeLabel={showLabels ? (node: Graph3DNode) => `
-          <div style="background:rgba(0,0,0,0.85);padding:8px 12px;border-radius:8px;border:1px solid ${node.color};max-width:250px;">
-            <div style="color:${node.color};font-weight:600;font-size:13px;">${node.name}</div>
-            <div style="color:#999;font-size:11px;margin-top:4px;">${node.type}${node.score ? ` · Score: ${node.score}` : ''}</div>
-            ${node.description ? `<div style="color:#ccc;font-size:11px;margin-top:4px;">${node.description.slice(0, 100)}...</div>` : ''}
-          </div>
-        ` : undefined}
-        nodeOpacity={0.9}
-        // 엣지
-        linkColor={(link: any) => {
-          const style = getEdgeStyle(link.type);
-          return style?.color ?? '#333';
-        }}
-        linkWidth={(link: any) => {
-          const style = getEdgeStyle(link.type);
-          return style?.width ?? 1;
-        }}
-        linkDirectionalParticles={(link: any) => {
-          const style = getEdgeStyle(link.type);
-          return style?.particles ?? 0;
-        }}
-        linkDirectionalParticleSpeed={(link: any) => {
-          const style = getEdgeStyle(link.type);
-          return style?.particleSpeed ?? 0;
-        }}
-        linkDirectionalParticleWidth={2}
-        linkDirectionalParticleColor={(link: any) => {
-          const style = getEdgeStyle(link.type);
-          return style?.color ?? '#666';
-        }}
-        linkOpacity={0.6}
-        // 인터랙션
+      ref={graphRef}
+      graphData={data}
+      width={width}
+      height={height}
+      backgroundColor={GRAPH_BG}
+      enableNodeDrag={true}
+      enableNavigationControls={true}
+      enablePointerInteraction={true}
+      // 노드
+      nodeVal={(node: Graph3DNode) => node.val}
+      nodeColor={(node: Graph3DNode) => {
+        if (hoveredNode && hoveredNode !== node.id) {
+          const isLinked = data.links.some(
+            (l) =>
+              ((l.source as any)?.id ?? l.source) === hoveredNode && ((l.target as any)?.id ?? l.target) === node.id ||
+              ((l.target as any)?.id ?? l.target) === hoveredNode && ((l.source as any)?.id ?? l.source) === node.id
+          );
+          return isLinked ? node.color : 'rgba(255,255,255,0.04)';
+        }
+        return node.color;
+      }}
+      nodeLabel={showLabels ? (node: Graph3DNode) => `
+        <div style="background:rgba(0,0,0,0.9);padding:8px 14px;border-radius:10px;border:1px solid ${node.color}40;max-width:280px;backdrop-filter:blur(8px);">
+          <div style="color:${node.color};font-weight:600;font-size:13px;">${node.name}</div>
+          <div style="color:#888;font-size:10px;margin-top:3px;text-transform:uppercase;letter-spacing:0.5px;">${node.type}${node.score ? ` · ${node.score}` : ''}${node.method ? ` · ${node.method}` : ''}</div>
+          ${node.description ? `<div style="color:#aaa;font-size:11px;margin-top:6px;line-height:1.4;">${node.description.slice(0, 120)}${node.description.length > 120 ? '...' : ''}</div>` : ''}
+        </div>
+      ` : undefined}
+      nodeOpacity={0.92}
+      // 엣지 — 곡선 (뇌 시냅스)
+      linkCurvature={(link: any) => link.curvature ?? 0.2}
+      linkCurveRotation={(link: any) => link.source?.id ? (link.source.id.charCodeAt(0) % 7) * 0.9 : 0}
+      linkColor={(link: any) => {
+        if (hoveredNode) {
+          const src = (link.source as any)?.id ?? link.source;
+          const tgt = (link.target as any)?.id ?? link.target;
+          if (src !== hoveredNode && tgt !== hoveredNode) return 'rgba(255,255,255,0.02)';
+        }
+        const style = getEdgeStyle(link.type);
+        return style?.color ?? '#333';
+      }}
+      linkWidth={(link: any) => {
+        const style = getEdgeStyle(link.type);
+        return style?.width ?? 0.8;
+      }}
+      linkDirectionalParticles={(link: any) => {
+        const style = getEdgeStyle(link.type);
+        return style?.particles ?? 0;
+      }}
+      linkDirectionalParticleSpeed={(link: any) => {
+        const style = getEdgeStyle(link.type);
+        return style?.particleSpeed ?? 0;
+      }}
+      linkDirectionalParticleWidth={1.5}
+      linkDirectionalParticleColor={(link: any) => {
+        const style = getEdgeStyle(link.type);
+        return style?.color ?? '#666';
+      }}
+      linkOpacity={0.5}
+      // 물리엔진
+      d3AlphaDecay={PHYSICS_CONFIG.d3AlphaDecay}
+      d3VelocityDecay={PHYSICS_CONFIG.d3VelocityDecay}
+      warmupTicks={PHYSICS_CONFIG.warmupTicks}
+      cooldownTime={PHYSICS_CONFIG.cooldownTime}
+      // 인터랙션
         onNodeClick={handleNodeClick}
         onNodeHover={handleNodeHover}
-        // 물리엔진
-        d3AlphaDecay={0.02}
-        d3VelocityDecay={0.3}
-        warmupTicks={100}
-        cooldownTime={3000}
       />
     </div>
   );

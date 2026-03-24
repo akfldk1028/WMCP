@@ -15,9 +15,12 @@
     "pnpm": ">=9.0.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   },
   "devDependencies": {
+    "puppeteer-core": "^24.38.0",
     "vitest": "^4.0.18"
   }
 }

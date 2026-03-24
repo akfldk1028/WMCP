@@ -26,7 +26,7 @@ JSON 스키마:
   "summary": "PEST 분석 종합 요약"
 }
 
-각 카테고리(P, E, S, T)별로 3-5개씩, 총 12-17개 요인을 분석하세요.
+각 카테고리(P, E, S, T)별로 정확히 4개씩, 총 16개 요인을 분석하세요. 부족하면 반드시 4개를 채우세요.
 각 요인의 fiveForces 점수는 해당 요인이 5 Forces 각 축에 미치는 영향도를 1~5로 평가합니다.`;
 
 export function buildUserMessage(ctx: PipelineContext): string {

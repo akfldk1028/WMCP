@@ -1,5 +1,5 @@
 import type { SectionType } from '@/frameworks/types';
-import { SECTION_DESCRIPTIONS } from '@/lib/pages';
+import { useLocale } from '@/i18n';
 
 interface Props {
   sectionIndex: number;
@@ -9,7 +9,8 @@ interface Props {
 }
 
 export default function SectionCover({ sectionIndex, sectionType, sectionTitle, companyName }: Props) {
-  const description = SECTION_DESCRIPTIONS[sectionType];
+  const { t } = useLocale();
+  const description = t.sections.descriptions[sectionType];
   const num = String(sectionIndex + 1).padStart(2, '0');
 
   return (
@@ -22,7 +23,7 @@ export default function SectionCover({ sectionIndex, sectionType, sectionTitle, 
 
         {/* Section label */}
         <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-indigo-600">
-          Section {num}
+          {t.ui.reportNew.sectionLabel} {num}
         </p>
 
         {/* Title */}

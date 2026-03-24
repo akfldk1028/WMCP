@@ -7,14 +7,32 @@ JSON 스키마:
 {
   "description": "기업에 대한 종합적 설명 (2-3문단)",
   "industry": "주요 산업 분야",
-  "founded": "설립 연도 (알 수 있는 경우)",
+  "founded": "설립 연도",
   "headquarters": "본사 위치",
   "employees": "직원 수 규모 (구체적 숫자로, 예: 약 267,000명)",
-  "revenue": "매출 규모 (구체적 금액으로, 예: 약 258.9조원 (2023))",
-  "mainProducts": ["주력 제품/서비스 목록"],
-  "keyStrengths": ["핵심 강점 목록"],
-  "recentNews": ["최근 주요 동향/뉴스"]
-}`;
+  "revenue": "매출 규모 (구체적 금액, 원래 통화 그대로, 예: 약 $391B (FY2024) 또는 약 258.9조원 (2023))",
+  "mainProducts": ["주력 제품/서비스 3-5개"],
+  "keyStrengths": ["핵심 강점 3-5개"],
+  "recentNews": ["최근 주요 동향/뉴스 3-5개 (반드시 연도 포함)"],
+  "governance": {
+    "ceo": "대표이사명",
+    "majorShareholders": ["주요 주주 목록"],
+    "boardComposition": "이사회 구성 설명"
+  },
+  "investmentHistory": [
+    { "event": "투자/M&A 이벤트명", "year": "연도", "amount": "금액", "description": "상세 설명" }
+  ],
+  "companyValuation": "기업가치 추정 (예: 약 2조원, 유니콘 등급)",
+  "timeline": [
+    { "year": "연도", "event": "주요 연혁 이벤트" }
+  ]
+}
+
+반드시 다음을 포함하세요:
+- governance: 대표이사, 주요 주주, 이사회 구성
+- investmentHistory: M&A, 투자유치 이력 (시드~최근 라운드)
+- companyValuation: 기업가치/시가총액
+- timeline: 주요 연혁 5-10개`;
 
 export function buildUserMessage(ctx: PipelineContext): string {
   return `다음 기업에 대한 종합적인 개요를 작성해 주세요: "${ctx.companyName}"
@@ -35,6 +53,8 @@ ${research.slice(0, 15000)}
 중요 규칙:
 - employees, revenue는 반드시 구체적 숫자를 포함하세요. "데이터 없음"은 절대 쓰지 마세요.
 - 리서치 데이터에 직접적 수치가 없으면, 해당 기업 규모에 맞는 합리적 추정치를 제공하세요.
+- revenue는 원래 통화 그대로 표시하세요 (미국 기업은 USD, 한국 기업은 KRW). 임의로 환산하지 마세요.
+- 연도는 리서치 데이터에 나온 가장 최근 회계연도를 사용하세요.
 - mainProducts, keyStrengths, recentNews는 각각 3-5개 항목으로 작성해 주세요.
 - recentNews는 반드시 연도를 포함하세요 (예: "2026년 2월, ...").`;
 }

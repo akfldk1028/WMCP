@@ -16,31 +16,26 @@
  * Key Idea: "양이 질보다 먼저" — 발산 단계에서는 비판 없이 최대한 많이 생성
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { llmGenerateJSON } from '@/modules/llm/client';
 import { CREATIVE_SYSTEM_PROMPT } from '../prompts/system';
 import { buildDivergentPrompt } from '../prompts/divergent';
 import { buildConvergentPrompt } from '../prompts/convergent';
 import type { Idea, DivergentResult, ConvergentResult, IdeaScores } from '@/types/creativity';
 
-const anthropic = new Anthropic();
-
 /** 발산적 생성: 주제에서 N개 아이디어 독립 생성 */
 export async function divergentGenerate(
   topic: string,
   domain: string,
-  count = 10
+  count = 10,
+  graphContext?: string
 ): Promise<DivergentResult> {
-  const prompt = buildDivergentPrompt(topic, domain, count);
+  const prompt = buildDivergentPrompt(topic, domain, count, graphContext);
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
+  const parsed = await llmGenerateJSON<{ ideas: { title: string; description: string }[] }>({
+    prompt,
     system: CREATIVE_SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: prompt }],
+    maxTokens: 4096,
   });
-
-  const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  const parsed = JSON.parse(text) as { ideas: { title: string; description: string }[] };
 
   const ideas: Idea[] = parsed.ideas.map((raw, i) => ({
     id: `idea-${Date.now()}-${i}`,
@@ -66,18 +61,10 @@ export async function convergentSelect(
     criteria
   );
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
-    system: CREATIVE_SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: prompt }],
-  });
-
-  const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  const parsed = JSON.parse(text) as {
+  const parsed = await llmGenerateJSON<{
     ranked: { index: number; title: string; scores: IdeaScores; reasoning: string }[];
     eliminated: { index: number; reason: string }[];
-  };
+  }>({ prompt, system: CREATIVE_SYSTEM_PROMPT, maxTokens: 4096 });
 
   const ranked: Idea[] = parsed.ranked.map((r) => ({
     ...ideas[r.index],

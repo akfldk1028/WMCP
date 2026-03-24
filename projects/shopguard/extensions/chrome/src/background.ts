@@ -79,7 +79,7 @@ function sendResult(
       data: result.analysis,
       agentNotes: result.agentNotes,
       suspiciousPatterns: result.suspiciousPatterns,
-    }).catch(() => {});
+    }).catch((err) => console.warn('[ShopGuard] sendResult failed:', err?.message));
 
     const rank = GRADE_ORDER[result.analysis.overall.grade] ?? 6;
     const color = rank <= 2 ? '#22c55e' : rank <= 4 ? '#eab308' : '#ef4444';
@@ -99,7 +99,8 @@ async function analyzeTab(tabId: number, snapshot: PageSnapshot): Promise<void> 
   await saveTabState(tabId, state);
 
   // Notify content script that analysis started
-  chrome.tabs.sendMessage(tabId, { type: 'ANALYSIS_STARTED' as const }).catch(() => {});
+  chrome.tabs.sendMessage(tabId, { type: 'ANALYSIS_STARTED' as const })
+    .catch((err) => console.warn('[ShopGuard] ANALYSIS_STARTED failed:', err?.message));
 
   const { apiKey, model } = await getSettings();
   const { licenseKey } = await getProSettings();
@@ -138,7 +139,7 @@ async function analyzeTab(tabId: number, snapshot: PageSnapshot): Promise<void> 
         type: 'ANALYSIS_ERROR' as const,
         error: aiResult.error,
         errorCode: aiResult.errorCode,
-      }).catch(() => {});
+      }).catch((err) => console.warn('[ShopGuard] ANALYSIS_ERROR failed:', err?.message));
     }
     await trackUsage();
     return;
@@ -197,7 +198,7 @@ chrome.runtime.onMessage.addListener(
         // Ask content script to capture the page
         chrome.tabs.sendMessage(activeTabId, {
           type: 'CAPTURE_PAGE' as const,
-        }).catch(() => {});
+        }).catch((err) => console.warn('[ShopGuard] CAPTURE_PAGE failed:', err?.message));
       });
       return false;
     }
@@ -260,7 +261,7 @@ chrome.commands.onCommand.addListener((command) => {
       if (!tabId) return;
       chrome.tabs.sendMessage(tabId, {
         type: 'CAPTURE_PAGE' as const,
-      }).catch(() => {});
+      }).catch((err) => console.warn('[ShopGuard] keyboard CAPTURE_PAGE failed:', err?.message));
     });
   }
 });

@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "build:extension": "node scripts/build-extension.mjs",
+    "check:extension": "tsc --project tsconfig.extension.json"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -30,8 +32,11 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4.0.0",
+    "@types/chrome": "^0.0.300",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
+    "esbuild": "^0.25.0",
+    "sharp": "^0.33.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.5.0"
   }

@@ -1,0 +1,26 @@
+BizScope AI — AI Business Strategy Report Generator
+
+Analyze any company or business idea with AI-powered strategic frameworks. Right-click any company name to instantly generate a consulting-grade strategy report.
+
+FEATURES:
+- Company Analysis: 12 strategic frameworks (PEST, Porter's 5 Forces, SWOT, TOWS, McKinsey 7S, and more)
+- Idea Validation: 8 frameworks with a 9-dimension scorecard for Go/No-Go decisions
+- Multi-Model Ensemble: Cross-validation using Claude, GPT-4o, Grok, and Gemini (Pro)
+- Context Menu: Right-click any text to analyze as a company or idea
+- Keyboard Shortcut: Alt+Shift+B for quick access
+- License Management: Enter your license key in extension settings
+
+HOW TO USE:
+1. Select any company name on a web page
+2. Right-click → "BizScope AI로 기업 분석" or "아이디어 검증"
+3. BizScope AI opens and automatically starts analysis
+4. View your complete strategy report in 3 minutes
+
+PRICING:
+- Free: 2 reports (no sign-up required)
+- Per-report: $5 per report
+- Pro: $29/month (unlimited reports + ensemble AI)
+
+This extension connects to https://bizscope-rho.vercel.app for AI analysis processing.
+
+Supports Korean and English interfaces.

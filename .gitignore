@@ -9,6 +9,7 @@ webmcp/
 .DS_Store
 .env
 .env.*
+.env.local
 *.log
 extensions/chrome/dist/
 extensions/chrome/popup.html
@@ -16,3 +17,28 @@ extensions/chrome/settings/
 *.zip
 .playwright-mcp/
 clone/
+data/
+
+# Build artifacts
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+.pnpm-approved-builds
+test-results/
+
+# Root-level screenshots & temp files
+/*.png
+/*.html
+/*.mjs
+/*.ps1
+/test-*
+/demo-video/
+/1280w/
+/128h/
+/test-minimal-ext/
+
+# Root-level misc docs (not project code)
+/SHOPGUARD-ACTION-PLAN.md
+/test-api.py
+
+# Embedded git repos
+projects/DigitalCreativity/ClawTeam/

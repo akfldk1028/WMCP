@@ -2,13 +2,22 @@
 
 import { JSON_INSTRUCTION } from './system';
 
-export function buildDivergentPrompt(topic: string, domain: string, count: number): string {
+export function buildDivergentPrompt(
+  topic: string,
+  domain: string,
+  count: number,
+  graphContext?: string
+): string {
+  const contextBlock = graphContext && !graphContext.includes('No prior knowledge')
+    ? `\nPrior Knowledge from Knowledge Graph (use this to build upon, not repeat):\n${graphContext}\n\nIMPORTANT: Generate ideas that are DIFFERENT from the existing ones above. Build on them, combine them, or go in opposite directions — but don't duplicate.\n`
+    : '';
+
   return `You are in DIVERGENT THINKING mode (Guilford's SI Model).
 Generate ${count} completely different, creative ideas about:
 
 Topic: "${topic}"
 Domain: "${domain}"
-
+${contextBlock}
 Rules:
 - Quantity over quality — every idea counts
 - No criticism, no filtering, no "that's impossible"

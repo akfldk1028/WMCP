@@ -60,8 +60,9 @@ async function checkRateLimit(key: string, plan: Plan): Promise<{ allowed: boole
       return { allowed: false, remaining: 0 };
     }
     return { allowed: true, remaining: limit - count };
-  } catch {
-    // KV unavailable — allow request but warn
+  } catch (err) {
+    // KV unavailable — allow request but log for monitoring
+    console.error('[auth] KV rate-limit unavailable, allowing request:', err);
     return { allowed: true, remaining: limit };
   }
 }

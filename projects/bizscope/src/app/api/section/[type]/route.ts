@@ -35,7 +35,8 @@ const ALL_SECTIONS: SectionType[] = [...COMPANY_SECTION_ORDER, ...IDEA_SECTION_O
 
 /** Pure computation sections — no AI, no search needed. */
 const COMPUTE_SECTIONS: SectionType[] = [
-  'possibility-impact-matrix',
+  'key-env-variables',
+  'pest-forces-matrix',
   'swot-summary',
   'priority-matrix',
 ];
@@ -45,13 +46,18 @@ const COMPANY_AI_MODULE_MAP: Partial<
   Record<SectionType, () => Promise<{ generateWithResearch: (ctx: PipelineContext, research: string) => Promise<SectionData> }>>
 > = {
   'company-overview': () => import('@/frameworks/company-overview'),
+  'business-model-detail': () => import('@/frameworks/business-model-detail'),
+  'kpi-performance': () => import('@/frameworks/kpi-performance'),
+  'financial-analysis': () => import('@/frameworks/financial-analysis'),
   'pest-analysis': () => import('@/frameworks/pest'),
+  'five-forces-detail': () => import('@/frameworks/five-forces-detail'),
   'internal-capability': () => import('@/frameworks/internal-capability'),
   'tows-cross-matrix': () => import('@/frameworks/tows'),
   'strategy-combination': () => import('@/frameworks/strategy-combination'),
   'seven-s-alignment': () => import('@/frameworks/seven-s'),
   'strategy-current-comparison': () => import('@/frameworks/strategy-current'),
   'competitor-comparison': () => import('@/frameworks/competitor'),
+  'reference-case': () => import('@/frameworks/reference-case'),
   'final-implications': () => import('@/frameworks/implications'),
 };
 
@@ -59,14 +65,21 @@ const COMPANY_AI_MODULE_MAP: Partial<
 const IDEA_AI_MODULE_MAP: Partial<
   Record<SectionType, () => Promise<{ generateWithResearch: (ctx: PipelineContext, research: string) => Promise<SectionData> }>>
 > = {
-  'idea-overview': () => import('@/frameworks/idea-overview'),
-  'market-size': () => import('@/frameworks/market-size'),
-  'competitor-scan': () => import('@/frameworks/competitor-scan'),
-  'differentiation': () => import('@/frameworks/differentiation'),
-  'business-model': () => import('@/frameworks/business-model'),
-  'go-to-market': () => import('@/frameworks/go-to-market'),
-  'risk-assessment': () => import('@/frameworks/risk-assessment'),
-  'action-plan': () => import('@/frameworks/action-plan'),
+  'idea-overview': () => import('@/frameworks/idea/validation/overview'),
+  'idea-target-customer': () => import('@/frameworks/idea/validation/target-customer'),
+  'market-size': () => import('@/frameworks/idea/market/size'),
+  'market-environment': () => import('@/frameworks/idea/market/environment'),
+  'competitor-scan': () => import('@/frameworks/idea/market/competitor-scan'),
+  'competitor-positioning': () => import('@/frameworks/idea/market/competitor-positioning'),
+  'differentiation': () => import('@/frameworks/idea/strategy/differentiation'),
+  'business-model': () => import('@/frameworks/idea/strategy/business-model'),
+  'unit-economics': () => import('@/frameworks/idea/strategy/unit-economics'),
+  'go-to-market': () => import('@/frameworks/idea/strategy/go-to-market'),
+  'growth-strategy': () => import('@/frameworks/idea/strategy/growth-strategy'),
+  'financial-projection': () => import('@/frameworks/idea/execution/financial-projection'),
+  'risk-assessment': () => import('@/frameworks/idea/execution/risk-assessment'),
+  'idea-reference-case': () => import('@/frameworks/idea/execution/reference-case'),
+  'action-plan': () => import('@/frameworks/idea/execution/action-plan'),
 };
 
 /** Compute section generators. */
@@ -74,7 +87,8 @@ const COMPUTE_MODULE_MAP: Record<
   string,
   () => Promise<{ generate: (ctx: PipelineContext) => Promise<SectionData> }>
 > = {
-  'possibility-impact-matrix': () => import('@/frameworks/matrix'),
+  'key-env-variables': () => import('@/frameworks/key-env-variables'),
+  'pest-forces-matrix': () => import('@/frameworks/pest-forces-matrix'),
   'swot-summary': () => import('@/frameworks/swot'),
   'priority-matrix': () => import('@/frameworks/priority-matrix'),
 };
@@ -86,23 +100,35 @@ const FALLBACK_MODULE_MAP: Record<
 > = {
   // Company
   'company-overview': () => import('@/frameworks/company-overview'),
+  'business-model-detail': () => import('@/frameworks/business-model-detail'),
+  'kpi-performance': () => import('@/frameworks/kpi-performance'),
+  'financial-analysis': () => import('@/frameworks/financial-analysis'),
   'pest-analysis': () => import('@/frameworks/pest'),
+  'five-forces-detail': () => import('@/frameworks/five-forces-detail'),
   'internal-capability': () => import('@/frameworks/internal-capability'),
   'tows-cross-matrix': () => import('@/frameworks/tows'),
   'strategy-combination': () => import('@/frameworks/strategy-combination'),
   'seven-s-alignment': () => import('@/frameworks/seven-s'),
   'strategy-current-comparison': () => import('@/frameworks/strategy-current'),
   'competitor-comparison': () => import('@/frameworks/competitor'),
+  'reference-case': () => import('@/frameworks/reference-case'),
   'final-implications': () => import('@/frameworks/implications'),
   // Idea
-  'idea-overview': () => import('@/frameworks/idea-overview'),
-  'market-size': () => import('@/frameworks/market-size'),
-  'competitor-scan': () => import('@/frameworks/competitor-scan'),
-  'differentiation': () => import('@/frameworks/differentiation'),
-  'business-model': () => import('@/frameworks/business-model'),
-  'go-to-market': () => import('@/frameworks/go-to-market'),
-  'risk-assessment': () => import('@/frameworks/risk-assessment'),
-  'action-plan': () => import('@/frameworks/action-plan'),
+  'idea-overview': () => import('@/frameworks/idea/validation/overview'),
+  'idea-target-customer': () => import('@/frameworks/idea/validation/target-customer'),
+  'market-size': () => import('@/frameworks/idea/market/size'),
+  'market-environment': () => import('@/frameworks/idea/market/environment'),
+  'competitor-scan': () => import('@/frameworks/idea/market/competitor-scan'),
+  'competitor-positioning': () => import('@/frameworks/idea/market/competitor-positioning'),
+  'differentiation': () => import('@/frameworks/idea/strategy/differentiation'),
+  'business-model': () => import('@/frameworks/idea/strategy/business-model'),
+  'unit-economics': () => import('@/frameworks/idea/strategy/unit-economics'),
+  'go-to-market': () => import('@/frameworks/idea/strategy/go-to-market'),
+  'growth-strategy': () => import('@/frameworks/idea/strategy/growth-strategy'),
+  'financial-projection': () => import('@/frameworks/idea/execution/financial-projection'),
+  'risk-assessment': () => import('@/frameworks/idea/execution/risk-assessment'),
+  'idea-reference-case': () => import('@/frameworks/idea/execution/reference-case'),
+  'action-plan': () => import('@/frameworks/idea/execution/action-plan'),
 };
 
 export async function POST(
@@ -174,7 +200,7 @@ export async function POST(
         ? (ideaInput?.name ?? companyName)
         : companyName;
 
-      const FINANCIAL_SECTIONS: SectionType[] = ['company-overview', 'internal-capability', 'competitor-comparison'];
+      const FINANCIAL_SECTIONS: SectionType[] = ['company-overview', 'kpi-performance', 'financial-analysis', 'internal-capability', 'competitor-comparison'];
       const needsFinancials = !isIdeaMode && FINANCIAL_SECTIONS.includes(sectionType);
 
       const [webResearch, financials] = await Promise.all([

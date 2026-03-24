@@ -33,11 +33,41 @@ const SECTION_SEARCH: Record<string, SectionSearchConfig> = {
     ],
     exaCategory: 'company',
   },
+  'business-model-detail': {
+    queries: (c) => [
+      `${c} business model revenue streams platform components value chain`,
+      `${c} monetization strategy commission structure subscription advertising`,
+      `${c} 3C content community commerce business model analysis`,
+    ],
+    exaCategory: 'company',
+  },
+  'kpi-performance': {
+    queries: (c) => [
+      `${c} KPI performance metrics MAU DAU transaction volume`,
+      `${c} market share industry ranking downloads users 2025 2026`,
+      `${c} key performance indicators benchmark comparison`,
+    ],
+    exaCategory: 'company',
+  },
+  'financial-analysis': {
+    queries: (c) => [
+      `${c} financial statements income statement revenue profit loss 2023 2024 2025`,
+      `${c} cost structure operating expenses R&D marketing costs`,
+      `${c} financial ratios debt ratio ROE growth rate stability`,
+    ],
+    exaCategory: 'company',
+  },
   'pest-analysis': {
     queries: (c) => [
       `${c} regulatory political government policy sanctions trade tariff 2025 2026`,
       `${c} industry economic trends market outlook competition`,
       `${c} technology innovation AI semiconductor disruption patent R&D 2025 2026`,
+    ],
+  },
+  'five-forces-detail': {
+    queries: (c) => [
+      `${c} industry competition Porter five forces analysis barriers to entry`,
+      `${c} supplier buyer bargaining power substitute products rivalry`,
     ],
   },
   'internal-capability': {
@@ -79,6 +109,14 @@ const SECTION_SEARCH: Record<string, SectionSearchConfig> = {
       `${c} vs competitor strengths weaknesses competitive positioning`,
     ],
   },
+  'reference-case': {
+    queries: (c) => [
+      `${c} industry success story transformation case study benchmark`,
+      `${c} similar company strategy implementation results outcomes`,
+      `corporate transformation digital innovation success case study global`,
+    ],
+    exaCategory: 'research paper',
+  },
   'final-implications': {
     queries: (c) => [
       `${c} industry trends forecast outlook 2025 2026 2027`,
@@ -93,10 +131,25 @@ const SECTION_SEARCH: Record<string, SectionSearchConfig> = {
       `${c} startup idea validation user research`,
     ],
   },
+  'idea-target-customer': {
+    queries: (c) => [
+      `${c} target customer persona user research segmentation`,
+      `${c} customer journey map pain points willingness to pay`,
+      `${c} user behavior switching cost alternatives analysis`,
+    ],
+  },
   'market-size': {
     queries: (c) => [
       `${c} market size TAM SAM SOM 2025 2026`,
       `${c} industry market research growth forecast report`,
+    ],
+    exaCategory: 'research paper',
+  },
+  'market-environment': {
+    queries: (c) => [
+      `${c} industry trends technology disruption regulation 2025 2026`,
+      `${c} PEST analysis market maturity consumer behavior change`,
+      `${c} regulatory environment compliance policy impact startup`,
     ],
     exaCategory: 'research paper',
   },
@@ -105,6 +158,14 @@ const SECTION_SEARCH: Record<string, SectionSearchConfig> = {
       `${c} similar apps competitors alternatives comparison`,
       `${c} Product Hunt startup competitors funding Crunchbase`,
       `${c} market landscape existing solutions review`,
+    ],
+    exaCategory: 'company',
+  },
+  'competitor-positioning': {
+    queries: (c) => [
+      `${c} competitive positioning map market segmentation`,
+      `${c} competitor weakness vulnerability market gap opportunity`,
+      `${c} substitute products indirect competition threat analysis`,
     ],
     exaCategory: 'company',
   },
@@ -120,17 +181,46 @@ const SECTION_SEARCH: Record<string, SectionSearchConfig> = {
       `${c} startup monetization strategy unit economics`,
     ],
   },
+  'unit-economics': {
+    queries: (c) => [
+      `${c} startup unit economics CAC LTV break even point`,
+      `${c} SaaS metrics burn rate runway customer acquisition cost benchmark`,
+    ],
+    exaCategory: 'research paper',
+  },
   'go-to-market': {
     queries: (c) => [
       `${c} go to market strategy launch plan growth hacking`,
       `${c} customer acquisition channels marketing strategy startup`,
     ],
   },
+  'growth-strategy': {
+    queries: (c) => [
+      `${c} startup growth strategy viral loop network effects`,
+      `${c} partnership strategy international expansion scaling plan`,
+      `${c} product-led growth community building content marketing`,
+    ],
+  },
+  'financial-projection': {
+    queries: (c) => [
+      `${c} startup financial projection revenue forecast 3 year`,
+      `${c} startup funding seed series A venture capital valuation`,
+    ],
+    exaCategory: 'research paper',
+  },
   'risk-assessment': {
     queries: (c) => [
       `${c} startup risks challenges failure reasons`,
       `${c} market risk regulatory compliance barriers to entry`,
     ],
+  },
+  'idea-reference-case': {
+    queries: (c) => [
+      `${c} similar startup success story case study growth journey`,
+      `${c} startup failure lessons learned postmortem analysis`,
+      `${c} comparable company IPO acquisition exit outcome`,
+    ],
+    exaCategory: 'company',
   },
   'action-plan': {
     queries: (c) => [

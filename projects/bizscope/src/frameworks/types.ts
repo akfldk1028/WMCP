@@ -1,39 +1,16 @@
-// --- Company analysis section types ---
-
-export type CompanySectionType =
-  | 'company-overview'
-  | 'pest-analysis'
-  | 'possibility-impact-matrix'
-  | 'internal-capability'
-  | 'swot-summary'
-  | 'tows-cross-matrix'
-  | 'strategy-combination'
-  | 'seven-s-alignment'
-  | 'priority-matrix'
-  | 'strategy-current-comparison'
-  | 'competitor-comparison'
-  | 'final-implications';
-
-// --- Idea analysis section types ---
-
-export type IdeaSectionType =
-  | 'idea-overview'
-  | 'market-size'
-  | 'competitor-scan'
-  | 'differentiation'
-  | 'business-model'
-  | 'go-to-market'
-  | 'risk-assessment'
-  | 'action-plan';
-
-export type SectionType = CompanySectionType | IdeaSectionType;
-
-export type ReportMode = 'company' | 'idea';
+// Re-export from section-types.ts (separated to avoid circular deps with i18n)
+export type { CompanySectionType, IdeaSectionType, SectionType, ReportMode } from './section-types';
+import type { CompanySectionType, IdeaSectionType, SectionType, ReportMode } from './section-types';
 
 export const COMPANY_SECTION_ORDER: CompanySectionType[] = [
   'company-overview',
+  'business-model-detail',
+  'kpi-performance',
+  'financial-analysis',
   'pest-analysis',
-  'possibility-impact-matrix',
+  'five-forces-detail',
+  'pest-forces-matrix',
+  'key-env-variables',
   'internal-capability',
   'swot-summary',
   'tows-cross-matrix',
@@ -42,17 +19,25 @@ export const COMPANY_SECTION_ORDER: CompanySectionType[] = [
   'priority-matrix',
   'strategy-current-comparison',
   'competitor-comparison',
+  'reference-case',
   'final-implications',
 ];
 
 export const IDEA_SECTION_ORDER: IdeaSectionType[] = [
   'idea-overview',
+  'idea-target-customer',
   'market-size',
+  'market-environment',
   'competitor-scan',
+  'competitor-positioning',
   'differentiation',
   'business-model',
+  'unit-economics',
   'go-to-market',
+  'growth-strategy',
+  'financial-projection',
   'risk-assessment',
+  'idea-reference-case',
   'action-plan',
 ];
 
@@ -63,46 +48,16 @@ export function getSectionOrder(mode: ReportMode): SectionType[] {
   return mode === 'idea' ? IDEA_SECTION_ORDER : COMPANY_SECTION_ORDER;
 }
 
-export const SECTION_TITLES: Record<SectionType, string> = {
-  // Company
-  'company-overview': '기업 개요',
-  'pest-analysis': 'PEST 분석 + 5 Forces',
-  'possibility-impact-matrix': 'Possibility × Impact 매트릭스',
-  'internal-capability': '내부역량 평가',
-  'swot-summary': 'SWOT 종합',
-  'tows-cross-matrix': 'TOWS 교차 매트릭스',
-  'strategy-combination': '전략 조합 (SO/ST/WO/WT)',
-  'seven-s-alignment': '7S 정렬',
-  'priority-matrix': '우선순위 매트릭스',
-  'strategy-current-comparison': '기업 현 전략 비교',
-  'competitor-comparison': '경쟁사 비교',
-  'final-implications': '시사점 및 액션 아이템',
-  // Idea
-  'idea-overview': '아이디어 개요',
-  'market-size': '시장 규모 (TAM/SAM/SOM)',
-  'competitor-scan': '경쟁 서비스 스캔',
-  'differentiation': '차별화 분석',
-  'business-model': '수익 모델',
-  'go-to-market': 'GTM 전략',
-  'risk-assessment': '리스크 평가',
-  'action-plan': '실행 계획 & 판정',
-};
+import { getMessages } from '@/i18n';
+import type { Locale } from '@/i18n';
 
-/** Idea mode titles for the 12 company-analysis sections */
-export const IDEA_SECTION_TITLES: Record<string, string> = {
-  'company-overview': '아이디어 개요',
-  'pest-analysis': '시장 환경 분석 (PEST + 5 Forces)',
-  'possibility-impact-matrix': 'Possibility × Impact 매트릭스',
-  'internal-capability': '필요 역량 vs 보유 역량',
-  'swot-summary': 'SWOT 종합',
-  'tows-cross-matrix': 'TOWS 교차 매트릭스',
-  'strategy-combination': '실행 전략 조합 (SO/ST/WO/WT)',
-  'seven-s-alignment': '7S 실행 준비도',
-  'priority-matrix': '우선순위 매트릭스',
-  'strategy-current-comparison': '시장 포지셔닝 분석',
-  'competitor-comparison': '경쟁 앱/서비스 비교',
-  'final-implications': '시사점 및 실행 로드맵',
-};
+/** Get section titles for a locale. Defaults to 'ko'. */
+export function getSectionTitles(locale?: Locale | string | null): Record<SectionType, string> {
+  return getMessages(locale).sections.titles;
+}
+
+/** Default section titles (Korean) for backward compatibility. */
+export const SECTION_TITLES: Record<SectionType, string> = getSectionTitles('ko');
 
 export interface IdeaInput {
   name: string;
@@ -134,8 +89,13 @@ export interface ReportSection {
 
 export type SectionData =
   | CompanyOverviewData
+  | BusinessModelDetailData
+  | KPIPerformanceData
+  | FinancialAnalysisData
   | PESTData
-  | MatrixData
+  | FiveForceDetailData
+  | PESTForcesMatrixData
+  | KeyEnvVariablesData
   | InternalCapabilityData
   | SWOTData
   | TOWSData
@@ -144,14 +104,22 @@ export type SectionData =
   | PriorityMatrixData
   | StrategyCurrentComparisonData
   | CompetitorData
+  | ReferenceCaseData
   | ImplicationsData
   | IdeaOverviewData
+  | IdeaTargetCustomerData
   | MarketSizeData
+  | MarketEnvironmentData
   | CompetitorScanData
+  | CompetitorPositioningData
   | DifferentiationData
   | BusinessModelData
+  | UnitEconomicsData
   | GoToMarketData
+  | GrowthStrategyData
+  | FinancialProjectionData
   | RiskAssessmentData
+  | IdeaReferenceCaseData
   | ActionPlanData;
 
 // --- Company section data types ---
@@ -167,6 +135,83 @@ export interface CompanyOverviewData {
   mainProducts: string[];
   keyStrengths: string[];
   recentNews: string[];
+  // New fields for reference-level depth
+  governance?: {
+    ceo?: string;
+    majorShareholders?: string[];
+    boardComposition?: string;
+  };
+  investmentHistory?: {
+    event: string;
+    year: string;
+    amount?: string;
+    description: string;
+  }[];
+  companyValuation?: string;
+  timeline?: { year: string; event: string }[];
+}
+
+// ② Business Model Detail [NEW]
+export interface BusinessModelDetailData {
+  type: 'business-model-detail';
+  businessModelType: string; // e.g. "3C (Content/Community/Commerce)", "Platform", etc.
+  revenueStreams: {
+    name: string;
+    description: string;
+    percentage?: string; // share of total revenue
+  }[];
+  platformComponents?: string[];
+  valueChain: string[];
+  commissionStructure?: string;
+  keyPartners?: string[];
+  summary: string;
+}
+
+// ③ KPI Performance [NEW]
+export interface KPIPerformanceData {
+  type: 'kpi-performance';
+  kpis: {
+    metric: string;
+    value: string;
+    trend: 'up' | 'down' | 'stable';
+    benchmark?: string;
+  }[];
+  marketPosition: string;
+  industryComparison?: string;
+  summary: string;
+}
+
+// ④ Financial Analysis [NEW]
+export interface FinancialAnalysisData {
+  type: 'financial-analysis';
+  incomeStatement: {
+    year: string;
+    revenue: string;
+    operatingProfit: string;
+    netIncome: string;
+  }[];
+  costStructure: {
+    category: string;
+    amount?: string;
+    percentage?: string;
+  }[];
+  growthIndicators: {
+    metric: string;
+    value: string;
+    interpretation: string;
+  }[];
+  stabilityIndicators: {
+    metric: string;
+    value: string;
+    interpretation: string;
+  }[];
+  profitabilityIndicators?: {
+    metric: string;
+    value: string;
+    interpretation: string;
+  }[];
+  lossAnalysis?: string;
+  summary: string;
 }
 
 export type PESTCategory = 'political' | 'economic' | 'social' | 'technological';
@@ -197,6 +242,71 @@ export interface PESTData {
   summary: string;
 }
 
+// ⑥ Five Forces Detail [NEW]
+export interface FiveForceAxisDetail {
+  axis: 'rivalry' | 'newEntrants' | 'supplierPower' | 'buyerPower' | 'substitutes';
+  label: string;
+  score: number; // 1-5
+  analysis: string;
+  pestInfluences: {
+    pestFactor: string;
+    influence: string;
+    direction: 'increase' | 'decrease' | 'neutral';
+  }[];
+}
+
+export interface FiveForceDetailData {
+  type: 'five-forces-detail';
+  axes: FiveForceAxisDetail[];
+  overallCompetitiveIntensity: number; // 1-5
+  summary: string;
+}
+
+// ⑦ PEST × 5Forces Matrix [NEW, pure computation]
+export interface PESTForcesMatrixCell {
+  pestFactorId: string;
+  pestFactor: string;
+  pestCategory: PESTCategory;
+  axis: string;
+  influenceScore: number; // -5 to +5
+}
+
+export interface PESTForcesMatrixData {
+  type: 'pest-forces-matrix';
+  cells: PESTForcesMatrixCell[];
+  axisImpactSummary: {
+    axis: string;
+    totalImpact: number;
+    topInfluencers: string[];
+  }[];
+  priorityRanking: {
+    pestFactor: string;
+    totalInfluence: number;
+    rank: number;
+  }[];
+  summary: string;
+}
+
+// ⑧ Key Environment Variables [replaces MatrixData]
+export interface EnvVariable {
+  id: string; // O1, O2, T1, T2, etc.
+  label: string;
+  classification: 'opportunity' | 'threat';
+  probability: number; // 0-1
+  impact: number; // 1-5
+  priorityScore: number; // probability * impact
+  description: string;
+}
+
+export interface KeyEnvVariablesData {
+  type: 'key-env-variables';
+  opportunities: EnvVariable[];
+  threats: EnvVariable[];
+  priorityRanking: { id: string; label: string; score: number }[];
+  summary: string;
+}
+
+/** @deprecated Use KeyEnvVariablesData — kept for backward compat */
 export interface MatrixPoint {
   id: string;
   label: string;
@@ -206,6 +316,7 @@ export interface MatrixPoint {
   quadrant: 'high-high' | 'high-low' | 'low-high' | 'low-low';
 }
 
+/** @deprecated Use KeyEnvVariablesData */
 export interface MatrixData {
   type: 'possibility-impact-matrix';
   points: MatrixPoint[];
@@ -213,16 +324,16 @@ export interface MatrixData {
 
 export interface CapabilityItem {
   area: string;
-  strengths: string[];
-  weaknesses: string[];
+  strengths: { id: string; description: string }[];
+  weaknesses: { id: string; description: string }[];
   score: number; // 1-5
 }
 
 export interface InternalCapabilityData {
   type: 'internal-capability';
   capabilities: CapabilityItem[];
-  overallStrengths: string[];
-  overallWeaknesses: string[];
+  overallStrengths: { id: string; description: string }[];
+  overallWeaknesses: { id: string; description: string }[];
   summary: string;
 }
 
@@ -265,6 +376,7 @@ export interface StrategyComparison {
   currentStrategy: string;
   sevenSComparison: string;
   verdict: 'match' | 'supplement' | 'missing';
+  status?: 'completed' | 'in-progress' | 'planned';
 }
 
 export interface StrategyCurrentComparisonData {
@@ -307,11 +419,19 @@ export interface SevenSItem {
   difficulty: number; // 1-5
   impact: number; // 1-5
   relatedStrategies: string[];
+  executionStatus?: 'not-started' | 'in-progress' | 'completed';
+  progress?: number; // 0-100
 }
 
 export interface SevenSData {
   type: 'seven-s-alignment';
   items: SevenSItem[];
+  strategyClassification?: {
+    strategyId: string;
+    strategyName: string;
+    sevenSElement: SevenSElement;
+    rationale: string;
+  }[];
   summary: string;
 }
 
@@ -336,6 +456,9 @@ export interface CompetitorProfile {
   weaknesses: string[];
   marketShare?: string;
   keyDifferentiator: string;
+  revenue?: string;
+  employees?: string;
+  founded?: string;
 }
 
 export interface GapItem {
@@ -353,6 +476,20 @@ export interface CompetitorData {
   summary: string;
 }
 
+// ⑰ Reference Case [NEW]
+export interface ReferenceCaseData {
+  type: 'reference-case';
+  cases: {
+    company: string;
+    industry: string;
+    strategy: string;
+    outcome: string;
+    applicability: string;
+  }[];
+  implications: string[];
+  summary: string;
+}
+
 export interface ActionItem {
   priority: 'high' | 'medium' | 'low';
   action: string;
@@ -366,6 +503,8 @@ export interface ImplicationsData {
   keyInsights: string[];
   actionItems: ActionItem[];
   roadmap: string;
+  techRoadmap?: string;
+  recommendedPartners?: { name: string; reason: string }[];
   conclusion: string;
 }
 
@@ -545,34 +684,288 @@ export interface ActionPlanData {
   summary: string;
 }
 
+// --- New idea section data types (expanded 8→15) ---
+
+export interface PersonaDetail {
+  name: string;
+  age: string;
+  occupation: string;
+  income?: string;
+  pain: string;
+  currentSolution: string;
+  desiredOutcome: string;
+  willingnessToPay: string;
+}
+
+export interface CustomerJourneyStep {
+  stage: string;
+  action: string;
+  touchpoint: string;
+  painPoint: string;
+  opportunity: string;
+}
+
+export interface IdeaTargetCustomerData {
+  type: 'idea-target-customer';
+  personas: PersonaDetail[];
+  customerJourney: CustomerJourneyStep[];
+  currentAlternatives: {
+    name: string;
+    usage: string;
+    satisfaction: 'high' | 'medium' | 'low';
+    switchingBarrier: string;
+  }[];
+  willingnessAnalysis: {
+    segment: string;
+    priceRange: string;
+    paymentModel: string;
+    reasoning: string;
+  }[];
+  summary: string;
+}
+
+export interface MarketEnvironmentData {
+  type: 'market-environment';
+  pestSummary: {
+    category: 'political' | 'economic' | 'social' | 'technological';
+    keyFactor: string;
+    impact: string;
+    direction: 'positive' | 'negative' | 'neutral';
+  }[];
+  techTrends: {
+    trend: string;
+    relevance: string;
+    timeframe: string;
+  }[];
+  regulatoryEnvironment: {
+    regulation: string;
+    status: 'existing' | 'upcoming' | 'proposed';
+    impact: string;
+  }[];
+  consumerBehavior: {
+    trend: string;
+    evidence: string;
+    implication: string;
+  }[];
+  marketMaturity: 'emerging' | 'growing' | 'mature' | 'declining';
+  maturityReasoning: string;
+  summary: string;
+}
+
+export interface PositioningAxis {
+  label: string;
+  lowEnd: string;
+  highEnd: string;
+}
+
+export interface PositionedCompetitor {
+  name: string;
+  x: number; // 0-100
+  y: number; // 0-100
+  size?: 'small' | 'medium' | 'large';
+  isOurs?: boolean;
+}
+
+export interface CompetitorPositioningData {
+  type: 'competitor-positioning';
+  axes: { x: PositioningAxis; y: PositioningAxis };
+  positions: PositionedCompetitor[];
+  indirectCompetitors: {
+    name: string;
+    overlapArea: string;
+    threatLevel: 'high' | 'medium' | 'low';
+  }[];
+  substitutes: {
+    name: string;
+    description: string;
+    switchingCost: string;
+  }[];
+  vulnerabilities: {
+    competitor: string;
+    weakness: string;
+    exploitStrategy: string;
+  }[];
+  marketWhitespace: string[];
+  summary: string;
+}
+
+export interface UnitEconomicsData {
+  type: 'unit-economics';
+  cac: { value: string; breakdown: string; benchmark?: string };
+  ltv: { value: string; calculation: string; benchmark?: string };
+  ltvCacRatio: { value: string; verdict: 'healthy' | 'marginal' | 'unsustainable' };
+  breakEvenPoint: {
+    months: string;
+    customers: string;
+    revenue: string;
+    assumptions: string;
+  };
+  monthlyBurnRate: string;
+  runway: string;
+  margins: {
+    gross: string;
+    contribution: string;
+    reasoning: string;
+  };
+  sensitivityAnalysis: {
+    variable: string;
+    optimistic: string;
+    base: string;
+    pessimistic: string;
+  }[];
+  summary: string;
+}
+
+export interface GrowthStrategyData {
+  type: 'growth-strategy';
+  strategies: {
+    type: 'viral' | 'content' | 'partnership' | 'paid' | 'community' | 'product-led';
+    name: string;
+    description: string;
+    cost: string;
+    expectedImpact: string;
+    timeline: string;
+    priority: 'high' | 'medium' | 'low';
+  }[];
+  networkEffects: {
+    type: 'direct' | 'indirect' | 'data' | 'none';
+    description: string;
+    strength: 'strong' | 'moderate' | 'weak' | 'none';
+  };
+  expansionStages: {
+    stage: string;
+    timeline: string;
+    target: string;
+    strategy: string;
+    kpi: string;
+  }[];
+  internationalExpansion?: {
+    feasibility: 'high' | 'medium' | 'low';
+    priorityMarkets: string[];
+    barriers: string[];
+    timeline: string;
+  };
+  partnerships: {
+    partner: string;
+    type: string;
+    benefit: string;
+    feasibility: 'high' | 'medium' | 'low';
+  }[];
+  summary: string;
+}
+
+export interface MonthlyProjection {
+  month: string;
+  revenue: number;
+  cost: number;
+  profit: number;
+  users?: number;
+}
+
+export interface YearlyProjection {
+  year: string;
+  revenue: string;
+  cost: string;
+  profit: string;
+  users?: string;
+  keyAssumptions: string[];
+}
+
+export interface FinancialProjectionData {
+  type: 'financial-projection';
+  monthly: MonthlyProjection[]; // 12-36 months
+  yearly: YearlyProjection[]; // 3 years
+  scenarios: {
+    scenario: 'optimistic' | 'base' | 'pessimistic';
+    year3Revenue: string;
+    year3Profit: string;
+    probability: string;
+    keyAssumption: string;
+  }[];
+  fundingPlan: {
+    stage: string;
+    amount: string;
+    timing: string;
+    use: string;
+    source: string;
+  }[];
+  keyMetrics: {
+    metric: string;
+    year1: string;
+    year2: string;
+    year3: string;
+  }[];
+  summary: string;
+}
+
+export interface IdeaReferenceCaseData {
+  type: 'idea-reference-case';
+  successCases: {
+    company: string;
+    industry: string;
+    similarity: string;
+    strategy: string;
+    outcome: string;
+    keyLesson: string;
+    timeToSuccess: string;
+  }[];
+  failureCase: {
+    company: string;
+    industry: string;
+    reason: string;
+    lesson: string;
+  };
+  implications: string[];
+  summary: string;
+}
+
 // --- Pipeline context ---
 
 export interface PipelineContext {
   companyName: string;
   mode?: ReportMode;
   ensembleEnabled?: boolean;
-  // Company mode
+  // Company mode — CH01
   companyOverview?: CompanyOverviewData;
+  businessModelDetail?: BusinessModelDetailData;
+  kpiPerformance?: KPIPerformanceData;
+  financialAnalysis?: FinancialAnalysisData;
+  // Company mode — CH02
   pest?: PESTData;
-  matrix?: MatrixData;
+  fiveForceDetail?: FiveForceDetailData;
+  pestForcesMatrix?: PESTForcesMatrixData;
+  keyEnvVariables?: KeyEnvVariablesData;
   internalCapability?: InternalCapabilityData;
+  // Company mode — CH03
   swot?: SWOTData;
   towsCrossMatrix?: TOWSData;
   strategyCombination?: StrategyCombinationData;
   sevenS?: SevenSData;
   priorityMatrix?: PriorityMatrixData;
+  // Company mode — CH04
   strategyCurrentComparison?: StrategyCurrentComparisonData;
   competitor?: CompetitorData;
+  referenceCase?: ReferenceCaseData;
   implications?: ImplicationsData;
+  // Backward compat
+  /** @deprecated Use keyEnvVariables */
+  matrix?: MatrixData;
   // Idea mode
   ideaInput?: IdeaInput;
   ideaOverview?: IdeaOverviewData;
+  ideaTargetCustomer?: IdeaTargetCustomerData;
   marketSize?: MarketSizeData;
+  marketEnvironment?: MarketEnvironmentData;
   competitorScan?: CompetitorScanData;
+  competitorPositioning?: CompetitorPositioningData;
   differentiation?: DifferentiationData;
   businessModel?: BusinessModelData;
+  unitEconomics?: UnitEconomicsData;
   goToMarket?: GoToMarketData;
+  growthStrategy?: GrowthStrategyData;
+  financialProjection?: FinancialProjectionData;
   riskAssessment?: RiskAssessmentData;
+  ideaReferenceCase?: IdeaReferenceCaseData;
   actionPlan?: ActionPlanData;
   scoreCard?: ScoreCard;
 }

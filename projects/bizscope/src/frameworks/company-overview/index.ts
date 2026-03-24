@@ -18,6 +18,10 @@ export async function generate(ctx: PipelineContext): Promise<CompanyOverviewDat
     mainProducts: parsed.mainProducts ?? [],
     keyStrengths: parsed.keyStrengths ?? [],
     recentNews: parsed.recentNews ?? [],
+    governance: parsed.governance,
+    investmentHistory: parsed.investmentHistory,
+    companyValuation: parsed.companyValuation,
+    timeline: parsed.timeline,
   };
 }
 
@@ -39,5 +43,9 @@ export async function generateWithResearch(
     mainProducts: parsed.mainProducts ?? [],
     keyStrengths: parsed.keyStrengths ?? [],
     recentNews: parsed.recentNews ?? [],
+    governance: parsed.governance,
+    investmentHistory: parsed.investmentHistory,
+    companyValuation: parsed.companyValuation,
+    timeline: parsed.timeline,
   };
 }

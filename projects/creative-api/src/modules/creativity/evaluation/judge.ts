@@ -6,10 +6,7 @@
  * - Tournament bracket으로 N개 중 최고 선별
  */
 
-import Anthropic from '@anthropic-ai/sdk';
-import type { Idea } from '@/types/creativity';
-
-const anthropic = new Anthropic();
+import { llmGenerateJSON } from '@/modules/llm/client';
 
 export interface JudgeResult {
   winner: 'idea_1' | 'idea_2';
@@ -19,15 +16,6 @@ export interface JudgeResult {
     idea_2: Record<string, number>;
   };
 }
-
-const JUDGE_CRITERIA = [
-  'domainRelevance',
-  'creativeThinking',
-  'intrinsicMotivation',
-  'specificity',
-  'marketNeed',
-  'competitiveAdvantage',
-] as const;
 
 /** 두 아이디어 비교 평가 */
 export async function compareIdeas(
@@ -66,14 +54,7 @@ Respond ONLY with valid JSON:
   }
 }`;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1024,
-    messages: [{ role: 'user', content: prompt }],
-  });
-
-  const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  return JSON.parse(text) as JudgeResult;
+  return llmGenerateJSON<JudgeResult>({ prompt, maxTokens: 1024 });
 }
 
 /** Tournament bracket — N개 아이디어 중 최고 선별 */

@@ -41,6 +41,8 @@ export interface CreateSessionRequest {
   topic: string;
   domain: string;
   mode?: SessionMode;
+  /** 사용자 ID (사용량 추적용, 미지정 시 anonymous) */
+  userId?: string;
   /** SCAMPER 기법 제한 (미지정 시 전체 사용) */
   scamperTypes?: string[];
   /** 발산 시 생성할 아이디어 수 */

@@ -7,10 +7,8 @@
  * AI 에이전트가 생성한 아이디어에 스토리 프레임을 입히는 기능.
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { llmGenerateJSON } from '@/modules/llm/client';
 import { JSON_INSTRUCTION, CREATIVE_SYSTEM_PROMPT } from '../prompts/system';
-
-const anthropic = new Anthropic();
 
 /** Hero's Journey 5단계 (수업자료 슬라이드 19) */
 export interface HeroJourney {
@@ -58,15 +56,11 @@ Format:
   "return": "..."
 }`;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1024,
+  return llmGenerateJSON<HeroJourney>({
+    prompt,
     system: CREATIVE_SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: prompt }],
+    maxTokens: 1024,
   });
-
-  const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  return JSON.parse(text) as HeroJourney;
 }
 
 /** 아이디어를 3-Act Structure로 포장 */
@@ -95,13 +89,9 @@ Format:
   "end": "..."
 }`;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1024,
+  return llmGenerateJSON<ThreeActStructure>({
+    prompt,
     system: CREATIVE_SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: prompt }],
+    maxTokens: 1024,
   });
-
-  const text = response.content[0].type === 'text' ? response.content[0].text : '';
-  return JSON.parse(text) as ThreeActStructure;
 }

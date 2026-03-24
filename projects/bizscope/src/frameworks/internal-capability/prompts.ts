@@ -8,23 +8,25 @@ JSON 스키마:
   "capabilities": [
     {
       "area": "역량 영역 (예: 기술력, 브랜드, 재무, 인재, 운영, 혁신)",
-      "strengths": ["해당 영역의 강점들"],
-      "weaknesses": ["해당 영역의 약점들"],
+      "strengths": [{ "id": "S1", "description": "강점 설명" }],
+      "weaknesses": [{ "id": "W1", "description": "약점 설명" }],
       "score": 1~5
     }
   ],
-  "overallStrengths": ["기업 전체 핵심 강점 3-5개"],
-  "overallWeaknesses": ["기업 전체 핵심 약점 3-5개"],
+  "overallStrengths": [{ "id": "S1", "description": "핵심 강점" }],
+  "overallWeaknesses": [{ "id": "W1", "description": "핵심 약점" }],
   "summary": "내부역량 평가 종합 요약"
 }
 
 6-8개 주요 역량 영역을 평가하세요.
+강점은 S1~Sn, 약점은 W1~Wn으로 넘버링하세요. 전체 기업 기준으로 일련번호를 부여합니다.
 
 중요 규칙:
 - 각 영역에 반드시 강점과 약점을 최소 1개씩 도출하세요.
+- overallStrengths는 반드시 4-6개를 도출하세요.
+- overallWeaknesses는 반드시 4-6개를 도출하세요. 약점이 없는 기업은 없습니다.
 - "데이터가 부족하다", "평가에 한계가 있다" 같은 메타 코멘트는 절대 쓰지 마세요.
-- 데이터가 제한적이면 해당 산업의 일반적 맥락에서 합리적으로 추론하세요.
-- overallWeaknesses는 반드시 3-5개를 도출하세요. 약점이 없는 기업은 없습니다.`;
+- 데이터가 제한적이면 해당 산업의 일반적 맥락에서 합리적으로 추론하세요.`;
 
 export function buildUserMessage(ctx: PipelineContext): string {
   const overview = ctx.companyOverview;

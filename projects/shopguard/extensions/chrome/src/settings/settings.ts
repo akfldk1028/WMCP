@@ -71,7 +71,10 @@ chrome.storage.local.get(['apiKey', 'model', 'analysisCount', 'totalTokens', 'li
 });
 
 // Save handler (API key)
+let savePending = false;
 saveBtn.addEventListener('click', async () => {
+  if (savePending) return;
+
   const key = apiKeyInput.value.trim();
   const model = modelSelect.value;
 
@@ -87,6 +90,7 @@ saveBtn.addEventListener('click', async () => {
     return;
   }
 
+  savePending = true;
   saveBtn.disabled = true;
   showStatus('Validating API key...', 'loading');
 
@@ -100,6 +104,7 @@ saveBtn.addEventListener('click', async () => {
   }
 
   saveBtn.disabled = false;
+  savePending = false;
 });
 
 // Activate license handler

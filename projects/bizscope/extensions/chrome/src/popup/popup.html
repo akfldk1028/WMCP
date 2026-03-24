@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 380px;
+      min-height: 240px;
+      background: #0f0f17;
+      color: #e0e0e0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      padding: 16px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .header img { height: 24px; width: auto; border-radius: 4px; }
+    .header h1 { font-size: 15px; font-weight: 700; color: #fff; }
+    .header .version { font-size: 10px; color: #555; margin-left: auto; }
+
+    /* Mode tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px;
+      padding: 3px;
+    }
+    .tab {
+      flex: 1;
+      padding: 7px 0;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #888;
+      transition: all 0.15s;
+      border: none;
+      background: none;
+    }
+    .tab.active {
+      background: rgba(99,102,241,0.15);
+      color: #a5b4fc;
+    }
+    .tab:hover:not(.active) { color: #bbb; }
+
+    /* Input */
+    .input-group { margin-bottom: 10px; }
+    .input-group label {
+      display: block;
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus, textarea:focus {
+      border-color: rgba(99,102,241,0.5);
+    }
+    input::placeholder, textarea::placeholder { color: #555; }
+    textarea { resize: vertical; min-height: 60px; }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #fff;
+    }
+    .btn-ghost {
+      background: rgba(255,255,255,0.06);
+      color: #aaa;
+      font-size: 11px;
+      padding: 7px;
+    }
+
+    /* License badge */
+    .license-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .license-free { background: rgba(255,255,255,0.06); color: #888; }
+    .license-pro { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+    .license-credits { background: rgba(234,179,8,0.15); color: #fbbf24; }
+
+    /* Footer */
+    .footer {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #444;
+    }
+    .footer a {
+      color: #6366f1;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    /* Hide sections */
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="../icons/icon48.png" alt="BS">
+    <h1>BizScope AI</h1>
+    <span class="version">v1.0.0</span>
+  </div>
+
+  <!-- License status -->
+  <div id="licenseStatus" style="margin-bottom: 10px;"></div>
+
+  <!-- Mode tabs -->
+  <div class="tabs">
+    <button class="tab active" data-mode="company">기업 분석</button>
+    <button class="tab" data-mode="idea">아이디어 검증</button>
+  </div>
+
+  <!-- Company mode -->
+  <div id="companyMode">
+    <div class="input-group">
+      <label>기업명</label>
+      <input type="text" id="companyInput" placeholder="삼성전자, Apple, Tesla..." autofocus>
+    </div>
+    <button class="btn btn-primary" id="analyzeCompanyBtn">분석 시작</button>
+  </div>
+
+  <!-- Idea mode -->
+  <div id="ideaMode" class="hidden">
+    <div class="input-group">
+      <label>아이디어 이름</label>
+      <input type="text" id="ideaInput" placeholder="AI 헬스케어 앱, SaaS 도구...">
+    </div>
+    <div class="input-group">
+      <label>설명 (선택)</label>
+      <textarea id="ideaDescInput" placeholder="어떤 문제를 해결하는지, 주요 기능..."></textarea>
+    </div>
+    <button class="btn btn-primary" id="analyzeIdeaBtn">검증 시작</button>
+  </div>
+
+  <!-- Quick links -->
+  <div style="margin-top: 10px; display: flex; gap: 6px;">
+    <button class="btn btn-ghost" id="openWebBtn" style="flex:1;">웹에서 열기</button>
+    <button class="btn btn-ghost" id="historyBtn" style="flex:1;">분석 기록</button>
+  </div>
+
+  <div class="footer">
+    <span>AI 비즈니스 전략 분석</span>
+    <a id="settingsLink">설정</a>
+  </div>
+
+  <script src="../dist/popup.js"></script>
+</body>
+</html>

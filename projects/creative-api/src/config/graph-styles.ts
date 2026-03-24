@@ -68,11 +68,34 @@ export function getEdgeStyle(type: string, category?: string): EdgeStyle {
   return EDGE_STYLES[type] ?? EDGE_CATEGORY_STYLES[(category ?? 'structural') as keyof typeof EDGE_CATEGORY_STYLES];
 }
 
-/** Bloom 후처리 설정 */
-export const BLOOM_CONFIG = { strength: 1.8, radius: 0.6, threshold: 0.1 };
+/** Bloom 후처리 설정 — 은은한 뇌 발광 */
+export const BLOOM_CONFIG = { strength: 1.2, radius: 0.8, threshold: 0.15 };
 
 /** 카메라 설정 */
-export const CAMERA_CONFIG = { distance: 400, fov: 60, autoRotateSpeed: 0.3 };
+export const CAMERA_CONFIG = { distance: 500, fov: 55, autoRotateSpeed: 0.15 };
+
+/** 물리엔진 — 퍼지는 뇌 형태
+ * 핵심: 강한 반발력 + 느린 안정화 → 뉴런처럼 넓게 퍼짐 */
+export const PHYSICS_CONFIG = {
+  d3AlphaDecay: 0.008,
+  d3VelocityDecay: 0.15,
+  chargeStrength: -180,
+  linkDistanceStructural: 35,
+  linkDistanceSemantic: 90,
+  linkDistanceCreation: 60,
+  warmupTicks: 200,
+  cooldownTime: 5000,
+};
+
+/** 엣지 타입 → 링크 거리 매핑 */
+const STRUCTURAL_EDGES = ['BELONGS_TO', 'PART_OF', 'ADDRESSES_TOPIC', 'PRODUCED_IN', 'USES_CONCEPT'];
+const CREATION_EDGES = ['INSPIRED_BY', 'ITERATED_FROM', 'COMBINED_FROM', 'SCAMPER_OF', 'DERIVED_FROM'];
+
+export function getLinkDistance(edgeType: string): number {
+  if (STRUCTURAL_EDGES.includes(edgeType)) return PHYSICS_CONFIG.linkDistanceStructural;
+  if (CREATION_EDGES.includes(edgeType)) return PHYSICS_CONFIG.linkDistanceCreation;
+  return PHYSICS_CONFIG.linkDistanceSemantic;
+}
 
 /** 노드 라벨 표시 최소 줌 거리 */
-export const LABEL_VISIBLE_DISTANCE = 200;
+export const LABEL_VISIBLE_DISTANCE = 250;
