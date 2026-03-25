@@ -82,5 +82,5 @@ export async function POST(request: Request) {
   }
 }
 
-/** maxDuration for agent mode — agents need time for multi-step tool calling */
-export const maxDuration = 120;
+/** maxDuration for agent mode — 5 agents sequential, each up to 12 steps */
+export const maxDuration = 300;

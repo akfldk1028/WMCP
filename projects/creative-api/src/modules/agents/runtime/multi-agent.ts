@@ -54,7 +54,9 @@ export async function runMultiAgentPipeline(
   );
   agentResults.push(researchResult);
 
-  const researchContext = `${baseContext}\n\nResearch findings:\n${researchResult.finalOutput}`;
+  const truncate = (s: string, max = 500) => s.length > max ? s.slice(0, max) + '...[truncated]' : s;
+
+  const researchContext = `${baseContext}\n\nResearch findings:\n${truncate(researchResult.finalOutput)}`;
 
   // Phase 2: INSPIRATION — divergent_thinker가 자율적으로 아이디어 생성
   const divergentResult = await runAgent(
@@ -66,7 +68,7 @@ export async function runMultiAgentPipeline(
   );
   agentResults.push(divergentResult);
 
-  const ideaContext = `${researchContext}\n\nGenerated ideas:\n${divergentResult.finalOutput}`;
+  const ideaContext = `${researchContext}\n\nGenerated ideas:\n${truncate(divergentResult.finalOutput)}`;
 
   // Phase 3: ISOLATION — evaluator + field_validator 독립 실행 (병렬)
   const [evalResult, fieldResult] = await Promise.all([
@@ -98,7 +100,7 @@ export async function runMultiAgentPipeline(
       topIdeas.map((idea, i) => `${i + 1}. "${idea.title}" (${idea.wins} wins)`).join('\n');
   }
 
-  const evalContext = `${ideaContext}\n\nEvaluation:\n${evalResult.finalOutput}\n\nField Validation:\n${fieldResult.finalOutput}${tournamentContext}`;
+  const evalContext = `${ideaContext}\n\nEvaluation:\n${truncate(evalResult.finalOutput)}\n\nField Validation:\n${truncate(fieldResult.finalOutput)}${tournamentContext}`;
 
   // Phase 4: ITERATION — iterator가 상위 아이디어를 자율적으로 변주
   const iterResult = await runAgent(

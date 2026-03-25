@@ -54,7 +54,19 @@ Respond ONLY with valid JSON:
   }
 }`;
 
-  return llmGenerateJSON<JudgeResult>({ prompt, maxTokens: 1024 });
+  try {
+    return await llmGenerateJSON<JudgeResult>({ prompt, maxTokens: 2048 });
+  } catch {
+    // Fallback: random winner with default scores
+    return {
+      winner: Math.random() > 0.5 ? 'idea_1' : 'idea_2',
+      reasoning: 'LLM evaluation failed — random selection',
+      scores: {
+        idea_1: { domainRelevance: 70, creativeThinking: 70, intrinsicMotivation: 70, specificity: 70, marketNeed: 70, competitiveAdvantage: 70 },
+        idea_2: { domainRelevance: 70, creativeThinking: 70, intrinsicMotivation: 70, specificity: 70, marketNeed: 70, competitiveAdvantage: 70 },
+      },
+    };
+  }
 }
 
 /** Tournament bracket — N개 아이디어 중 최고 선별 */
@@ -71,7 +83,7 @@ export async function tournamentSelect(
   const wins = new Map<number, number>();
   ideas.forEach((_, i) => wins.set(i, 0));
 
-  const matchups = Math.min(ideas.length * 2, 20); // 최대 20 매치
+  const matchups = Math.min(ideas.length, 10); // 최대 10 매치 (속도 vs 정확도 균형)
   for (let m = 0; m < matchups; m++) {
     const i = Math.floor(Math.random() * ideas.length);
     let j = Math.floor(Math.random() * ideas.length);
