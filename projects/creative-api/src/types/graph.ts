@@ -34,6 +34,10 @@ export interface GraphNode {
   parentId?: string;
   /** 생성한 사용자 ID (My Brain vs Collective Brain 필터링) */
   userId?: string;
+  /** 이미지 URL (Vercel Blob or base64 data URI) */
+  imageUrl?: string;
+  /** VLM 분석 결과 요약 */
+  imageAnalysis?: string;
 }
 
 export interface GraphEdge {
@@ -67,6 +71,7 @@ export interface Graph3DNode {
   score?: number;
   method?: string;
   level?: number;
+  imageUrl?: string;
 }
 
 export interface Graph3DLink {

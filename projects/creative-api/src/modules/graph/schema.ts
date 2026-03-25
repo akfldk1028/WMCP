@@ -185,7 +185,9 @@ export type GenerationMethod =
   | 'web_research'             // 웹 검색에서 발견
   | 'graph_traversal'          // 그래프 탐색에서 발견
   | 'human_input'              // 사용자 직접 입력
-  | 'agent_autonomous';        // 에이전트 자율 생성
+  | 'agent_autonomous'         // 에이전트 자율 생성
+  | 'visual_inspiration'       // 이미지에서 영감 (VLM 분석)
+  | 'scene_graph_extract';     // 이미지 Scene Graph 추출
 
 // ═══════════════════════════════════════════
 // EDGE TYPES — 3계층 관계

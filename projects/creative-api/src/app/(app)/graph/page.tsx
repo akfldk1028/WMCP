@@ -178,6 +178,17 @@ export default function GraphPage() {
                 {selected.description}
               </p>
             )}
+            {selected.imageUrl && (
+              <div className="mt-3 border-t border-white/5 pt-3">
+                <img
+                  src={selected.imageUrl}
+                  alt={selected.name}
+                  className="w-full rounded-lg object-cover max-h-48"
+                  loading="lazy"
+                />
+                <div className="text-[10px] text-white/30 mt-1">Visual inspiration source</div>
+              </div>
+            )}
           </div>
 
           <button

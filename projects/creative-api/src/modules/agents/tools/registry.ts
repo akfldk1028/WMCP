@@ -16,6 +16,7 @@ import { brainstormTool } from './brainstorm-tool';
 import { keywordExtractorTool } from './keyword-extractor';
 import { noveltyTool } from './novelty-tool';
 import { trizTool } from './triz-tool';
+import { imageAnalysisTool } from './image-tool';
 
 export interface AgentTool {
   name: string;
@@ -24,7 +25,7 @@ export interface AgentTool {
   execute: (params: Record<string, unknown>) => Promise<unknown>;
 }
 
-/** 전체 도구 레지스트리 — 11종 */
+/** 전체 도구 레지스트리 — 12종 */
 export const ALL_TOOLS: AgentTool[] = [
   webSearchTool,
   graphQueryTool,
@@ -37,13 +38,14 @@ export const ALL_TOOLS: AgentTool[] = [
   keywordExtractorTool,
   noveltyTool,
   trizTool,
+  imageAnalysisTool,
 ];
 
 /** 역할별 기본 도구 매핑 */
 const ROLE_TOOLS: Record<AgentRole, string[]> = {
   creative_director: ['web_search', 'graph_search', 'graph_query', 'evaluate_idea', 'measure_novelty'],
-  researcher:        ['extract_keywords', 'web_search', 'graph_search', 'graph_query', 'graph_add_node'],
-  divergent_thinker: ['extract_keywords', 'web_search', 'brainstorm', 'scamper_transform', 'triz_principle', 'graph_add_node', 'graph_add_edge'],
+  researcher:        ['extract_keywords', 'web_search', 'graph_search', 'graph_query', 'graph_add_node', 'analyze_image'],
+  divergent_thinker: ['extract_keywords', 'web_search', 'brainstorm', 'scamper_transform', 'triz_principle', 'graph_add_node', 'graph_add_edge', 'analyze_image'],
   evaluator:         ['evaluate_idea', 'measure_novelty', 'graph_search', 'graph_query'],
   iterator:          ['graph_search', 'scamper_transform', 'triz_principle', 'graph_add_node', 'graph_add_edge', 'web_search', 'measure_novelty'],
   field_validator:   ['web_search', 'extract_keywords', 'graph_search', 'evaluate_idea', 'measure_novelty'],

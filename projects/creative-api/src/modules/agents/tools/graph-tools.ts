@@ -42,6 +42,7 @@ interface MemNode {
   tags?: string[];
   score?: number;
   userId?: string;
+  imageUrl?: string;
   createdAt: string;
 }
 interface MemEdge {

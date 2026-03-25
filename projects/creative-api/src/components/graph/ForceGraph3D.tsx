@@ -130,6 +130,24 @@ export default function ForceGraph3DComponent({
       enableNodeDrag={true}
       enableNavigationControls={true}
       enablePointerInteraction={true}
+      // 이미지 노드 — Sprite 텍스처 (imageUrl 있을 때)
+      nodeThreeObject={(node: Graph3DNode) => {
+        if (!node.imageUrl || !node.imageUrl.startsWith('http')) return undefined as any;
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const THREE = require('three');
+        const loader = new THREE.TextureLoader();
+        const texture = loader.load(node.imageUrl);
+        const material = new THREE.SpriteMaterial({
+          map: texture,
+          transparent: true,
+          opacity: 0.9,
+        });
+        const sprite = new THREE.Sprite(material);
+        const size = (node.val ?? 8) * 1.5;
+        sprite.scale.set(size, size, 1);
+        return sprite;
+      }}
+      nodeThreeObjectExtend={true}
       // 노드
       nodeVal={(node: Graph3DNode) => node.val}
       nodeColor={(node: Graph3DNode) => {

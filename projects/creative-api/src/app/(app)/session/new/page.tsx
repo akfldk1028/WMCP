@@ -25,10 +25,30 @@ export default function NewSessionPage() {
   const [graphPersistence, setGraphPersistence] = useState<{ nodesCreated: number; edgesCreated: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [health, setHealth] = useState<HealthStatus | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/health').then((r) => r.json()).then(setHealth).catch(() => {});
   }, []);
+
+  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setImageUrl(null);
+
+    // Upload immediately
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/vision/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) setImageUrl(data.data.url);
+    } catch { /* upload failed — will proceed without image */ }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,10 +61,19 @@ export default function NewSessionPage() {
     setCurrentPhase('immersion');
 
     try {
+      // 이미지가 있으면 먼저 분석
+      if (imageUrl) {
+        await fetch('/api/vision/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl, context: `${topic} ${domain}` }),
+        });
+      }
+
       const res = await fetch('/api/creative/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, domain, mode }),
+        body: JSON.stringify({ topic, domain, mode, imageUrl }),
       });
 
       const data = await res.json();
@@ -102,6 +131,31 @@ export default function NewSessionPage() {
             placeholder="e.g., Fintech, Healthcare, Education"
             className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/25 focus:border-amber-500/50 focus:outline-none transition"
           />
+        </div>
+
+        {/* Image Upload (optional) */}
+        <div>
+          <label className="block text-sm text-white/60 mb-1.5">Visual Inspiration (optional)</label>
+          <div className="relative">
+            {imagePreview ? (
+              <div className="relative rounded-xl overflow-hidden border border-white/10">
+                <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover" />
+                <button
+                  type="button"
+                  onClick={() => { setImageFile(null); setImagePreview(null); setImageUrl(null); }}
+                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 text-white/70 hover:text-white text-xs flex items-center justify-center"
+                >x</button>
+                {imageUrl && <div className="absolute bottom-2 left-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded">Uploaded</div>}
+                {imageFile && !imageUrl && <div className="absolute bottom-2 left-2 text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded animate-pulse">Uploading...</div>}
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center h-28 rounded-xl border border-dashed border-white/15 bg-white/3 cursor-pointer hover:border-white/25 transition">
+                <span className="text-white/30 text-sm">Drop image or click to upload</span>
+                <span className="text-white/20 text-[10px] mt-1">VLM will extract concepts and create graph nodes</span>
+                <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+              </label>
+            )}
+          </div>
         </div>
 
         {/* Mode Toggle */}

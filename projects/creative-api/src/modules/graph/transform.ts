@@ -15,6 +15,7 @@ export function toGraph3D(nodes: GraphNode[], edges: GraphEdge[]): Graph3DData {
       description: n.description,
       score: n.score,
       method: n.method,
+      imageUrl: n.imageUrl,
     };
   });
 
