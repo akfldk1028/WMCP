@@ -58,7 +58,7 @@ export function forbiddenResponse(requiredTier: Tier) {
 
 /** tier 계층 비교 */
 export function tierAtLeast(userTier: Tier, requiredTier: Tier): boolean {
-  const levels: Record<Tier, number> = { free: 0, pro: 1, enterprise: 2, team: 3 };
+  const levels: Record<Tier, number> = { free: 0, pro: 1, team: 2, enterprise: 3 };
   return levels[userTier] >= levels[requiredTier];
 }
 

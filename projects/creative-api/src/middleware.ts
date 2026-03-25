@@ -4,7 +4,7 @@
  * 실제 키 검증(Redis/해시)은 각 route handler에서 수행 (Edge 제약 회피)
  *
  * Public:    /api/health, /api/webhooks/*, /api/mcp/*
- * Cron:      /api/cron/* → CRON_SECRET 검증
+ * Cron:      /api/cron/* → CRON_SECRET 검증 (미설정 시 차단)
  * Protected: /api/v1/*, /api/creative/*, /api/graph/* → Bearer token 필수
  */
 
@@ -16,6 +16,15 @@ const PROTECTED_PREFIXES = ['/api/v1/', '/api/creative/', '/api/graph/'];
 function isPublic(p: string) { return PUBLIC_PREFIXES.some((x) => p.startsWith(x)); }
 function isProtected(p: string) { return PROTECTED_PREFIXES.some((x) => p.startsWith(x)); }
 
+/** Strip any externally-injected internal headers to prevent spoofing */
+function stripInternalHeaders(request: NextRequest): Headers {
+  const headers = new Headers(request.headers);
+  headers.delete('x-user-id');
+  headers.delete('x-user-tier');
+  headers.delete('x-api-key-raw');
+  return headers;
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (!pathname.startsWith('/api/')) return NextResponse.next();
@@ -23,12 +32,12 @@ export function middleware(request: NextRequest) {
   // Public → 통과
   if (isPublic(pathname)) return NextResponse.next();
 
-  // Cron → CRON_SECRET
+  // Cron → CRON_SECRET (미설정 시 차단)
   if (pathname.startsWith('/api/cron/')) {
     const secret = process.env.CRON_SECRET;
-    if (secret && request.headers.get('authorization') !== `Bearer ${secret}`) {
+    if (!secret || request.headers.get('authorization') !== `Bearer ${secret}`) {
       return NextResponse.json(
-        { success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid cron secret' } },
+        { success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid or missing cron secret' } },
         { status: 401 }
       );
     }
@@ -37,13 +46,13 @@ export function middleware(request: NextRequest) {
 
   // Protected → Bearer token 존재 확인
   if (isProtected(pathname)) {
+    const headers = stripInternalHeaders(request);
     const masterKey = process.env.CREATIVEGRAPH_API_KEY;
 
-    // 키 미설정 = open mode (개발 환경) → 모두 통과
+    // 키 미설정 = open mode (개발 환경) → free 티어로 제한
     if (!masterKey) {
-      const headers = new Headers(request.headers);
       headers.set('x-user-id', 'anonymous');
-      headers.set('x-user-tier', 'pro');
+      headers.set('x-user-tier', 'free');
       return NextResponse.next({ request: { headers } });
     }
 
@@ -60,7 +69,6 @@ export function middleware(request: NextRequest) {
 
     // 마스터 키 = 즉시 통과 (관리자)
     if (apiKey === masterKey) {
-      const headers = new Headers(request.headers);
       headers.set('x-user-id', 'admin');
       headers.set('x-user-tier', 'team');
       return NextResponse.next({ request: { headers } });
@@ -75,7 +83,6 @@ export function middleware(request: NextRequest) {
     }
 
     // 형식 OK → route handler로 전달 (거기서 Redis 검증)
-    const headers = new Headers(request.headers);
     headers.set('x-api-key-raw', apiKey);
     return NextResponse.next({ request: { headers } });
   }

@@ -17,7 +17,7 @@ interface LegacyAuthResult {
 
 export function authenticateApiKey(apiKey: string | null): LegacyAuthResult {
   if (!process.env.CREATIVEGRAPH_API_KEY) {
-    return { authenticated: true, userId: 'anonymous', tier: 'pro' };
+    return { authenticated: true, userId: 'anonymous', tier: 'free' };
   }
   if (!apiKey) {
     return { authenticated: false, tier: 'free', error: 'API key required' };

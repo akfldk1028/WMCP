@@ -8,7 +8,6 @@
 
 import type { GraphNode, GraphEdge, GraphQueryResult } from '@/types/graph';
 import type { CreativeSession } from '@/types/session';
-import type { Idea } from '@/types/creativity';
 import { getMemoryStore } from '../agents/tools/graph-tools';
 import { loadFromFile, scheduleAutoSave } from './persistence';
 import { createIdeaNode, type CreateIdeaParams } from './queries/ideas';
@@ -19,15 +18,25 @@ import { tokenSearch } from './queries/search';
 import { bfsNeighborhood } from './queries/traversal';
 import { calculateNoveltyInMemory } from './queries/novelty';
 import { toGraph3D } from './transform';
+import { safeLabel, safeRelType, clampInt } from './safe-cypher';
 
 const USE_MEMGRAPH = !!(process.env.NEO4J_URI && process.env.NEO4J_USER && process.env.NEO4J_PASSWORD);
 
-let runQuery: ((cypher: string, params?: Record<string, unknown>) => Promise<unknown[]>) | null = null;
+const MAX_STORE_NODES = 10_000;
+const MAX_STORE_EDGES = 30_000;
 
-if (USE_MEMGRAPH) {
-  import('./driver').then((mod) => {
-    runQuery = mod.runQuery;
-  });
+/** Lazy async getter — avoids race condition with top-level dynamic import */
+let _runQuery: ((cypher: string, params?: Record<string, unknown>) => Promise<unknown[]>) | null = null;
+let _driverPromise: Promise<void> | null = null;
+
+async function getRunQuery() {
+  if (!USE_MEMGRAPH) return null;
+  if (_runQuery) return _runQuery;
+  if (!_driverPromise) {
+    _driverPromise = import('./driver').then((mod) => { _runQuery = mod.runQuery; });
+  }
+  await _driverPromise;
+  return _runQuery;
 }
 
 // Restore persisted in-memory store on module load
@@ -60,6 +69,9 @@ export async function addNode(
   }
 
   const store = getMemoryStore();
+  if (store.nodes.length >= MAX_STORE_NODES) {
+    store.nodes.splice(0, Math.floor(MAX_STORE_NODES * 0.1)); // evict oldest 10%
+  }
   store.nodes.push({
     id: node.id,
     type: node.type,
@@ -71,9 +83,11 @@ export async function addNode(
   });
   scheduleAutoSave();
 
-  if (USE_MEMGRAPH && runQuery) {
-    await runQuery(
-      `CREATE (n:${node.type} {id: $id, title: $title, description: $desc, createdAt: $ts})`,
+  const runQ = await getRunQuery();
+  if (runQ) {
+    const label = safeLabel(node.type);
+    await runQ(
+      `CREATE (n:${label} {id: $id, title: $title, description: $desc, createdAt: $ts})`,
       { id: node.id, title: node.title, desc: node.description ?? '', ts: node.createdAt }
     );
   }
@@ -82,8 +96,9 @@ export async function addNode(
 }
 
 export async function getNode(id: string): Promise<GraphNode | null> {
-  if (USE_MEMGRAPH && runQuery) {
-    const results = await runQuery('MATCH (n {id: $id}) RETURN n', { id });
+  const runQ = await getRunQuery();
+  if (runQ) {
+    const results = await runQ('MATCH (n {id: $id}) RETURN n', { id });
     if (results.length > 0) {
       const r = results[0] as Record<string, unknown>;
       const n = r.n as Record<string, unknown>;
@@ -118,11 +133,12 @@ export async function listNodes(options?: {
 }): Promise<GraphNode[]> {
   const limit = options?.limit ?? 100;
 
-  if (USE_MEMGRAPH && runQuery) {
+  const runQ = await getRunQuery();
+  if (runQ) {
     const cypher = options?.type
-      ? `MATCH (n:${options.type}) RETURN n ORDER BY n.createdAt DESC LIMIT $limit`
+      ? `MATCH (n:${safeLabel(options.type)}) RETURN n ORDER BY n.createdAt DESC LIMIT $limit`
       : `MATCH (n) RETURN n, labels(n)[0] as nodeType ORDER BY n.createdAt DESC LIMIT $limit`;
-    const results = await runQuery(cypher, { limit });
+    const results = await runQ(cypher, { limit });
     return results.map((r: unknown) => {
       const rec = r as Record<string, unknown>;
       const n = rec.n as Record<string, unknown>;
@@ -160,6 +176,9 @@ export async function addEdge(params: CreateEdgeParams): Promise<GraphEdge> {
   const edge = createEdge(params);
 
   const store = getMemoryStore();
+  if (store.edges.length >= MAX_STORE_EDGES) {
+    store.edges.splice(0, Math.floor(MAX_STORE_EDGES * 0.1));
+  }
   store.edges.push({
     id: edge.id,
     source: edge.source,
@@ -169,9 +188,11 @@ export async function addEdge(params: CreateEdgeParams): Promise<GraphEdge> {
   });
   scheduleAutoSave();
 
-  if (USE_MEMGRAPH && runQuery) {
-    await runQuery(
-      `MATCH (a {id: $src}), (b {id: $tgt}) CREATE (a)-[:${edge.type} {id: $eid, createdAt: $ts}]->(b)`,
+  const runQ = await getRunQuery();
+  if (runQ) {
+    const relType = safeRelType(edge.type);
+    await runQ(
+      `MATCH (a {id: $src}), (b {id: $tgt}) CREATE (a)-[:${relType} {id: $eid, createdAt: $ts}]->(b)`,
       { src: edge.source, tgt: edge.target, eid: edge.id, ts: edge.createdAt }
     );
   }
@@ -186,7 +207,8 @@ export async function listEdges(options?: {
 }): Promise<GraphEdge[]> {
   const limit = options?.limit ?? 200;
 
-  if (USE_MEMGRAPH && runQuery) {
+  const runQ = await getRunQuery();
+  if (runQ) {
     let cypher: string;
     const params: Record<string, unknown> = { limit };
 
@@ -197,7 +219,7 @@ export async function listEdges(options?: {
       cypher = `MATCH (a)-[r]->(b) RETURN r, a.id as src, b.id as tgt, type(r) as rType LIMIT $limit`;
     }
 
-    const results = await runQuery(cypher, params);
+    const results = await runQ(cypher, params);
     return results.map((rec: unknown) => {
       const r = rec as Record<string, unknown>;
       const rel = r.r as Record<string, unknown>;
@@ -241,12 +263,13 @@ export async function searchGraph(
 ): Promise<GraphNode[]> {
   const limit = options?.limit ?? 20;
 
-  if (USE_MEMGRAPH && runQuery) {
+  const runQ = await getRunQuery();
+  if (runQ) {
     const cypher = options?.type
-      ? `MATCH (n:${options.type}) WHERE toLower(n.title) CONTAINS toLower($q) OR toLower(n.description) CONTAINS toLower($q) RETURN n ORDER BY n.createdAt DESC LIMIT $limit`
+      ? `MATCH (n:${safeLabel(options.type)}) WHERE toLower(n.title) CONTAINS toLower($q) OR toLower(n.description) CONTAINS toLower($q) RETURN n ORDER BY n.createdAt DESC LIMIT $limit`
       : `MATCH (n) WHERE toLower(n.title) CONTAINS toLower($q) OR toLower(n.description) CONTAINS toLower($q) RETURN n, labels(n)[0] as nodeType ORDER BY n.createdAt DESC LIMIT $limit`;
 
-    const results = await runQuery(cypher, { q: query, limit });
+    const results = await runQ(cypher, { q: query, limit });
     return results.map((rec: unknown) => {
       const r = rec as Record<string, unknown>;
       const n = r.n as Record<string, unknown>;
@@ -289,16 +312,20 @@ export async function getNeighborhood(
   maxHops: number = 2,
   limit: number = 50
 ): Promise<GraphQueryResult> {
-  if (USE_MEMGRAPH && runQuery) {
+  const safeHops = clampInt(maxHops, 1, 5, 2);
+  const safeLimit = clampInt(limit, 1, 200, 50);
+
+  const runQ = await getRunQuery();
+  if (runQ) {
     const cypher = `
       MATCH (start {id: $startId})
-      MATCH path = (start)-[*1..${maxHops}]-(neighbor)
+      MATCH path = (start)-[*1..${safeHops}]-(neighbor)
       WITH neighbor, min(length(path)) as distance
       RETURN neighbor, distance
       ORDER BY distance
       LIMIT $limit
     `;
-    const results = await runQuery(cypher, { startId: nodeId, limit });
+    const results = await runQ(cypher, { startId: nodeId, limit: safeLimit });
     const nodes: GraphNode[] = results.map((rec: unknown) => {
       const r = rec as Record<string, unknown>;
       const n = r.neighbor as Record<string, unknown>;
@@ -469,6 +496,7 @@ export async function persistSession(session: CreativeSession): Promise<{
   edgesCreated: number;
 }> {
   const store = getMemoryStore();
+  const runQ = await getRunQuery();
   let nodesCreated = 0;
   let edgesCreated = 0;
 
@@ -483,8 +511,8 @@ export async function persistSession(session: CreativeSession): Promise<{
       description: `Domain: ${session.domain}`,
       createdAt: session.createdAt,
     });
-    if (USE_MEMGRAPH && runQuery) {
-      await runQuery(
+    if (runQ) {
+      await runQ(
         'CREATE (n:Domain {id: $id, name: $name, description: $desc, createdAt: $ts})',
         { id: domainId, name: session.domain, desc: `Domain: ${session.domain}`, ts: session.createdAt }
       );
@@ -501,8 +529,8 @@ export async function persistSession(session: CreativeSession): Promise<{
     description: `Topic: ${session.topic} (${session.domain})`,
     createdAt: session.createdAt,
   });
-  if (USE_MEMGRAPH && runQuery) {
-    await runQuery(
+  if (runQ) {
+    await runQ(
       'CREATE (n:Topic {id: $id, title: $title, description: $desc, domainId: $domainId, createdAt: $ts})',
       { id: topicId, title: session.topic, desc: `Topic: ${session.topic}`, domainId, ts: session.createdAt }
     );
@@ -511,8 +539,8 @@ export async function persistSession(session: CreativeSession): Promise<{
 
   // Topic → Domain 엣지
   store.edges.push({ id: `e-${Date.now()}-td`, source: topicId, target: domainId, type: 'BELONGS_TO', createdAt: session.createdAt });
-  if (USE_MEMGRAPH && runQuery) {
-    await runQuery(
+  if (runQ) {
+    await runQ(
       'MATCH (a {id: $src}), (b {id: $tgt}) CREATE (a)-[:BELONGS_TO {createdAt: $ts}]->(b)',
       { src: topicId, tgt: domainId, ts: session.createdAt }
     );
@@ -527,8 +555,8 @@ export async function persistSession(session: CreativeSession): Promise<{
     description: `${session.mode} mode, ${session.totalGenerated} ideas, ${session.duration}ms`,
     createdAt: session.createdAt,
   });
-  if (USE_MEMGRAPH && runQuery) {
-    await runQuery(
+  if (runQ) {
+    await runQ(
       'CREATE (n:Session {id: $id, title: $title, status: $status, mode: $mode, createdAt: $ts})',
       { id: session.id, title: `Session: ${session.topic}`, status: session.status, mode: session.mode, ts: session.createdAt }
     );
@@ -555,8 +583,8 @@ export async function persistSession(session: CreativeSession): Promise<{
       createdAt: idea.createdAt,
     });
 
-    if (USE_MEMGRAPH && runQuery) {
-      await runQuery(
+    if (runQ) {
+      await runQ(
         'CREATE (n:Idea {id: $id, title: $title, description: $desc, method: $method, phase: $phase, createdAt: $ts})',
         {
           id: idea.id, title: idea.title, desc: idea.description,
@@ -584,12 +612,12 @@ export async function persistSession(session: CreativeSession): Promise<{
       edgesCreated++;
     }
 
-    if (USE_MEMGRAPH && runQuery) {
-      await runQuery(
+    if (runQ) {
+      await runQ(
         'MATCH (a {id: $src}), (b {id: $tgt}) CREATE (a)-[:ADDRESSES_TOPIC {createdAt: $ts}]->(b)',
         { src: idea.id, tgt: topicId, ts: idea.createdAt }
       );
-      await runQuery(
+      await runQ(
         'MATCH (a {id: $src}), (b {id: $tgt}) CREATE (a)-[:PRODUCED_IN {createdAt: $ts}]->(b)',
         { src: idea.id, tgt: session.id, ts: idea.createdAt }
       );

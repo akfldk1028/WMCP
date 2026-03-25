@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') ?? undefined;
     const id = searchParams.get('id');
-    const limit = parseInt(searchParams.get('limit') ?? '100', 10);
+    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') ?? '100', 10) || 100, 1), 500);
 
     // 특정 노드 조회
     if (id) {

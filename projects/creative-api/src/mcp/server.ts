@@ -11,6 +11,7 @@
  */
 
 import { MCP_TOOLS, findTool } from './tools';
+import { isToolAllowed, getAllowedTools, type Tier } from './tiers';
 
 const SERVER_INFO = {
   name: 'creativegraph-ai',
@@ -43,7 +44,7 @@ interface JsonRpcResponse {
 // Handler
 // ---------------------------------------------------------------------------
 
-export async function handleMCPRequest(request: JsonRpcRequest): Promise<JsonRpcResponse | null> {
+export async function handleMCPRequest(request: JsonRpcRequest, tier: Tier = 'free'): Promise<JsonRpcResponse | null> {
   const id = request.id ?? null;
 
   // Notifications (no id) -- acknowledge silently
@@ -66,22 +67,37 @@ export async function handleMCPRequest(request: JsonRpcRequest): Promise<JsonRpc
     case 'ping':
       return { jsonrpc: '2.0', id, result: {} };
 
-    case 'tools/list':
+    case 'tools/list': {
+      const allowed = getAllowedTools(tier);
       return {
         jsonrpc: '2.0',
         id,
         result: {
-          tools: MCP_TOOLS.map((t) => ({
-            name: t.name,
-            description: t.description,
-            inputSchema: t.inputSchema,
-          })),
+          tools: MCP_TOOLS
+            .filter((t) => allowed.includes(t.name))
+            .map((t) => ({
+              name: t.name,
+              description: t.description,
+              inputSchema: t.inputSchema,
+            })),
         },
       };
+    }
 
     case 'tools/call': {
       const toolName = (request.params?.name as string) ?? '';
       const toolArgs = (request.params?.arguments as Record<string, unknown>) ?? {};
+
+      if (!isToolAllowed(tier, toolName)) {
+        return {
+          jsonrpc: '2.0',
+          id,
+          result: {
+            content: [{ type: 'text', text: JSON.stringify({ error: `Tool "${toolName}" requires a higher tier. Current tier: ${tier}` }) }],
+            isError: true,
+          },
+        };
+      }
 
       const tool = findTool(toolName);
       if (!tool) {

@@ -10,18 +10,26 @@
 import type { AgentTool } from './registry';
 import { scheduleAutoSave } from '../../graph/persistence';
 import { emitNodeCreated, emitEdgeCreated } from '../../graph/events';
+import { safeLabel, safeRelType, isReadOnlyCypher } from '../../graph/safe-cypher';
 
 // ── Dual-mode: Memgraph or in-memory ──
 
 const USE_MEMGRAPH = !!(process.env.NEO4J_URI && process.env.NEO4J_USER && process.env.NEO4J_PASSWORD);
 
-let runQuery: ((cypher: string, params?: Record<string, unknown>) => Promise<unknown[]>) | null = null;
+const MAX_STORE_NODES = 10_000;
+const MAX_STORE_EDGES = 30_000;
 
-if (USE_MEMGRAPH) {
-  // Dynamic import to avoid crash when env vars missing
-  import('@/modules/graph/driver').then((mod) => {
-    runQuery = mod.runQuery;
-  });
+let _runQuery: ((cypher: string, params?: Record<string, unknown>) => Promise<unknown[]>) | null = null;
+let _driverPromise: Promise<void> | null = null;
+
+async function getRunQuery() {
+  if (!USE_MEMGRAPH) return null;
+  if (_runQuery) return _runQuery;
+  if (!_driverPromise) {
+    _driverPromise = import('@/modules/graph/driver').then((mod) => { _runQuery = mod.runQuery; });
+  }
+  await _driverPromise;
+  return _runQuery;
 }
 
 /** In-memory store — 서버 프로세스 수명 동안 유지, 모든 에이전트가 공유 */
@@ -78,8 +86,13 @@ export const graphQueryTool: AgentTool = {
   execute: async (params) => {
     const cypher = params.cypher as string;
 
-    if (USE_MEMGRAPH && runQuery) {
-      const results = await runQuery(cypher);
+    if (!isReadOnlyCypher(cypher)) {
+      return { error: 'Write operations (CREATE, DELETE, SET, MERGE, DROP) are not allowed via graph_query. Use graph_add_node or graph_add_edge instead.' };
+    }
+
+    const runQ = await getRunQuery();
+    if (runQ) {
+      const results = await runQ(cypher);
       return { source: 'memgraph', results };
     }
 
@@ -104,9 +117,10 @@ export const graphSearchTool: AgentTool = {
     const keywords = params.keywords as string;
     const max = (params.max_results as number) ?? 10;
 
-    if (USE_MEMGRAPH && runQuery) {
+    const runQ = await getRunQuery();
+    if (runQ) {
       const cypher = `MATCH (n) WHERE toLower(n.title) CONTAINS toLower($kw) OR toLower(n.description) CONTAINS toLower($kw) RETURN n LIMIT $limit`;
-      const results = await runQuery(cypher, { kw: keywords, limit: max });
+      const results = await runQ(cypher, { kw: keywords, limit: max });
       return { source: 'memgraph', results, total: results.length };
     }
 
@@ -145,11 +159,17 @@ export const graphAddNodeTool: AgentTool = {
       createdAt: new Date().toISOString(),
     };
 
-    // Always write to in-memory (source of truth for current session)
+    // Validate label before any write
+    const validLabel = safeLabel(node.type);
+
+    // Evict oldest if at capacity
+    if (memoryStore.nodes.length >= MAX_STORE_NODES) {
+      memoryStore.nodes.splice(0, Math.floor(MAX_STORE_NODES * 0.1));
+    }
+
     memoryStore.nodes.push(node);
     scheduleAutoSave();
 
-    // 이벤트 발생 → novelty 자동 계산 + 유사 노드 자동 연결
     emitNodeCreated({
       id: node.id,
       type: node.type,
@@ -158,9 +178,10 @@ export const graphAddNodeTool: AgentTool = {
       method: node.method,
     });
 
-    if (USE_MEMGRAPH && runQuery) {
-      await runQuery(
-        `CREATE (n:${node.type} {id: $id, title: $title, description: $desc, method: $method, createdAt: $ts})`,
+    const runQ = await getRunQuery();
+    if (runQ) {
+      await runQ(
+        `CREATE (n:${validLabel} {id: $id, title: $title, description: $desc, method: $method, createdAt: $ts})`,
         { id: node.id, title: node.title, desc: node.description, method: node.method ?? '', ts: node.createdAt }
       );
       return { created: node, totalNodes: memoryStore.nodes.length, persisted: 'memgraph' };
@@ -187,10 +208,16 @@ export const graphAddEdgeTool: AgentTool = {
       createdAt: new Date().toISOString(),
     };
 
+    // Validate relationship type before any write
+    const validRelType = safeRelType(edge.type);
+
+    if (memoryStore.edges.length >= MAX_STORE_EDGES) {
+      memoryStore.edges.splice(0, Math.floor(MAX_STORE_EDGES * 0.1));
+    }
+
     memoryStore.edges.push(edge);
     scheduleAutoSave();
 
-    // 이벤트 발생
     emitEdgeCreated({
       id: edge.id,
       source: edge.source,
@@ -198,9 +225,10 @@ export const graphAddEdgeTool: AgentTool = {
       type: edge.type,
     });
 
-    if (USE_MEMGRAPH && runQuery) {
-      await runQuery(
-        `MATCH (a {id: $src}), (b {id: $tgt}) CREATE (a)-[:${edge.type} {id: $eid, createdAt: $ts}]->(b)`,
+    const runQ = await getRunQuery();
+    if (runQ) {
+      await runQ(
+        `MATCH (a {id: $src}), (b {id: $tgt}) CREATE (a)-[:${validRelType} {id: $eid, createdAt: $ts}]->(b)`,
         { src: edge.source, tgt: edge.target, eid: edge.id, ts: edge.createdAt }
       );
       return { created: edge, totalEdges: memoryStore.edges.length, persisted: 'memgraph' };

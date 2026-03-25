@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAvailableProviders } from '@/modules/llm/client';
 
-export async function GET() {
+export async function GET(request: Request) {
   const providers = getAvailableProviders();
   const llm = providers.some((p) => p.configured);
   const search = !!(process.env.GOOGLE_SEARCH_API_KEY && process.env.GOOGLE_SEARCH_CX);
@@ -20,12 +20,18 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json({
-    llm,
-    providers,
-    search,
-    graph,
-    model: process.env.CREATIVE_MODEL ?? 'google/gemini-2.5-flash',
-    ready: llm,
-  });
+  // Public response: only readiness, no internal details
+  const publicResponse = { ready: llm, llm, search, graph };
+
+  // Detailed info only for authenticated requests (master key via middleware)
+  const userTier = request.headers.get('x-user-tier');
+  if (userTier === 'team') {
+    return NextResponse.json({
+      ...publicResponse,
+      providers,
+      model: process.env.CREATIVE_MODEL ?? 'google/gemini-2.5-flash',
+    });
+  }
+
+  return NextResponse.json(publicResponse);
 }

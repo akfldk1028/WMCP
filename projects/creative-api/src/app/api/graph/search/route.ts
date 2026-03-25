@@ -9,8 +9,8 @@ export async function GET(request: Request) {
     const q = searchParams.get('q') ?? '';
     const type = searchParams.get('type') ?? undefined;
     const nodeId = searchParams.get('nodeId');
-    const hops = parseInt(searchParams.get('hops') ?? '2', 10);
-    const limit = parseInt(searchParams.get('limit') ?? '20', 10);
+    const hops = Math.min(Math.max(parseInt(searchParams.get('hops') ?? '2', 10) || 2, 1), 5);
+    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') ?? '20', 10) || 20, 1), 200);
 
     // 특정 노드의 이웃 탐색
     if (nodeId) {

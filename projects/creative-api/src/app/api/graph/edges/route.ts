@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const nodeId = searchParams.get('nodeId') ?? undefined;
     const type = searchParams.get('type') ?? undefined;
-    const limit = parseInt(searchParams.get('limit') ?? '200', 10);
+    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') ?? '200', 10) || 200, 1), 500);
 
     const edges = await listEdges({ nodeId, type, limit });
 

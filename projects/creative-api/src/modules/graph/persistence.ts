@@ -8,7 +8,8 @@ import { readFile, writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { getMemoryStore, loadMemoryStore } from '../agents/tools/graph-tools';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const IS_VERCEL = !!process.env.VERCEL;
+const DATA_DIR = IS_VERCEL ? '/tmp' : path.join(process.cwd(), 'data');
 const STORE_FILE = path.join(DATA_DIR, 'graph-store.json');
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
