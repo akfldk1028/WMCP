@@ -73,7 +73,7 @@ export async function llmGenerate(options: {
   return result.text;
 }
 
-/** JSON 응답 생성 — 텍스트에서 JSON 추출 */
+/** JSON 응답 생성 — 텍스트에서 JSON 추출 (견고한 파싱) */
 export async function llmGenerateJSON<T = unknown>(options: {
   prompt: string;
   system?: string;
@@ -81,10 +81,49 @@ export async function llmGenerateJSON<T = unknown>(options: {
   model?: string;
 }): Promise<T> {
   const text = await llmGenerate(options);
-  // JSON 블록 추출 (```json ... ``` 또는 순수 JSON)
-  const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) ?? text.match(/(\{[\s\S]*\})/);
-  const jsonStr = jsonMatch?.[1]?.trim() ?? text.trim();
-  return JSON.parse(jsonStr) as T;
+
+  // Strategy 1: ```json code block
+  const codeBlockMatch = text.match(/```json\s*([\s\S]*?)```/);
+  if (codeBlockMatch) {
+    try { return JSON.parse(codeBlockMatch[1].trim()) as T; } catch { /* try next */ }
+  }
+
+  // Strategy 2: find outermost { ... } (balanced braces)
+  const firstBrace = text.indexOf('{');
+  if (firstBrace !== -1) {
+    let depth = 0;
+    let lastBrace = -1;
+    for (let i = firstBrace; i < text.length; i++) {
+      if (text[i] === '{') depth++;
+      else if (text[i] === '}') { depth--; if (depth === 0) { lastBrace = i; break; } }
+    }
+    if (lastBrace !== -1) {
+      const candidate = text.slice(firstBrace, lastBrace + 1);
+      try { return JSON.parse(candidate) as T; } catch { /* try cleanup */ }
+      // Clean trailing commas before ] or }
+      const cleaned = candidate.replace(/,\s*([\]}])/g, '$1');
+      try { return JSON.parse(cleaned) as T; } catch { /* try next */ }
+    }
+  }
+
+  // Strategy 3: find outermost [ ... ]
+  const firstBracket = text.indexOf('[');
+  if (firstBracket !== -1) {
+    let depth = 0;
+    let lastBracket = -1;
+    for (let i = firstBracket; i < text.length; i++) {
+      if (text[i] === '[') depth++;
+      else if (text[i] === ']') { depth--; if (depth === 0) { lastBracket = i; break; } }
+    }
+    if (lastBracket !== -1) {
+      const candidate = text.slice(firstBracket, lastBracket + 1);
+      const cleaned = candidate.replace(/,\s*([\]}])/g, '$1');
+      try { return JSON.parse(cleaned) as T; } catch { /* fall through */ }
+    }
+  }
+
+  // Last resort: raw parse
+  throw new Error(`Failed to parse LLM JSON response. Raw text starts with: ${text.slice(0, 200)}`);
 }
 
 export { generateText } from 'ai';

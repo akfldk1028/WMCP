@@ -61,17 +61,44 @@ export async function convergentSelect(
     criteria
   );
 
-  const parsed = await llmGenerateJSON<{
-    ranked: { index: number; title: string; scores: IdeaScores; reasoning: string }[];
-    eliminated: { index: number; reason: string }[];
-  }>({ prompt, system: CREATIVE_SYSTEM_PROMPT, maxTokens: 4096 });
+  let parsed: {
+    ranked?: { index: number; title: string; scores: IdeaScores; reasoning: string }[];
+    eliminated?: { index: number; reason: string }[];
+  };
+  try {
+    parsed = await llmGenerateJSON({ prompt, system: CREATIVE_SYSTEM_PROMPT, maxTokens: 8192 });
+  } catch {
+    // LLM parsing failed — return all ideas unranked with default scores
+    return {
+      ranked: ideas.map((idea) => ({ ...idea, scores: { domainRelevance: 70, creativeThinking: 70, motivation: 70, overall: 70 } })),
+      criteria: criteria ?? ['domain relevance', 'creative originality', 'feasibility'],
+      eliminated: [],
+    };
+  }
 
-  const ranked: Idea[] = parsed.ranked.map((r) => ({
-    ...ideas[r.index],
-    scores: r.scores,
-  }));
+  const rankedArr = Array.isArray(parsed.ranked) ? parsed.ranked : [];
+  const eliminatedArr = Array.isArray(parsed.eliminated) ? parsed.eliminated : [];
 
-  const eliminated = parsed.eliminated.map((e) => ideas[e.index]?.id).filter(Boolean);
+  const ranked: Idea[] = rankedArr
+    .filter((r) => r.index >= 0 && r.index < ideas.length)
+    .map((r) => ({
+      ...ideas[r.index],
+      scores: r.scores,
+    }));
+
+  // If ranking produced nothing useful, return all ideas
+  if (ranked.length === 0) {
+    return {
+      ranked: ideas.map((idea) => ({ ...idea, scores: { domainRelevance: 70, creativeThinking: 70, motivation: 70, overall: 70 } })),
+      criteria: criteria ?? ['domain relevance', 'creative originality', 'feasibility'],
+      eliminated: [],
+    };
+  }
+
+  const eliminated = eliminatedArr
+    .filter((e) => e.index >= 0 && e.index < ideas.length)
+    .map((e) => ideas[e.index]?.id)
+    .filter(Boolean);
 
   return { ranked, criteria: criteria ?? ['domain relevance', 'creative originality', 'feasibility'], eliminated };
 }
