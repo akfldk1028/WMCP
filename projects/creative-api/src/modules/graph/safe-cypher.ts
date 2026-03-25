@@ -9,10 +9,17 @@ const ALLOWED_NODE_LABELS = new Set([
 ]);
 
 const ALLOWED_REL_TYPES = new Set([
-  'BELONGS_TO', 'ADDRESSES_TOPIC', 'PRODUCED_IN', 'INSPIRED_BY',
-  'ITERATED_FROM', 'COMBINES', 'SCAMPER_OF', 'CONTRADICTS',
-  'CAUSES', 'SIMILAR_TO', 'EXPLORES', 'EVALUATES', 'REFINES',
-  'DERIVED_FROM', 'USED_IN', 'RELATES_TO',
+  // Creation (provenance)
+  'INSPIRED_BY', 'ITERATED_FROM', 'COMBINED_FROM', 'COMBINES',
+  'SCAMPER_OF', 'DERIVED_FROM', 'GENERATED_BY', 'RESEARCHED_FROM',
+  // Semantic (meaning)
+  'CONTRADICTS', 'SUPPORTS', 'CAUSES', 'SIMILAR_TO',
+  'ALTERNATIVE_TO', 'PREREQUISITE_OF', 'EXTENDS',
+  // Structural (hierarchy)
+  'BELONGS_TO', 'PRODUCED_IN', 'ADDRESSES_TOPIC', 'USES_CONCEPT',
+  'PRODUCES', 'PART_OF', 'GENERALIZES', 'SPECIALIZES',
+  // Agent-specific
+  'EXPLORES', 'EVALUATES', 'REFINES', 'USED_IN', 'RELATES_TO',
 ]);
 
 /** Validate and return a safe node label for Cypher interpolation.
