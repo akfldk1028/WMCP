@@ -73,15 +73,8 @@ export async function llmGenerate(options: {
   return result.text;
 }
 
-/** JSON 응답 생성 — 텍스트에서 JSON 추출 (견고한 파싱) */
-export async function llmGenerateJSON<T = unknown>(options: {
-  prompt: string;
-  system?: string;
-  maxTokens?: number;
-  model?: string;
-}): Promise<T> {
-  const text = await llmGenerate(options);
-
+/** LLM 텍스트에서 JSON 추출 — balanced brace + trailing comma 정리 */
+export function extractJSON<T = unknown>(text: string): T {
   // Strategy 1: ```json code block
   const codeBlockMatch = text.match(/```json\s*([\s\S]*?)```/);
   if (codeBlockMatch) {
@@ -122,8 +115,18 @@ export async function llmGenerateJSON<T = unknown>(options: {
     }
   }
 
-  // Last resort: raw parse
-  throw new Error(`Failed to parse LLM JSON response. Raw text starts with: ${text.slice(0, 200)}`);
+  throw new Error(`JSON extraction failed: ${text.slice(0, 200)}`);
+}
+
+/** JSON 응답 생성 — LLM 호출 + extractJSON */
+export async function llmGenerateJSON<T = unknown>(options: {
+  prompt: string;
+  system?: string;
+  maxTokens?: number;
+  model?: string;
+}): Promise<T> {
+  const text = await llmGenerate(options);
+  return extractJSON<T>(text);
 }
 
 export { generateText } from 'ai';

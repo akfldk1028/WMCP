@@ -3,6 +3,7 @@
  * 이미지 분석 결과 → Concept 노드 + Idea 노드 + 엣지 생성
  */
 
+import { randomUUID } from 'crypto';
 import type { ImageAnalysisResult } from './analyze';
 import { getMemoryStore } from '@/modules/agents/tools/graph-tools';
 import { scheduleAutoSave } from '@/modules/graph/persistence';
@@ -18,7 +19,6 @@ export interface SceneGraphResult {
 export function extractSceneGraph(
   analysis: ImageAnalysisResult,
   imageUrl: string,
-  topic?: string,
 ): SceneGraphResult {
   const store = getMemoryStore();
   const now = new Date().toISOString();
@@ -29,7 +29,7 @@ export function extractSceneGraph(
   // 1. 개념들 → Concept 노드
   const conceptIds: string[] = [];
   for (const concept of analysis.concepts.slice(0, 5)) {
-    const id = `concept-img-${Date.now()}-${nodesCreated}`;
+    const id = `concept-img-${randomUUID().slice(0, 8)}`;
     store.nodes.push({
       id,
       type: 'Concept',
@@ -47,7 +47,7 @@ export function extractSceneGraph(
 
   // 2. 영감 아이디어 → Idea 노드
   for (const inspiration of analysis.inspirations.slice(0, 3)) {
-    const id = `idea-img-${Date.now()}-${nodesCreated}`;
+    const id = `idea-img-${randomUUID().slice(0, 8)}`;
     store.nodes.push({
       id,
       type: 'Idea',
@@ -64,7 +64,7 @@ export function extractSceneGraph(
     // Idea → Concept 엣지 (USES_CONCEPT)
     for (const conceptId of conceptIds) {
       store.edges.push({
-        id: `e-img-${Date.now()}-${edgesCreated}`,
+        id: `e-img-${randomUUID().slice(0, 8)}`,
         source: id,
         target: conceptId,
         type: 'USES_CONCEPT',
@@ -77,7 +77,7 @@ export function extractSceneGraph(
   // 3. 개념 간 관계 → SIMILAR_TO 엣지
   for (let i = 0; i < conceptIds.length - 1; i++) {
     store.edges.push({
-      id: `e-img-rel-${Date.now()}-${edgesCreated}`,
+      id: `e-img-rel-${randomUUID().slice(0, 8)}`,
       source: conceptIds[i],
       target: conceptIds[i + 1],
       type: 'SIMILAR_TO',

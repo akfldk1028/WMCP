@@ -29,13 +29,17 @@ export default function GraphPage() {
     }
     try {
       const params = new URLSearchParams({ mode: viewMode, maxNodes: '200', scope });
-      const res = await fetch(`/api/graph/visualize?${params}`);
+      const res = await fetch(`/api/v1/graph/visualize?${params}`);
       const json = await res.json();
       if (json.success) {
         const newNodes = json.data.nodes ?? [];
         const newLinks = json.data.links ?? [];
 
-        // 새 노드 감지
+        // 폴링 시 노드 수 변화 없으면 리렌더 스킵 (물리엔진 리셋 방지)
+        if (isPolling && newNodes.length === prevNodeCount.current) {
+          return;
+        }
+
         if (isPolling && newNodes.length > prevNodeCount.current) {
           setLiveCount((c) => c + (newNodes.length - prevNodeCount.current));
         }

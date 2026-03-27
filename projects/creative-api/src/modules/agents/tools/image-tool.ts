@@ -29,7 +29,7 @@ export const imageAnalysisTool: AgentTool = {
 
     try {
       const analysis = await analyzeImage(imageUrl, context);
-      const sceneGraph = extractSceneGraph(analysis, imageUrl, context);
+      const sceneGraph = extractSceneGraph(analysis, imageUrl);
 
       return {
         analysis: {

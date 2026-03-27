@@ -84,7 +84,7 @@ export const PHYSICS_CONFIG = {
   linkDistanceSemantic: 90,
   linkDistanceCreation: 60,
   warmupTicks: 200,
-  cooldownTime: 5000,
+  cooldownTime: 3000,
 };
 
 /** 엣지 타입 → 링크 거리 매핑 */

@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     }
 
     const analysis = await analyzeImage(imageUrl, context);
-    const sceneGraph = extractSceneGraph(analysis, imageUrl, context);
+    const sceneGraph = extractSceneGraph(analysis, imageUrl);
 
     return NextResponse.json<ApiResponse>({
       success: true,

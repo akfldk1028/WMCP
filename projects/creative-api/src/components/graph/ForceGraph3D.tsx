@@ -1,8 +1,13 @@
 'use client';
 
 import { useRef, useCallback, useEffect, useState } from 'react';
+import * as THREE from 'three';
 import type { Graph3DData, Graph3DNode } from '@/types/graph';
 import { GRAPH_BG, NODE_STYLES, getEdgeStyle, BLOOM_CONFIG, CAMERA_CONFIG, PHYSICS_CONFIG, getLinkDistance } from '@/config/graph-styles';
+
+// Texture 캐시 — 같은 URL 재로드 방지 + cleanup 용이
+const textureLoader = new THREE.TextureLoader();
+const textureCache = new Map<string, THREE.Texture>();
 
 interface ForceGraph3DProps {
   data: Graph3DData;
@@ -67,26 +72,24 @@ export default function ForceGraph3DComponent({
     const renderer = graphRef.current.renderer();
     if (!renderer) return;
 
-    import('three/examples/jsm/postprocessing/EffectComposer.js').then(({ EffectComposer }) => {
-      import('three/examples/jsm/postprocessing/RenderPass.js').then(({ RenderPass }) => {
-        import('three/examples/jsm/postprocessing/UnrealBloomPass.js').then(({ UnrealBloomPass }) => {
-          import('three').then((THREE) => {
-            const scene = graphRef.current.scene();
-            const camera = graphRef.current.camera();
-            const composer = new EffectComposer(renderer);
-            composer.addPass(new RenderPass(scene, camera));
-            composer.addPass(
-              new UnrealBloomPass(
-                new THREE.Vector2(window.innerWidth, window.innerHeight),
-                BLOOM_CONFIG.strength,
-                BLOOM_CONFIG.radius,
-                BLOOM_CONFIG.threshold
-              )
-            );
-            graphRef.current.postProcessingComposer(composer);
-          });
-        });
-      });
+    Promise.all([
+      import('three/examples/jsm/postprocessing/EffectComposer.js'),
+      import('three/examples/jsm/postprocessing/RenderPass.js'),
+      import('three/examples/jsm/postprocessing/UnrealBloomPass.js'),
+    ]).then(([{ EffectComposer }, { RenderPass }, { UnrealBloomPass }]) => {
+      const scene = graphRef.current.scene();
+      const camera = graphRef.current.camera();
+      const composer = new EffectComposer(renderer);
+      composer.addPass(new RenderPass(scene, camera));
+      composer.addPass(
+        new UnrealBloomPass(
+          new THREE.Vector2(window.innerWidth, window.innerHeight),
+          BLOOM_CONFIG.strength,
+          BLOOM_CONFIG.radius,
+          BLOOM_CONFIG.threshold
+        )
+      );
+      graphRef.current.postProcessingComposer(composer);
     }).catch(() => {});
   }, [ForceGraph]);
 
@@ -132,11 +135,12 @@ export default function ForceGraph3DComponent({
       enablePointerInteraction={true}
       // 이미지 노드 — Sprite 텍스처 (imageUrl 있을 때)
       nodeThreeObject={(node: Graph3DNode) => {
-        if (!node.imageUrl || !node.imageUrl.startsWith('http')) return undefined as any;
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const THREE = require('three');
-        const loader = new THREE.TextureLoader();
-        const texture = loader.load(node.imageUrl);
+        if (!node.imageUrl || !(node.imageUrl.startsWith('http') || node.imageUrl.startsWith('data:'))) return undefined as any;
+        let texture = textureCache.get(node.imageUrl);
+        if (!texture) {
+          texture = textureLoader.load(node.imageUrl);
+          textureCache.set(node.imageUrl, texture);
+        }
         const material = new THREE.SpriteMaterial({
           map: texture,
           transparent: true,

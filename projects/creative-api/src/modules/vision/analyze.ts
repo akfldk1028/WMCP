@@ -7,7 +7,7 @@
  */
 
 import { generateText } from 'ai';
-import { getModel } from '@/modules/llm/client';
+import { getModel, extractJSON } from '@/modules/llm/client';
 
 export interface ImageAnalysisResult {
   description: string;
@@ -21,7 +21,7 @@ export interface ImageAnalysisResult {
 const ANALYSIS_PROMPT = `You are a visual analyst for a creative AI system.
 Analyze this image and extract structured information for a knowledge graph.
 
-Respond ONLY with valid JSON:
+Respond ONLY with raw JSON (no markdown, no \`\`\`json blocks):
 {
   "description": "1-2 sentence description of the image",
   "concepts": ["concept1", "concept2", ...],
@@ -63,18 +63,14 @@ export async function analyzeImage(
         ],
       },
     ],
-    maxOutputTokens: 2048,
+    maxOutputTokens: 4096,
   });
 
-  const text = result.text;
-  const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) ?? text.match(/(\{[\s\S]*\})/);
-  const jsonStr = jsonMatch?.[1]?.trim() ?? text.trim();
-
   try {
-    return JSON.parse(jsonStr) as ImageAnalysisResult;
+    return extractJSON<ImageAnalysisResult>(result.text);
   } catch {
     return {
-      description: text.slice(0, 200),
+      description: result.text.slice(0, 200),
       concepts: [],
       objects: [],
       mood: 'unknown',

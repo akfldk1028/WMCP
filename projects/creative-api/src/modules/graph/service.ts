@@ -147,6 +147,9 @@ export async function listNodes(options?: {
         type: ((rec.nodeType ?? n.type ?? 'Idea') as string) as GraphNode['type'],
         title: (n.title ?? n.name ?? '') as string,
         description: (n.description ?? '') as string,
+        method: n.method as string | undefined,
+        score: n.score as number | undefined,
+        imageUrl: n.imageUrl as string | undefined,
         createdAt: (n.createdAt ?? '') as string,
       };
     });
@@ -164,6 +167,7 @@ export async function listNodes(options?: {
       description: n.description,
       method: n.method,
       score: n.score,
+      imageUrl: n.imageUrl,
       createdAt: n.createdAt,
     }));
 }
@@ -392,6 +396,7 @@ export async function getVisualizationData(maxNodes: number = 100, userId?: stri
         description: n.description,
         method: n.method,
         score: n.score,
+        imageUrl: n.imageUrl,
         userId: n.userId,
         createdAt: n.createdAt,
       }));

@@ -11,13 +11,22 @@ import type { AgentTool } from './registry';
 import { scheduleAutoSave } from '../../graph/persistence';
 import { emitNodeCreated, emitEdgeCreated } from '../../graph/events';
 import { safeLabel, safeRelType, isReadOnlyCypher } from '../../graph/safe-cypher';
+import {
+  storeManager,
+  getMemoryStore,
+  loadMemoryStore,
+  type StoreNode,
+  type StoreEdge,
+} from '../../graph/store';
+
+// Re-export for backward compatibility
+export { getMemoryStore, loadMemoryStore };
+export type MemNode = StoreNode;
+export type MemEdge = StoreEdge;
 
 // ── Dual-mode: Memgraph or in-memory ──
 
 const USE_MEMGRAPH = !!(process.env.NEO4J_URI && process.env.NEO4J_USER && process.env.NEO4J_PASSWORD);
-
-const MAX_STORE_NODES = 10_000;
-const MAX_STORE_EDGES = 30_000;
 
 let _runQuery: ((cypher: string, params?: Record<string, unknown>) => Promise<unknown[]>) | null = null;
 let _driverPromise: Promise<void> | null = null;
@@ -32,43 +41,9 @@ async function getRunQuery() {
   return _runQuery;
 }
 
-/** In-memory store — 서버 프로세스 수명 동안 유지, 모든 에이전트가 공유 */
-interface MemNode {
-  id: string;
-  type: string;
-  title: string;
-  description: string;
-  method?: string;
-  tags?: string[];
-  score?: number;
-  userId?: string;
-  imageUrl?: string;
-  createdAt: string;
+function getStore() {
+  return storeManager.getGlobalStore();
 }
-interface MemEdge {
-  id: string;
-  source: string;
-  target: string;
-  type: string;
-  createdAt: string;
-}
-
-const memoryStore: { nodes: MemNode[]; edges: MemEdge[] } = { nodes: [], edges: [] };
-
-/** 외부에서 현재 store 상태 접근 (novelty 계산 등) */
-export function getMemoryStore() {
-  return memoryStore;
-}
-
-/** Persistence layer에서 저장된 데이터를 로드할 때 사용 */
-export function loadMemoryStore(nodes: MemNode[], edges: MemEdge[]): void {
-  memoryStore.nodes.length = 0;
-  memoryStore.edges.length = 0;
-  memoryStore.nodes.push(...nodes);
-  memoryStore.edges.push(...edges);
-}
-
-// ── 검색 헬퍼 ──
 
 function tokenMatch(text: string, query: string): boolean {
   const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
@@ -99,11 +74,11 @@ export const graphQueryTool: AgentTool = {
 
     // In-memory fallback: extract meaningful keywords from Cypher
     const cleaned = cypher.replace(/MATCH|RETURN|WHERE|CREATE|SET|WITH|ORDER BY|LIMIT|AND|OR|NOT|\(|\)|{|}|\[|\]|:|-|>|<|\*|\.|,|'|"/gi, ' ').trim();
-    const results = memoryStore.nodes.filter((n) =>
+    const results = getStore().getAllNodes().filter((n) =>
       tokenMatch(`${n.title} ${n.description} ${n.type}`, cleaned)
     ).slice(0, 10);
 
-    return { source: 'in_memory', results, totalInStore: memoryStore.nodes.length };
+    return { source: 'in_memory', results, totalInStore: getStore().getAllNodes().length };
   },
 };
 
@@ -126,7 +101,7 @@ export const graphSearchTool: AgentTool = {
     }
 
     // In-memory: token-based search
-    const results = memoryStore.nodes
+    const results = getStore().getAllNodes()
       .filter((n) => tokenMatch(`${n.title} ${n.description} ${n.type} ${n.tags?.join(' ') ?? ''}`, keywords))
       .slice(0, max);
 
@@ -134,7 +109,7 @@ export const graphSearchTool: AgentTool = {
       source: 'in_memory',
       results,
       total: results.length,
-      totalInStore: memoryStore.nodes.length,
+      totalInStore: getStore().getAllNodes().length,
     };
   },
 };
@@ -163,12 +138,8 @@ export const graphAddNodeTool: AgentTool = {
     // Validate label before any write
     const validLabel = safeLabel(node.type);
 
-    // Evict oldest if at capacity
-    if (memoryStore.nodes.length >= MAX_STORE_NODES) {
-      memoryStore.nodes.splice(0, Math.floor(MAX_STORE_NODES * 0.1));
-    }
-
-    memoryStore.nodes.push(node);
+    const store = getStore();
+    await store.addNode(node);
     scheduleAutoSave();
 
     emitNodeCreated({
@@ -185,10 +156,10 @@ export const graphAddNodeTool: AgentTool = {
         `CREATE (n:${validLabel} {id: $id, title: $title, description: $desc, method: $method, createdAt: $ts})`,
         { id: node.id, title: node.title, desc: node.description, method: node.method ?? '', ts: node.createdAt }
       );
-      return { created: node, totalNodes: memoryStore.nodes.length, persisted: 'memgraph' };
+      return { created: node, totalNodes: store.getAllNodes().length, persisted: 'memgraph' };
     }
 
-    return { created: node, totalNodes: memoryStore.nodes.length, persisted: 'in_memory' };
+    return { created: node, totalNodes: store.getAllNodes().length, persisted: 'in_memory' };
   },
 };
 
@@ -212,11 +183,8 @@ export const graphAddEdgeTool: AgentTool = {
     // Validate relationship type before any write
     const validRelType = safeRelType(edge.type);
 
-    if (memoryStore.edges.length >= MAX_STORE_EDGES) {
-      memoryStore.edges.splice(0, Math.floor(MAX_STORE_EDGES * 0.1));
-    }
-
-    memoryStore.edges.push(edge);
+    const store = getStore();
+    await store.addEdge(edge);
     scheduleAutoSave();
 
     emitEdgeCreated({
@@ -232,9 +200,9 @@ export const graphAddEdgeTool: AgentTool = {
         `MATCH (a {id: $src}), (b {id: $tgt}) CREATE (a)-[:${validRelType} {id: $eid, createdAt: $ts}]->(b)`,
         { src: edge.source, tgt: edge.target, eid: edge.id, ts: edge.createdAt }
       );
-      return { created: edge, totalEdges: memoryStore.edges.length, persisted: 'memgraph' };
+      return { created: edge, totalEdges: store.getAllEdges().length, persisted: 'memgraph' };
     }
 
-    return { created: edge, totalEdges: memoryStore.edges.length, persisted: 'in_memory' };
+    return { created: edge, totalEdges: store.getAllEdges().length, persisted: 'in_memory' };
   },
 };
