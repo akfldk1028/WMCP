@@ -5,9 +5,8 @@ import * as THREE from 'three';
 import type { Graph3DData, Graph3DNode } from '@/types/graph';
 import { GRAPH_BG, NODE_STYLES, getEdgeStyle, BLOOM_CONFIG, CAMERA_CONFIG, PHYSICS_CONFIG, getLinkDistance } from '@/config/graph-styles';
 
-// Texture 캐시 — 같은 URL 재로드 방지 + cleanup 용이
-const textureLoader = new THREE.TextureLoader();
-const textureCache = new Map<string, THREE.Texture>();
+// Canvas 텍스처 캐시 — 같은 imageUrl + color 조합은 재사용
+const canvasTextureCache = new Map<string, THREE.CanvasTexture>();
 
 interface ForceGraph3DProps {
   data: Graph3DData;
@@ -133,25 +132,68 @@ export default function ForceGraph3DComponent({
       enableNodeDrag={true}
       enableNavigationControls={true}
       enablePointerInteraction={true}
-      // 이미지 노드 — Sprite 텍스처 (imageUrl 있을 때)
+      // 이미지 노드 — 원형 이미지 + 컬러 보더 (구체 대체, 캐시)
       nodeThreeObject={(node: Graph3DNode) => {
-        if (!node.imageUrl || !(node.imageUrl.startsWith('http') || node.imageUrl.startsWith('data:'))) return undefined as any;
-        let texture = textureCache.get(node.imageUrl);
-        if (!texture) {
-          texture = textureLoader.load(node.imageUrl);
-          textureCache.set(node.imageUrl, texture);
+        const hasImage = node.imageUrl && (node.imageUrl.startsWith('http') || node.imageUrl.startsWith('data:'));
+        if (!hasImage) return undefined as any;
+
+        const cacheKey = `${node.imageUrl}|${node.color}`;
+        let canvasTexture = canvasTextureCache.get(cacheKey);
+
+        if (!canvasTexture) {
+          const canvasSize = 128;
+          const border = 10;
+          const canvas = document.createElement('canvas');
+          canvas.width = canvasSize;
+          canvas.height = canvasSize;
+          const ctx = canvas.getContext('2d')!;
+          const cx = canvasSize / 2;
+          const r = cx - 2;
+
+          // 1. 컬러 보더 원
+          ctx.beginPath();
+          ctx.arc(cx, cx, r, 0, Math.PI * 2);
+          ctx.fillStyle = node.color;
+          ctx.fill();
+
+          // 2. 안쪽 어두운 원 (이미지 로딩 전 배경)
+          ctx.beginPath();
+          ctx.arc(cx, cx, r - border, 0, Math.PI * 2);
+          ctx.fillStyle = '#111';
+          ctx.fill();
+
+          canvasTexture = new THREE.CanvasTexture(canvas);
+          canvasTextureCache.set(cacheKey, canvasTexture);
+
+          // 3. 이미지 비동기 로드 → 원형 클리핑
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          const ct = canvasTexture; // closure 캡처
+          img.onload = () => {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(cx, cx, r - border, 0, Math.PI * 2);
+            ctx.clip();
+            const s = Math.min(img.width, img.height);
+            const sx = (img.width - s) / 2;
+            const sy = (img.height - s) / 2;
+            ctx.drawImage(img, sx, sy, s, s, border, border, canvasSize - border * 2, canvasSize - border * 2);
+            ctx.restore();
+            ct.needsUpdate = true;
+          };
+          img.src = node.imageUrl!;
         }
-        const material = new THREE.SpriteMaterial({
-          map: texture,
-          transparent: true,
-          opacity: 0.9,
-        });
+
+        const material = new THREE.SpriteMaterial({ map: canvasTexture, transparent: true });
         const sprite = new THREE.Sprite(material);
-        const size = (node.val ?? 8) * 1.5;
+        const size = (node.val ?? 8) * 2.5;
         sprite.scale.set(size, size, 1);
         return sprite;
       }}
-      nodeThreeObjectExtend={true}
+      // 이미지 노드: 구체 대체 (false), 일반 노드: 기본 구체 유지 (true)
+      nodeThreeObjectExtend={(node: any) => {
+        return !(node.imageUrl && (node.imageUrl.startsWith('http') || node.imageUrl.startsWith('data:')));
+      }}
       // 노드
       nodeVal={(node: Graph3DNode) => node.val}
       nodeColor={(node: Graph3DNode) => {
