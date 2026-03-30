@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Loader2, Building2, Lightbulb, FileText, Type, Settings, CreditCard } from 'lucide-react';
+import { Loader2, Building2, Lightbulb, FileText, Type, Settings, CreditCard, Bot, CheckCircle2 } from 'lucide-react';
+import { BMC_BLOCK_META } from '@/modules/bmc/prompts';
+import type { BmcBlock, BmcBlockData } from '@/modules/bmc/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import ReportViewer from '@/components/report/ReportViewer';
@@ -19,6 +21,158 @@ const CompanyInput = dynamic(() => import('@/components/ui/CompanyInput'), {
   ssr: false,
   loading: () => <div className="h-12 w-full max-w-xl animate-pulse rounded-lg bg-muted" />,
 });
+
+/** Lazy-loaded planning chat — only fetches the chunk when rendered */
+const PlanningChatEmbed = dynamic(
+  () => import('@/modules/planning-chat').then((m) => {
+    function Embed({ ideaName, onEvent }: { ideaName: string; onEvent?: (e: { type: string; data: Record<string, unknown> }) => void }) {
+      return (
+        <m.PlanningChat
+          config={{ apiEndpoint: '/api/planning/chat', mode: 'both', planId: ideaName || undefined }}
+          onEvent={onEvent}
+        />
+      );
+    }
+    Embed.displayName = 'PlanningChatEmbed';
+    return { default: Embed };
+  }),
+  { ssr: false, loading: () => <div className="flex h-full items-center justify-center"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div> },
+);
+
+/** Lazy-loaded analysis chat — only fetches the chunk when rendered */
+const AnalysisChatEmbed = dynamic(
+  () => import('@/modules/analysis-chat').then((m) => {
+    function Embed({ config }: { config: import('@/modules/analysis-chat').AnalysisChatConfig }) {
+      return <m.AnalysisChat config={config} />;
+    }
+    Embed.displayName = 'AnalysisChatEmbed';
+    return { default: Embed };
+  }),
+  { ssr: false, loading: () => <div className="flex h-full items-center justify-center"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div> },
+);
+
+/* BMC grid layout order */
+const BMC_GRID: { block: BmcBlock; area: string }[] = [
+  { block: 'key-partners', area: 'kp' },
+  { block: 'key-activities', area: 'ka' },
+  { block: 'value-proposition', area: 'vp' },
+  { block: 'customer-relationships', area: 'cr' },
+  { block: 'customer-segments', area: 'cs' },
+  { block: 'key-resources', area: 'kr' },
+  { block: 'channels', area: 'ch' },
+  { block: 'cost-structure', area: 'co' },
+  { block: 'revenue-streams', area: 'rs' },
+];
+
+/** Live BMC Canvas + Chat sidebar split layout */
+function PlanningLayout({ ideaName, setIdeaName, setInputMode, ui }: {
+  ideaName: string;
+  setIdeaName: (s: string) => void;
+  setInputMode: (m: 'simple' | 'doc' | 'planning') => void;
+  ui: typeof import('@/i18n/ko').default['ui'];
+}) {
+  const [bmcBlocks, setBmcBlocks] = useState<Partial<Record<BmcBlock, BmcBlockData>>>({});
+  const filledCount = Object.keys(bmcBlocks).length;
+
+  const handleEvent = useCallback((event: { type: string; data: Record<string, unknown> }) => {
+    if (event.type === 'data-update') {
+      if (event.data.bmcBlocks) setBmcBlocks(event.data.bmcBlocks as Partial<Record<BmcBlock, BmcBlockData>>);
+      // planStages received but not displayed here (planning/page.tsx handles the plan canvas)
+    }
+  }, []);
+
+  return (
+    <div className="flex min-h-0 flex-1" style={{ height: 'calc(100dvh - 57px)' }}>
+      {/* Left: Live BMC Canvas */}
+      <div className="flex w-3/5 flex-col overflow-y-auto border-r px-6 py-5">
+        {/* Idea name + mode toggle */}
+        <div className="mb-4 flex items-center gap-3">
+          <input
+            type="text"
+            value={ideaName}
+            onChange={(e) => setIdeaName(e.target.value)}
+            placeholder={ui.reportNew.ideaNamePlaceholder}
+            className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+          />
+          <button type="button" onClick={() => setInputMode('simple')}
+            className="rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted">
+            <Type className="size-3.5" />
+          </button>
+        </div>
+
+        {/* Progress */}
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold">BMC Canvas</h3>
+          <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+            {filledCount}/9
+          </span>
+        </div>
+
+        {/* BMC 9-block grid */}
+        <div
+          className="grid gap-2"
+          style={{
+            gridTemplateColumns: 'repeat(5, 1fr)',
+            gridTemplateRows: 'auto auto auto',
+            gridTemplateAreas: `
+              "kp ka vp cr cs"
+              "kp kr vp ch cs"
+              "co co rs rs rs"
+            `,
+          }}
+        >
+          {BMC_GRID.map(({ block, area }) => {
+            const meta = BMC_BLOCK_META[block];
+            const data = bmcBlocks[block];
+            const filled = data && data.entries.length > 0;
+            return (
+              <div
+                key={block}
+                className={`rounded-xl border p-3 transition ${filled ? 'border-indigo-500/30 bg-indigo-500/5' : 'bg-muted/30'}`}
+                style={{ gridArea: area, minHeight: 80 }}
+              >
+                <div className="flex items-center gap-1.5">
+                  {filled && <CheckCircle2 className="size-3 text-indigo-500" />}
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {meta.labelKo}
+                  </p>
+                </div>
+                {filled ? (
+                  <ul className="mt-1.5 space-y-0.5">
+                    {data.entries.slice(0, 4).map((entry, i) => (
+                      <li key={i} className="text-[11px] leading-snug text-foreground">• {entry.slice(0, 60)}</li>
+                    ))}
+                    {data.entries.length > 4 && (
+                      <li className="text-[10px] text-muted-foreground">+{data.entries.length - 4}건</li>
+                    )}
+                  </ul>
+                ) : (
+                  <p className="mt-1 text-[10px] text-muted-foreground/50">—</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Section preview */}
+        <h3 className="mb-2 mt-6 text-xs font-semibold text-muted-foreground">{ui.reportNew.analysisPreview}</h3>
+        <div className="grid grid-cols-4 gap-1.5">
+          {ui.reportNew.ideaChapters.map((fw) => (
+            <div key={fw.num} className="rounded-lg border bg-muted/20 px-2.5 py-2">
+              <div className="text-[10px] font-bold text-indigo-600">{fw.num}</div>
+              <div className="text-[10px] font-medium">{fw.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right: AI Chat sidebar */}
+      <div className="flex w-2/5 min-h-0 flex-col bg-muted/20">
+        <PlanningChatEmbed ideaName={ideaName} onEvent={handleEvent} />
+      </div>
+    </div>
+  );
+}
 
 /** Reads URL search params and auto-starts analysis from Chrome extension deep-links */
 function DeepLinkHandler({ setMode, setIdeaName, setIdeaDescription, startGeneration, router }: {
@@ -37,6 +191,32 @@ function DeepLinkHandler({ setMode, setIdeaName, setIdeaDescription, startGenera
     const idea = searchParams.get('idea');
     const desc = searchParams.get('desc');
     const autostart = searchParams.get('autostart');
+    const planId = searchParams.get('planId');
+
+    // Planning → Analysis bridge: load planning data and auto-start idea analysis
+    if (planId && paramMode === 'idea') {
+      import('@/modules/planning-bridge').then(({ loadPlanLocal, mapPlanningToAnalysis }) => {
+        const stored = loadPlanLocal(planId);
+        if (!stored) return;
+        const planTitle = stored.bmc.title || idea || 'Plan';
+        setMode('idea');
+        setIdeaName(planTitle);
+        const overview = Object.values(stored.bmc.blocks).flatMap(b => b?.entries ?? []).join('. ');
+        if (overview) setIdeaDescription(overview);
+        done.current = true;
+        const mapped = mapPlanningToAnalysis(stored.bmc, stored.servicePlan);
+        startGeneration(planTitle, 'idea', {
+          name: planTitle,
+          description: overview || planTitle,
+          planningData: mapped,
+        }).then((r) => {
+          if (r) router.push(`/report/${(r as { id: string }).id}`);
+        });
+      }).catch(() => {
+        // Planning data not found — fall through to normal flow
+      });
+      return;
+    }
 
     if (paramMode === 'idea' && idea) {
       setMode('idea');
@@ -73,7 +253,10 @@ export default function NewReportPage() {
   const [ideaDescription, setIdeaDescription] = useState('');
   const [ideaTarget, setIdeaTarget] = useState('');
   const [ideaDocument, setIdeaDocument] = useState('');
-  const [inputMode, setInputMode] = useState<'simple' | 'doc'>('simple');
+  const [inputMode, setInputMode] = useState<'simple' | 'doc' | 'planning'>('simple');
+
+  // Interactive analysis state (P0: conversational analysis)
+  const [interactiveConfig, setInteractiveConfig] = useState<import('@/modules/analysis-chat').AnalysisChatConfig | null>(null);
 
   // License key state
   const [showLicenseDialog, setShowLicenseDialog] = useState(false);
@@ -109,10 +292,8 @@ export default function NewReportPage() {
   }
 
   async function handleCompanySubmit(companyName: string) {
-    const result = await startGeneration(companyName, 'company');
-    if (result) {
-      router.push(`/report/${result.id}`);
-    }
+    // Interactive analysis mode — show conversational chat instead of batch generation
+    setInteractiveConfig({ mode: 'company', subjectName: companyName });
   }
 
   async function handleIdeaSubmit(e: React.FormEvent) {
@@ -121,22 +302,50 @@ export default function NewReportPage() {
     if (inputMode === 'simple' && !ideaDescription.trim()) return;
     if (inputMode === 'doc' && !ideaDocument.trim()) return;
 
-    const ideaInput: IdeaInput = {
-      name: ideaName.trim(),
-      description: inputMode === 'doc'
-        ? `${ui.reportNew.documentAttached} ${ideaDocument.trim().slice(0, 200)}`
-        : ideaDescription.trim(),
-      targetMarket: ideaTarget.trim() || undefined,
-      document: inputMode === 'doc' ? ideaDocument.trim() : undefined,
-    };
+    const desc = inputMode === 'doc'
+      ? `${ui.reportNew.documentAttached} ${ideaDocument.trim().slice(0, 200)}`
+      : ideaDescription.trim();
 
-    const result = await startGeneration(ideaName.trim(), 'idea', ideaInput);
-    if (result) {
-      router.push(`/report/${result.id}`);
-    }
+    // Interactive analysis mode
+    setInteractiveConfig({
+      mode: 'idea',
+      subjectName: ideaName.trim(),
+      ideaDescription: desc,
+      ideaTarget: ideaTarget.trim() || undefined,
+    });
   }
 
   // Once generation starts, show PPT viewer with live progress
+  // Interactive analysis mode — show conversational chat layout
+  if (interactiveConfig) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <header className="border-b bg-background">
+          <div className="flex items-center justify-between px-6 py-3">
+            <Link href="/" className="flex items-center gap-2 text-sm font-bold text-primary">
+              <img src="/logo.png" alt="BS" className="h-8 w-auto" />
+              {ui.appName}
+            </Link>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-muted-foreground">{interactiveConfig.subjectName}</span>
+              <button
+                type="button"
+                onClick={() => setInteractiveConfig(null)}
+                className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+              >
+                ← {t.ui.analysis.goBack}
+              </button>
+            </div>
+          </div>
+        </header>
+        <div className="flex-1">
+          <AnalysisChatEmbed config={interactiveConfig} />
+        </div>
+      </div>
+    );
+  }
+
+  // Legacy batch generation view (for deep-links and backward compat)
   if (report && (isGenerating || report.status !== 'draft')) {
     return (
       <div className="flex min-h-screen flex-col">
@@ -212,7 +421,17 @@ export default function NewReportPage() {
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-center px-6 py-16">
+      {/* ===== AI Planning: full split layout ===== */}
+      {mode === 'idea' && inputMode === 'planning' && (
+        <PlanningLayout
+          ideaName={ideaName}
+          setIdeaName={setIdeaName}
+          setInputMode={setInputMode}
+          ui={ui}
+        />
+      )}
+
+      <main className={`flex flex-1 flex-col items-center justify-center px-6 py-16 ${mode === 'idea' && inputMode === 'planning' ? 'hidden' : ''}`}>
         <div className="mx-auto w-full max-w-2xl text-center">
           {/* License / credits bar */}
           <div className="mb-6 flex items-center justify-center gap-3 text-sm">
@@ -325,6 +544,9 @@ export default function NewReportPage() {
                 ))}
               </div>
             </>
+          ) : inputMode === 'planning' ? (
+            /* ===== AI Planning Mode: full-width split layout ===== */
+            null /* rendered outside the centered container */
           ) : (
             <>
               <h1 className="text-3xl font-extrabold tracking-tight">{ui.reportNew.ideaTitle}</h1>
@@ -375,9 +597,23 @@ export default function NewReportPage() {
                     <FileText className="size-3.5" />
                     {ui.reportNew.inputDoc}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setInputMode('planning')}
+                    className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+                      (inputMode as string) === 'planning'
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Bot className="size-3.5" />
+                    {ui.reportNew.inputPlanning}
+                  </button>
                 </div>
 
-                {inputMode === 'simple' ? (
+                {(inputMode as string) === 'planning' ? (
+                  null /* planning mode renders in the split layout above */
+                ) : inputMode === 'simple' ? (
                   <>
                     <div>
                       <label className="mb-1.5 block text-sm font-medium">
@@ -431,6 +667,7 @@ export default function NewReportPage() {
                   </div>
                 )}
 
+                {(inputMode as string) !== 'planning' && (
                 <button
                   type="submit"
                   disabled={
@@ -451,6 +688,7 @@ export default function NewReportPage() {
                     ui.reportNew.ideaSubmit
                   )}
                 </button>
+                )}
               </form>
 
               {/* Idea framework preview */}

@@ -153,6 +153,194 @@ export async function generateSection(
   }
 }
 
+// --- Multi-turn chat ---
+
+async function chatAnthropic(
+  config: ProviderConfig,
+  systemPrompt: string,
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+): Promise<string> {
+  if (!cachedAnthropicClient) {
+    const { default: Anthropic } = await import('@anthropic-ai/sdk');
+    cachedAnthropicClient = new Anthropic({ apiKey: config.apiKey });
+  }
+  const response = await cachedAnthropicClient.messages.create({
+    model: config.model,
+    max_tokens: 8192,
+    temperature: 0.4,
+    system: systemPrompt,
+    messages,
+  });
+  const block = response.content[0];
+  if (!block || block.type !== 'text') throw new Error('Anthropic returned no text content');
+  return block.text;
+}
+
+async function chatOpenAICompat(
+  config: ProviderConfig,
+  systemPrompt: string,
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+): Promise<string> {
+  if (!cachedOpenAIClient || cachedOpenAIClient.baseURL !== (config.provider === 'xai' ? 'https://api.x.ai/v1' : undefined)) {
+    const { default: OpenAI } = await import('openai');
+    cachedOpenAIClient = new OpenAI({
+      apiKey: config.apiKey,
+      ...(config.provider === 'xai' ? { baseURL: 'https://api.x.ai/v1' } : {}),
+    });
+  }
+  const response = await cachedOpenAIClient.chat.completions.create({
+    model: config.model,
+    max_tokens: 8192,
+    temperature: 0.4,
+    messages: [
+      { role: 'system' as const, content: systemPrompt },
+      ...messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    ],
+  });
+  const text = response.choices[0]?.message?.content;
+  if (!text) throw new Error(`${config.provider} returned no content`);
+  return text;
+}
+
+async function chatGemini(
+  config: ProviderConfig,
+  systemPrompt: string,
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+): Promise<string> {
+  const { GoogleGenerativeAI } = await import('@google/generative-ai');
+  const genAI = new GoogleGenerativeAI(config.apiKey);
+  const model = genAI.getGenerativeModel({
+    model: config.model,
+    systemInstruction: systemPrompt,
+  });
+  const contents = messages.map((m) => ({
+    role: m.role === 'assistant' ? ('model' as const) : ('user' as const),
+    parts: [{ text: m.content }],
+  }));
+  const result = await model.generateContent({ contents });
+  const text = result.response.text();
+  if (!text) throw new Error('Gemini returned no content');
+  return text;
+}
+
+/**
+ * Multi-turn chat with conversation history.
+ * Uses the same provider detection as generateSection.
+ */
+export async function generateChat(
+  systemPrompt: string,
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+): Promise<string> {
+  const config = getConfig();
+  switch (config.provider) {
+    case 'anthropic':
+      return chatAnthropic(config, systemPrompt, messages);
+    case 'openai':
+    case 'xai':
+      return chatOpenAICompat(config, systemPrompt, messages);
+    case 'gemini':
+      return chatGemini(config, systemPrompt, messages);
+  }
+}
+
+// --- Streaming multi-turn chat ---
+
+async function* streamAnthropic(
+  config: ProviderConfig,
+  systemPrompt: string,
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+): AsyncGenerator<string, void, unknown> {
+  if (!cachedAnthropicClient) {
+    const { default: Anthropic } = await import('@anthropic-ai/sdk');
+    cachedAnthropicClient = new Anthropic({ apiKey: config.apiKey });
+  }
+  const stream = cachedAnthropicClient.messages.stream({
+    model: config.model,
+    max_tokens: 8192,
+    temperature: 0.4,
+    system: systemPrompt,
+    messages,
+  });
+  for await (const event of stream) {
+    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+      yield event.delta.text;
+    }
+  }
+}
+
+async function* streamOpenAICompat(
+  config: ProviderConfig,
+  systemPrompt: string,
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+): AsyncGenerator<string, void, unknown> {
+  if (!cachedOpenAIClient || cachedOpenAIClient.baseURL !== (config.provider === 'xai' ? 'https://api.x.ai/v1' : undefined)) {
+    const { default: OpenAI } = await import('openai');
+    cachedOpenAIClient = new OpenAI({
+      apiKey: config.apiKey,
+      ...(config.provider === 'xai' ? { baseURL: 'https://api.x.ai/v1' } : {}),
+    });
+  }
+  const stream = await cachedOpenAIClient.chat.completions.create({
+    model: config.model,
+    max_tokens: 8192,
+    temperature: 0.4,
+    messages: [
+      { role: 'system' as const, content: systemPrompt },
+      ...messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    ],
+    stream: true,
+  });
+  for await (const chunk of stream) {
+    const delta = chunk.choices[0]?.delta?.content;
+    if (delta) yield delta;
+  }
+}
+
+async function* streamGemini(
+  config: ProviderConfig,
+  systemPrompt: string,
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+): AsyncGenerator<string, void, unknown> {
+  const { GoogleGenerativeAI } = await import('@google/generative-ai');
+  const genAI = new GoogleGenerativeAI(config.apiKey);
+  const model = genAI.getGenerativeModel({
+    model: config.model,
+    systemInstruction: systemPrompt,
+  });
+  const contents = messages.map((m) => ({
+    role: m.role === 'assistant' ? ('model' as const) : ('user' as const),
+    parts: [{ text: m.content }],
+  }));
+  const result = await model.generateContentStream({ contents });
+  for await (const chunk of result.stream) {
+    const text = chunk.text();
+    if (text) yield text;
+  }
+}
+
+/**
+ * Streaming multi-turn chat — yields tokens as they arrive.
+ * Use for real-time SSE streaming to the client.
+ */
+export async function* streamChat(
+  systemPrompt: string,
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+): AsyncGenerator<string, void, unknown> {
+  const config = getConfig();
+  switch (config.provider) {
+    case 'anthropic':
+      yield* streamAnthropic(config, systemPrompt, messages);
+      break;
+    case 'openai':
+    case 'xai':
+      yield* streamOpenAICompat(config, systemPrompt, messages);
+      break;
+    case 'gemini':
+      yield* streamGemini(config, systemPrompt, messages);
+      break;
+  }
+}
+
 // --- Multi-model ensemble for cross-validation ---
 
 function getAllProviders(): ProviderConfig[] {

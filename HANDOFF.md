@@ -1,157 +1,96 @@
-# HANDOFF — CreativeGraph AI (2026-03-23)
+# HANDOFF — BizScope (2026-03-30 세션 2)
 
-## Goal
+## 이번 세션 완료: P0~P5 전체 완료 + Vercel 배포
 
-**학술적 창의성 이론 5가지를 AI 에이전트 행동 모델로 코드화**하여, 멀티에이전트 팀이 자율적으로 아이디어를 생성·평가·진화시키는 플랫폼. Graph DB에 아이디어 계보를 영구 축적. 3D 인터랙티브 그래프로 시각화. API로 판매.
+### 완료 항목
 
-### 핵심 차별점 (논문 근거)
-- 5이론 통합 (Guilford + Amabile + Csikszentmihalyi + Geneplore + SCAMPER) — 경쟁자(TRIZ Agents)는 1이론만
-- Graph DB 영구 축적 — 쓸수록 더 창의적 (Knowledge Distance 가설, Luo 2022)
-- 자율 에이전트 + 도구 11종 — LLM이 자율적으로 웹 검색, Graph 조회, SCAMPER/TRIZ 적용
-- 3D 시각화 — react-force-graph-3d로 아이디어 네트워크 현혹
+| # | 항목 | 변경 파일 | 핵심 |
+|---|------|----------|------|
+| P0 | 브레인스토밍 사용자↔AI | route.ts | 멀티모델 태그 삭제 → 3라운드 프롬프트 기반 (Landscape/Devil's Advocate/Synthesis) |
+| P1 | extractBmcBlocks 노이즈 | PlanningChat.tsx | `NOISE_RE` 정규식으로 진행 메시지 필터링 |
+| P2 | 서비스기획 8단계 대화형 | route.ts, PlanningChat.tsx, planning/page.tsx, report/new/page.tsx | 프롬프트 상세화 + extractPlanFromA2UI + PlanStageList 실시간 |
+| P3 | Claude 플러그인 E2E | (변경 없음) | 53도구, initialize/tools/list/ping/web-search/auth 전부 통과 |
+| P4 | SSE 토큰 스트리밍 | claude.ts, route.ts, PlanningChat.tsx | streamChat() async generator + send('token') + 점진적 UI |
+| P5 | Vercel 배포 | — | bizscope-theta.vercel.app + bizscope-rho.vercel.app 200 OK |
 
----
-
-## Current Progress — 완료된 것
-
-### Phase 1: 스캐폴딩 + 학술 근거 (6 커밋)
-```
-c9c53ac  feat: 전체 스캐폴딩 (66파일, Next.js 15)
-211941f  feat: story structure + 학술 근거 주석
-4d437d4  fix: 학술적 정확성 5건 수정
-f80ef46  feat: 자율 에이전트 아키텍처 (도구 시스템 + 런타임 루프)
-22643f8  feat: 4계층 Graph 온톨로지 스키마 재설계
-8713eb7  feat: 논문 기반 6개 기능 (keyword, novelty, TRIZ, judge 등)
-```
-
-### Phase 2: Graph 인프라 연결 (이번 세션, 미커밋)
-
-#### 2-1. Graph 쿼리 모듈 (`modules/graph/queries/` — 7파일 신규)
-| 파일 | 내용 |
-|------|------|
-| `ideas.ts` | Idea CRUD Cypher 쿼리 + in-memory helper |
-| `concepts.ts` | Concept CRUD + 도메인별 검색 |
-| `sessions.ts` | Session 생성/상태 업데이트/이력 |
-| `connections.ts` | Edge 생성 + 3계층 분류 (creation/semantic/structural) |
-| `search.ts` | 전체 노드 텍스트 검색 + in-memory tokenSearch |
-| `traversal.ts` | BFS 이웃 탐색 + 서브그래프 추출 쿼리 |
-| `index.ts` | 전체 export |
-
-#### 2-2. Graph 서비스 레이어 (`modules/graph/service.ts` — 1파일 신규)
-- **Dual-mode**: `NEO4J_URI` 환경변수 유무로 Memgraph/in-memory 자동 전환
-- `addNode()`, `getNode()`, `listNodes()` — 노드 CRUD
-- `addEdge()`, `listEdges()` — 엣지 CRUD
-- `searchGraph()` — 키워드 검색
-- `getNeighborhood()` — N홉 BFS 이웃 탐색
-- `getVisualizationData()` — 3D react-force-graph 데이터 변환
-- `getStats()` — 그래프 통계
-- `getImmersionContext()` — Immersion phase용 기존 지식 추출
-- `persistSession()` — **세션 완료 → Graph 영구 저장** ("ideas compound forever")
-
-#### 2-3. API 라우트 실구현 (stub → 실제, 5파일)
-| 라우트 | 변경 |
-|--------|------|
-| `GET/POST /api/graph/nodes` | 노드 목록/생성, 통계 포함 |
-| `GET/POST /api/graph/edges` | 엣지 목록/생성, 카테고리 분류 |
-| `GET /api/graph/search` | 키워드 검색 + `?nodeId=` 이웃 탐색 |
-| `GET /api/graph/visualize` | mock/seed/live 3모드, 빈 그래프 시 mock fallback |
-| `GET /api/graph/stats` | **신규** — 전체 통계 + Memgraph 연결 상태 |
-
-#### 2-4. Immersion Phase 실구현 (2파일 수정)
-- **Light mode** (`four-is.ts`): `getImmersionContext()` → `divergentGenerate()`에 Graph 컨텍스트 주입
-- **Heavy mode** (`multi-agent.ts`): `getImmersionContext()` → researcher 에이전트의 baseContext에 주입
-- **Divergent prompt** (`divergent.ts`): graphContext 파라미터 추가, 기존 아이디어와 차별화 지시
-
-#### 2-5. 세션 결과 → Graph 영구 저장
-- `persistSession()` — 세션 완료 시 Domain/Topic/Session/Idea 노드 + 관계 엣지 자동 생성
-- `session/route.ts` — light/heavy 모두에서 `persistSession()` 호출
-- 다음 세션의 Immersion에서 자동으로 이전 아이디어 재활용
-
-#### 2-6. 기타
-- **Memgraph 스키마 자동 초기화** — `driver.ts`에 `initSchema()` + `ensureConnection()` 추가
-- **TRIZ 40원리 전체 확장** — 20개 → 40개 (Altshuller 1999 전체)
-- 빌드 성공 (18페이지, 102kB First Load JS)
+### 테스트
+- 127개 전부 통과 (24파일)
+- 빌드 성공 (Next.js 15.5.14)
+- Vercel 프로덕션 배포 성공
 
 ---
 
-## 프로젝트 구조 (최종)
-```
-projects/creative-api/src/
-├── app/
-│   ├── (marketing)/        — 랜딩 (3D 히어로), 가격
-│   ├── (app)/              — 그래프뷰어, 대시보드, 세션
-│   └── api/
-│       ├── creative/       — brainstorm, evaluate, iterate, session
-│       ├── graph/          — nodes, edges, search, visualize, stats  ← 실구현 완료
-│       └── pipeline/       — heavy (ClawTeam)
-├── modules/
-│   ├── creativity/         — 이론 5, 기법 5, 파이프라인, 프롬프트, 평가
-│   ├── graph/
-│   │   ├── driver.ts       — Memgraph Bolt 드라이버 + initSchema
-│   │   ├── schema.ts       — 4계층 온톨로지 (7노드, 22엣지)
-│   │   ├── service.ts      — dual-mode 서비스 + persistSession  ← NEW
-│   │   ├── transform.ts    — → react-force-graph-3d 변환
-│   │   └── queries/        — ideas, concepts, sessions, connections, search, traversal  ← NEW
-│   ├── agents/
-│   │   ├── runtime/        — agent-runner, multi-agent, definitions
-│   │   └── tools/          — 11종 (TRIZ 40원리 전체 포함)  ← EXPANDED
-│   └── payment/            — tiers
-├── components/graph/       — ForceGraph3D (WebGL + Bloom)
-├── config/                 — graph-styles, creativity, site, nav
-└── types/                  — graph, creativity, session, agent, api
-```
+## 다음 세션 TODO
+
+### P6: 멀티모델 브레인스토밍 (brainstorm-mcp API mode)
+- `src/lib/brainstorm.ts` + `/api/brainstorm/route.ts` — 이미 코드 존재
+- PlanningChat.tsx에 brainstorm SSE 핸들러도 존재 (dead code)
+- 필요: AI가 기획 중 특정 결정에서 멀티모델 토론 트리거
+- 조건: API 키 2개 이상 (OPENAI + GEMINI 등)
+- brainstorm-mcp submodule 참조: `submodules/brainstorm-mcp/`
+
+### i18n 잔여
+- `/pricing/success` 페이지 일부 한국어 하드코딩
+- 키 찾기 UI 한국어 하드코딩
+
+### rate limit Redis 전환
+- 현재 in-memory Map — 서버리스에서 인스턴스별 리셋
+- Upstash Redis로 전환 필요
+
+### BIZSCOPE_API_KEY legacy fallback 제거
+- `isLegacyEnvKey()` — 마이그레이션 완료 후 제거
 
 ---
 
-## Next Steps
+## Architecture Key Points
 
-### 즉시 (인프라)
-1. **Google VM 세팅** — `scripts/setup-vm.sh` 실행 → Memgraph 설치
-2. **`.env.local`에 환경변수 설정** — `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` → dual-mode가 자동 전환
-3. **`/api/graph/stats` 호출로 연결 확인** — `connection.connected: true` 확인
+### 토큰 스트리밍 파이프라인
+```
+claude.ts: streamChat() → async generator (Anthropic/OpenAI/xAI/Gemini)
+route.ts:  for await → send('token', chunk) → 완료 → parseResponse() → send('text') + send('a2ui')
+client:    consumeSSE onToken → filter+replace 점진적 업데이트 → done → A2UI 캔버스 반영
+```
 
-### 중기 (기능)
-4. **결제 연동** — LemonSqueezy (BizScope 패턴 이식)
-5. **Vercel 배포** — `vercel link` + `vercel env add`
-6. **대시보드 페이지** — `/dashboard`에서 `/api/graph/stats` 데이터 렌더링
-7. **세션 히스토리 페이지** — 과거 세션 목록 + 그래프 성장 추이
+### A2UI 이중 추출
+```
+텍스트: extractBmcBlocks() / extractPlanStages() — 헤딩 매칭 + NOISE_RE 필터
+A2UI:  extractBmcFromA2UI() / extractPlanFromA2UI() — 컴포넌트 매칭
+merge: { ...fromText, ...fromA2UI } — A2UI 우선
+```
 
-### 논문화
-8. **수업자료 29슬라이드 대조 감사** — `memory/creative-api/lecture-audit.md`
-9. **경쟁자 차별화** — TRIZ Agents vs 우리 (`memory/creative-api/paper-insights.md`)
+### 브레인스토밍 (사용자↔AI)
+```
+트리거: 어려운 결정 or "브레인스토밍/토론" 명시
+Round 1: Landscape — 옵션별 장단점 + "어떤 쪽이 끌리세요?"
+Round 2: Devil's Advocate — 선호 약점 도전
+Round 3: Synthesis — A2UI Card (Recommendation / Tradeoffs / Open Question)
+→ BMC/서비스기획 복귀
+```
 
----
+### 서비스기획 8단계
+```
+BMC 9블록 완료 → "서비스기획 8단계 시작합니다"
+1. Executive Summary (프로젝트 개요)
+2. Conceptual Framework (컨셉 프레임워크)
+3. Design & Content (디자인 & 컨텐츠 전략)
+4. Technical Architecture (기술 아키텍처)
+5. Development Roadmap (개발 로드맵)
+6. Marketing & Community (마케팅 & 커뮤니티)
+7. Post-Launch (출시 후 & 진화)
+8. Legal & Ethical (법률 & 윤리)
+→ StageCard A2UI + PlanStageList 실시간 업데이트
+```
 
-## 기술 정보
-
-### 빌드/실행
+## 빌드/실행
 ```bash
-pnpm --filter @wmcp/creative-api dev    # localhost:3001
-pnpm --filter @wmcp/creative-api build  # 빌드 확인
+pnpm --filter @wmcp/bizscope dev       # localhost:3000
+pnpm --filter @wmcp/bizscope test      # 127 tests (24 files)
+pnpm --filter @wmcp/bizscope build     # 프로덕션 빌드
+vercel --prod --scope clickaround8-4495s-projects  # 배포
 ```
 
-### 환경변수 (.env.local)
-```
-NEO4J_URI=bolt://<VM_IP>:7687
-NEO4J_USER=memgraph
-NEO4J_PASSWORD=<pw>
-CLAWTEAM_API_URL=http://<VM_IP>:8000
-ANTHROPIC_API_KEY=sk-ant-xxx
-GOOGLE_SEARCH_API_KEY=<key>
-GOOGLE_SEARCH_CX=<cx>
-```
-
-### 기술 스택
-- Next.js 15.5, React 19, TypeScript 5.5, Tailwind 4
-- react-force-graph-3d + Three.js (3D 시각화)
-- Anthropic SDK (에이전트 LLM + tool calling)
-- neo4j-driver (Memgraph Bolt 호환)
-
-### 메모리
-`D:\DevCache\claude-data\projects\D--Data-28-WMCP\memory\creative-api\` (20파일)
-
-### 논문
-`D:\Data\28_WMCP\clone\papers\` (25편 PDF)
-
-### GitHub
-https://github.com/akfldk1028/WMCP — master 브랜치
+## 메모리
+- `memory/bizscope/overview.md` — 전체 개요 업데이트 (2026-03-30)
+- `memory/bizscope/planning-mode.md` — P0~P5 완료 기록 (2026-03-30)
+- `memory/bizscope/deployment.md` — URL 2개 + 53도구 MCP (2026-03-30)
+- `memory/MEMORY.md` — 인덱스 업데이트됨
