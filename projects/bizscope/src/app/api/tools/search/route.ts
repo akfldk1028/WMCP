@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
 import { searchWeb } from '@/lib/search';
+import { resolveAuth, isLegacyEnvKey, unauthorizedResponse } from '@/lib/auth';
 
 export async function POST(request: Request) {
-  // API key auth (optional — enabled when BIZSCOPE_API_KEY is set)
-  const apiKey = process.env.BIZSCOPE_API_KEY;
-  if (apiKey) {
-    const auth = request.headers.get('authorization');
-    if (auth !== `Bearer ${apiKey}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  // Tools require paid key or legacy env key
+  const auth = await resolveAuth(request);
+  if (auth.plan === 'free' && !isLegacyEnvKey(request)) {
+    return unauthorizedResponse();
   }
 
   let body: Record<string, unknown>;

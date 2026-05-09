@@ -1,26 +1,35 @@
 import { handleSSEGet, handleSSEPost } from '@/mcp/transport-sse';
+import { handleHTTPPost } from '@/mcp/transport-http';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * MCP SSE endpoint.
+ * MCP endpoint — supports both Streamable HTTP and legacy SSE transports.
  *
- * GET  /api/mcp           -> Establish SSE connection, returns sessionId
- * POST /api/mcp?sessionId= -> Send JSON-RPC message to MCP server
+ * Streamable HTTP (recommended):
+ *   POST /api/mcp  (Content-Type: application/json, no sessionId)
+ *   → JSON-RPC response directly
+ *
+ * Legacy SSE:
+ *   GET  /api/mcp            → SSE stream + sessionId
+ *   POST /api/mcp?sessionId= → JSON-RPC via SSE stream
  *
  * Auth: Bearer token via BIZSCOPE_API_KEY env var (optional).
- *
- * Usage with Claude Code / OpenClaw:
- *   1. GET /api/mcp (with Authorization header if key is set)
- *   2. Read the `endpoint` SSE event to get the POST URL
- *   3. POST JSON-RPC messages to that URL
- *   4. Read `message` SSE events for responses
  */
 export function GET(request: Request) {
   return handleSSEGet(request);
 }
 
 export function POST(request: Request) {
-  return handleSSEPost(request);
+  const url = new URL(request.url);
+  const sessionId = url.searchParams.get('sessionId');
+
+  // If sessionId present → legacy SSE transport
+  if (sessionId) {
+    return handleSSEPost(request);
+  }
+
+  // Otherwise → Streamable HTTP transport
+  return handleHTTPPost(request);
 }

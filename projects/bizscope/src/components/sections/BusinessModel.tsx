@@ -1,4 +1,5 @@
 import type { BusinessModelData } from '@/frameworks/types';
+import { formatKpiValue } from '@/lib/format';
 
 interface Props {
   data: BusinessModelData;
@@ -69,7 +70,7 @@ export default function BusinessModel({ data, subPage }: Props) {
             {data.unitEconomics.map((ue, i) => (
               <div key={i} className="grid grid-cols-2 gap-4 py-3">
                 <span className="font-medium">{ue.metric}</span>
-                <span className="text-muted-foreground">{ue.value}</span>
+                <span className="text-muted-foreground">{formatKpiValue(ue.metric, ue.value)}</span>
               </div>
             ))}
           </div>

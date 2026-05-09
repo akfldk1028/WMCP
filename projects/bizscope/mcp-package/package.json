@@ -1,0 +1,17 @@
+{
+  "name": "@bizscope-ai/mcp",
+  "version": "1.0.0",
+  "description": "BizScope AI — MCP server for Claude Code. 53 tools: business analysis (18+15 sections), planning (BMC+8 stages), brainstorm (multi-model debate).",
+  "type": "module",
+  "bin": {
+    "bizscope-mcp": "./index.mjs"
+  },
+  "keywords": ["mcp", "claude-code", "business-analysis", "bizscope", "ai"],
+  "author": "Donghyeon Kim <clickaround@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://bizscope-rho.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clickaround/wmcp"
+  }
+}

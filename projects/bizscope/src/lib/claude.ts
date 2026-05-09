@@ -2,10 +2,10 @@
  * Multi-provider AI client.
  * Auto-detects available API key and uses the corresponding provider.
  *
- * Priority: Anthropic > OpenAI > xAI (Grok) > Google Gemini
+ * Priority: Anthropic > OpenAI > xAI (Grok) > Qwen > Google Gemini
  */
 
-type Provider = 'anthropic' | 'openai' | 'xai' | 'gemini';
+type Provider = 'anthropic' | 'openai' | 'xai' | 'gemini' | 'qwen';
 
 interface ProviderConfig {
   provider: Provider;
@@ -35,6 +35,13 @@ function detectProvider(): ProviderConfig {
       apiKey: process.env.XAI_API_KEY,
     };
   }
+  if (process.env.QWEN_API_KEY) {
+    return {
+      provider: 'qwen',
+      model: 'qwen-plus',
+      apiKey: process.env.QWEN_API_KEY,
+    };
+  }
   if (process.env.GOOGLE_GEMINI_API_KEY) {
     return {
       provider: 'gemini',
@@ -43,8 +50,17 @@ function detectProvider(): ProviderConfig {
     };
   }
   throw new Error(
-    'AI API 키가 설정되지 않았습니다. .env.local에 ANTHROPIC_API_KEY, OPENAI_API_KEY, XAI_API_KEY, 또는 GOOGLE_GEMINI_API_KEY 중 하나를 설정하세요.',
+    'AI API 키가 설정되지 않았습니다. .env.local에 ANTHROPIC_API_KEY, OPENAI_API_KEY, XAI_API_KEY, GOOGLE_GEMINI_API_KEY, 또는 QWEN_API_KEY 중 하나를 설정하세요.',
   );
+}
+
+// --- OpenAI-compatible base URLs ---
+function getOpenAICompatBaseURL(provider: Provider): string | undefined {
+  switch (provider) {
+    case 'xai': return 'https://api.x.ai/v1';
+    case 'qwen': return 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
+    default: return undefined;
+  }
 }
 
 // --- Cached config + clients ---
@@ -91,11 +107,12 @@ async function callOpenAI(
   systemPrompt: string,
   userMessage: string,
 ): Promise<string> {
-  if (!cachedOpenAIClient || cachedOpenAIClient.baseURL !== (config.provider === 'xai' ? 'https://api.x.ai/v1' : undefined)) {
+  const baseURL = getOpenAICompatBaseURL(config.provider);
+  if (!cachedOpenAIClient || cachedOpenAIClient.baseURL !== baseURL) {
     const { default: OpenAI } = await import('openai');
     cachedOpenAIClient = new OpenAI({
       apiKey: config.apiKey,
-      ...(config.provider === 'xai' ? { baseURL: 'https://api.x.ai/v1' } : {}),
+      ...(baseURL ? { baseURL } : {}),
     });
   }
   const response = await cachedOpenAIClient.chat.completions.create({
@@ -147,6 +164,7 @@ export async function generateSection(
       return callAnthropic(config, systemPrompt, userMessage);
     case 'openai':
     case 'xai':
+    case 'qwen':
       return callOpenAI(config, systemPrompt, userMessage);
     case 'gemini':
       return callGemini(config, systemPrompt, userMessage);
@@ -181,11 +199,12 @@ async function chatOpenAICompat(
   systemPrompt: string,
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
 ): Promise<string> {
-  if (!cachedOpenAIClient || cachedOpenAIClient.baseURL !== (config.provider === 'xai' ? 'https://api.x.ai/v1' : undefined)) {
+  const baseURL = getOpenAICompatBaseURL(config.provider);
+  if (!cachedOpenAIClient || cachedOpenAIClient.baseURL !== baseURL) {
     const { default: OpenAI } = await import('openai');
     cachedOpenAIClient = new OpenAI({
       apiKey: config.apiKey,
-      ...(config.provider === 'xai' ? { baseURL: 'https://api.x.ai/v1' } : {}),
+      ...(baseURL ? { baseURL } : {}),
     });
   }
   const response = await cachedOpenAIClient.chat.completions.create({
@@ -237,6 +256,7 @@ export async function generateChat(
       return chatAnthropic(config, systemPrompt, messages);
     case 'openai':
     case 'xai':
+    case 'qwen':
       return chatOpenAICompat(config, systemPrompt, messages);
     case 'gemini':
       return chatGemini(config, systemPrompt, messages);
@@ -273,11 +293,12 @@ async function* streamOpenAICompat(
   systemPrompt: string,
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
 ): AsyncGenerator<string, void, unknown> {
-  if (!cachedOpenAIClient || cachedOpenAIClient.baseURL !== (config.provider === 'xai' ? 'https://api.x.ai/v1' : undefined)) {
+  const baseURL = getOpenAICompatBaseURL(config.provider);
+  if (!cachedOpenAIClient || cachedOpenAIClient.baseURL !== baseURL) {
     const { default: OpenAI } = await import('openai');
     cachedOpenAIClient = new OpenAI({
       apiKey: config.apiKey,
-      ...(config.provider === 'xai' ? { baseURL: 'https://api.x.ai/v1' } : {}),
+      ...(baseURL ? { baseURL } : {}),
     });
   }
   const stream = await cachedOpenAIClient.chat.completions.create({
@@ -333,6 +354,7 @@ export async function* streamChat(
       break;
     case 'openai':
     case 'xai':
+    case 'qwen':
       yield* streamOpenAICompat(config, systemPrompt, messages);
       break;
     case 'gemini':
@@ -357,6 +379,9 @@ function getAllProviders(): ProviderConfig[] {
   if (process.env.GOOGLE_GEMINI_API_KEY) {
     providers.push({ provider: 'gemini', model: 'gemini-2.5-flash', apiKey: process.env.GOOGLE_GEMINI_API_KEY });
   }
+  if (process.env.QWEN_API_KEY) {
+    providers.push({ provider: 'qwen', model: 'qwen-plus', apiKey: process.env.QWEN_API_KEY });
+  }
   return providers;
 }
 
@@ -370,6 +395,7 @@ async function callProvider(
       return callAnthropic(config, systemPrompt, userMessage);
     case 'openai':
     case 'xai':
+    case 'qwen':
       return callOpenAI(config, systemPrompt, userMessage);
     case 'gemini':
       return callGemini(config, systemPrompt, userMessage);

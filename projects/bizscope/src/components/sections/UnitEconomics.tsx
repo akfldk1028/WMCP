@@ -1,4 +1,5 @@
 import type { UnitEconomicsData } from '@/frameworks/types';
+import { formatAmount, formatKpiValue, formatPercent } from '@/lib/format';
 
 interface Props {
   data: UnitEconomicsData;
@@ -34,7 +35,7 @@ export default function UnitEconomics({ data, subPage }: Props) {
               <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
                 CAC (고객획득비용)
               </p>
-              <p className="mt-2 text-2xl font-bold text-indigo-600">{data.cac.value}</p>
+              <p className="mt-2 text-2xl font-bold text-indigo-600">{formatAmount(data.cac.value)}</p>
               <p className="mt-2 text-sm text-muted-foreground">{data.cac.breakdown}</p>
               {data.cac.benchmark && (
                 <p className="mt-1 text-xs text-muted-foreground/70">업계 벤치마크: {data.cac.benchmark}</p>
@@ -45,7 +46,7 @@ export default function UnitEconomics({ data, subPage }: Props) {
               <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">
                 LTV (고객생애가치)
               </p>
-              <p className="mt-2 text-2xl font-bold text-indigo-600">{data.ltv.value}</p>
+              <p className="mt-2 text-2xl font-bold text-indigo-600">{formatAmount(data.ltv.value)}</p>
               <p className="mt-2 text-sm text-muted-foreground">{data.ltv.calculation}</p>
               {data.ltv.benchmark && (
                 <p className="mt-1 text-xs text-muted-foreground/70">업계 벤치마크: {data.ltv.benchmark}</p>
@@ -76,11 +77,11 @@ export default function UnitEconomics({ data, subPage }: Props) {
               <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">BEP 도달 시점</p>
               <p className="mt-2 text-xl font-bold">{data.breakEvenPoint.months}</p>
               <p className="mt-1 text-xs text-muted-foreground">필요 고객 수: {data.breakEvenPoint.customers}</p>
-              <p className="text-xs text-muted-foreground">필요 매출: {data.breakEvenPoint.revenue}</p>
+              <p className="text-xs text-muted-foreground">필요 매출: {formatAmount(data.breakEvenPoint.revenue)}</p>
             </div>
             <div className="rounded-xl border p-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">월간 번레이트</p>
-              <p className="mt-2 text-xl font-bold text-rose-500">{data.monthlyBurnRate}</p>
+              <p className="mt-2 text-xl font-bold text-rose-500">{formatAmount(data.monthlyBurnRate)}</p>
             </div>
             <div className="rounded-xl border p-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">런웨이</p>
@@ -102,11 +103,11 @@ export default function UnitEconomics({ data, subPage }: Props) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl border p-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">매출 총이익률</p>
-              <p className="mt-2 text-xl font-bold text-emerald-600">{data.margins.gross}</p>
+              <p className="mt-2 text-xl font-bold text-emerald-600">{formatPercent(data.margins.gross)}</p>
             </div>
             <div className="rounded-xl border p-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">공헌이익률</p>
-              <p className="mt-2 text-xl font-bold text-emerald-600">{data.margins.contribution}</p>
+              <p className="mt-2 text-xl font-bold text-emerald-600">{formatPercent(data.margins.contribution)}</p>
             </div>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">{data.margins.reasoning}</p>
@@ -125,9 +126,9 @@ export default function UnitEconomics({ data, subPage }: Props) {
               {data.sensitivityAnalysis.map((s, i) => (
                 <div key={i} className="grid grid-cols-4 gap-4 py-3">
                   <span className="font-medium">{s.variable}</span>
-                  <span className="text-emerald-600">{s.optimistic}</span>
-                  <span className="text-muted-foreground">{s.base}</span>
-                  <span className="text-rose-500">{s.pessimistic}</span>
+                  <span className="text-emerald-600">{formatKpiValue(s.variable, s.optimistic)}</span>
+                  <span className="text-muted-foreground">{formatKpiValue(s.variable, s.base)}</span>
+                  <span className="text-rose-500">{formatKpiValue(s.variable, s.pessimistic)}</span>
                 </div>
               ))}
             </div>

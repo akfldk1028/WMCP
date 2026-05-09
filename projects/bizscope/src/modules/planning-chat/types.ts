@@ -29,3 +29,10 @@ export interface PlanningChatEvent {
   type: 'block-complete' | 'stage-complete' | 'plan-ready';
   data: Record<string, unknown>;
 }
+
+/** Multi-model brainstorm result received via SSE */
+export interface BrainstormData {
+  topic: string;
+  opinions: Array<{ model: string; content: string; error?: string }>;
+  modelCount: number;
+}

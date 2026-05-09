@@ -3,7 +3,8 @@ import type { SectionType, PipelineContext, SectionData, ReportMode, IdeaInput }
 import { COMPANY_SECTION_ORDER, IDEA_SECTION_ORDER } from '@/frameworks/types';
 import { searchForSection } from '@/lib/search';
 import { getCompanyFinancials, formatFinancialsAsResearch } from '@/lib/finance';
-import { getLicenseInfo, useCredit } from '@/lib/kv';
+import { useCredit } from '@/lib/kv';
+import { resolveAuth } from '@/lib/auth';
 
 // --- IP-based rate limit (20 req/min) ---
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -140,22 +141,9 @@ export async function POST(
     return NextResponse.json({ error: 'Rate limit exceeded (20 req/min)' }, { status: 429 });
   }
 
-  // License key check — if provided, verify it's valid
-  const licenseKey = request.headers.get('x-license-key') || '';
-  let licensePlan: string | null = null;
-
-  if (licenseKey) {
-    try {
-      const info = await getLicenseInfo(licenseKey);
-      if (!info) {
-        return NextResponse.json({ error: 'Invalid license key' }, { status: 403 });
-      }
-      licensePlan = info.plan;
-      // Credit deduction happens once per report in /api/license/use, not per section
-    } catch {
-      // KV unavailable — allow request (graceful degradation)
-    }
-  }
+  // Unified auth — resolves plan from any header format
+  const auth = await resolveAuth(request);
+  const licensePlan = auth.plan === 'free' ? null : auth.plan;
 
   const { type } = await params;
 
@@ -172,11 +160,12 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { companyName, context, mode, ideaInput } = body as {
+  const { companyName, context, mode, ideaInput, userFeedback } = body as {
     companyName: string;
     context: PipelineContext;
     mode?: ReportMode;
     ideaInput?: IdeaInput;
+    userFeedback?: string;
   };
 
   if (!companyName) {
@@ -211,7 +200,14 @@ export async function POST(
       ]);
 
       const financialText = financials ? formatFinancialsAsResearch(financials) : '';
-      const research = [financialText, webResearch].filter(Boolean).join('\n\n---\n\n');
+      const planningContext = ctx.planningData?.[sectionType];
+      const planningText = planningContext
+        ? `## Planning Data (from BMC / Service Plan)\n${JSON.stringify(planningContext, null, 2)}`
+        : '';
+      const feedbackText = userFeedback
+        ? `## User Feedback (incorporate this into the analysis)\n${userFeedback}`
+        : '';
+      const research = [financialText, webResearch, planningText, feedbackText].filter(Boolean).join('\n\n---\n\n');
 
       if (research) {
         const aiMap = isIdeaMode ? IDEA_AI_MODULE_MAP : COMPANY_AI_MODULE_MAP;

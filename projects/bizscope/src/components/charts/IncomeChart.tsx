@@ -15,10 +15,19 @@ interface Props {
 }
 
 function formatAxis(value: number, currency: string) {
-  const isKRW = currency === 'KRW';
-  if (Math.abs(value) >= 1e12) return isKRW ? `${(value / 1e12).toFixed(0)}조` : `${(value / 1e9).toFixed(0)}B`;
-  if (Math.abs(value) >= 1e9) return isKRW ? `${(value / 1e8).toFixed(0)}억` : `${(value / 1e9).toFixed(1)}B`;
-  if (Math.abs(value) >= 1e6) return isKRW ? `${(value / 1e6).toFixed(0)}백만` : `${(value / 1e6).toFixed(0)}M`;
+  const abs = Math.abs(value);
+  // Auto-detect KRW: explicit currency or magnitude > 10B (typical KRW revenues)
+  const isKRW = currency === 'KRW' || abs >= 1e10;
+  if (isKRW) {
+    if (abs >= 1e12) return `${(value / 1e12).toFixed(1)}조`;
+    if (abs >= 1e8) return `${Math.round(value / 1e8).toLocaleString()}억`;
+    if (abs >= 1e4) return `${Math.round(value / 1e4).toLocaleString()}만`;
+    return value.toLocaleString();
+  }
+  if (abs >= 1e12) return `${(value / 1e12).toFixed(1)}T`;
+  if (abs >= 1e9) return `${(value / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
+  if (abs >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
   return value.toLocaleString();
 }
 

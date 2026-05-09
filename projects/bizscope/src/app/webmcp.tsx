@@ -507,6 +507,96 @@ const TOOLS = [
     },
     endpoint: '/api/webmcp/scorecard',
   },
+  // === Planning tools (12) ===
+  {
+    name: 'bizscope-bmc-generate',
+    description: 'Generate a Business Model Canvas (9 blocks) draft based on an idea name and description.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ideaName: { type: 'string', description: 'Name of the business idea or product' },
+        ideaDescription: { type: 'string', description: 'Brief description of the idea' },
+        research: { type: 'string', description: 'Optional web research context' },
+      },
+      required: ['ideaName', 'ideaDescription'],
+    },
+    endpoint: '/api/planning/tool/bizscope-bmc-generate',
+  },
+  {
+    name: 'bizscope-bmc-update',
+    description: 'Update a specific block in the Business Model Canvas with new entries.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        block: { type: 'string', description: 'BMC block to update (e.g. customer-segments, value-proposition)' },
+        entries: { type: 'array', items: { type: 'string' }, description: 'New entries for this block' },
+        notes: { type: 'string', description: 'Optional notes' },
+        mode: { type: 'string', enum: ['replace', 'append'], description: 'Replace or append (default: replace)' },
+      },
+      required: ['block', 'entries'],
+    },
+    endpoint: '/api/planning/tool/bizscope-bmc-update',
+  },
+  {
+    name: 'bizscope-plan-executive-summary',
+    description: 'Generate or update the executive-summary stage of the service plan.',
+    inputSchema: { type: 'object', properties: { ideaName: { type: 'string' }, ideaDescription: { type: 'string' }, research: { type: 'string' }, previousStages: { type: 'object' } }, required: ['ideaName', 'ideaDescription'] },
+    endpoint: '/api/planning/tool/bizscope-plan-executive-summary',
+  },
+  {
+    name: 'bizscope-plan-conceptual-framework',
+    description: 'Generate or update the conceptual-framework stage of the service plan.',
+    inputSchema: { type: 'object', properties: { ideaName: { type: 'string' }, ideaDescription: { type: 'string' }, research: { type: 'string' }, previousStages: { type: 'object' } }, required: ['ideaName', 'ideaDescription'] },
+    endpoint: '/api/planning/tool/bizscope-plan-conceptual-framework',
+  },
+  {
+    name: 'bizscope-plan-design-content',
+    description: 'Generate or update the design-content stage of the service plan.',
+    inputSchema: { type: 'object', properties: { ideaName: { type: 'string' }, ideaDescription: { type: 'string' }, research: { type: 'string' }, previousStages: { type: 'object' } }, required: ['ideaName', 'ideaDescription'] },
+    endpoint: '/api/planning/tool/bizscope-plan-design-content',
+  },
+  {
+    name: 'bizscope-plan-technical-arch',
+    description: 'Generate or update the technical-arch stage of the service plan.',
+    inputSchema: { type: 'object', properties: { ideaName: { type: 'string' }, ideaDescription: { type: 'string' }, research: { type: 'string' }, previousStages: { type: 'object' } }, required: ['ideaName', 'ideaDescription'] },
+    endpoint: '/api/planning/tool/bizscope-plan-technical-arch',
+  },
+  {
+    name: 'bizscope-plan-dev-roadmap',
+    description: 'Generate or update the dev-roadmap stage of the service plan.',
+    inputSchema: { type: 'object', properties: { ideaName: { type: 'string' }, ideaDescription: { type: 'string' }, research: { type: 'string' }, previousStages: { type: 'object' } }, required: ['ideaName', 'ideaDescription'] },
+    endpoint: '/api/planning/tool/bizscope-plan-dev-roadmap',
+  },
+  {
+    name: 'bizscope-plan-marketing',
+    description: 'Generate or update the marketing stage of the service plan.',
+    inputSchema: { type: 'object', properties: { ideaName: { type: 'string' }, ideaDescription: { type: 'string' }, research: { type: 'string' }, previousStages: { type: 'object' } }, required: ['ideaName', 'ideaDescription'] },
+    endpoint: '/api/planning/tool/bizscope-plan-marketing',
+  },
+  {
+    name: 'bizscope-plan-post-launch',
+    description: 'Generate or update the post-launch stage of the service plan.',
+    inputSchema: { type: 'object', properties: { ideaName: { type: 'string' }, ideaDescription: { type: 'string' }, research: { type: 'string' }, previousStages: { type: 'object' } }, required: ['ideaName', 'ideaDescription'] },
+    endpoint: '/api/planning/tool/bizscope-plan-post-launch',
+  },
+  {
+    name: 'bizscope-plan-legal-ethical',
+    description: 'Generate or update the legal-ethical stage of the service plan.',
+    inputSchema: { type: 'object', properties: { ideaName: { type: 'string' }, ideaDescription: { type: 'string' }, research: { type: 'string' }, previousStages: { type: 'object' } }, required: ['ideaName', 'ideaDescription'] },
+    endpoint: '/api/planning/tool/bizscope-plan-legal-ethical',
+  },
+  {
+    name: 'bizscope-plan-status',
+    description: 'Get the current completion status of the service plan.',
+    inputSchema: { type: 'object', properties: { planId: { type: 'string', description: 'Plan ID' } }, required: ['planId'] },
+    endpoint: '/api/planning/tool/bizscope-plan-status',
+  },
+  {
+    name: 'bizscope-plan-to-analysis',
+    description: 'Map completed planning data (BMC + service plan) to the 15-section analysis context.',
+    inputSchema: { type: 'object', properties: { planId: { type: 'string', description: 'Plan ID to map' } }, required: ['planId'] },
+    endpoint: '/api/planning/tool/bizscope-plan-to-analysis',
+  },
   // === Utility tools (2) ===
   {
     name: 'bizscope-web-search',

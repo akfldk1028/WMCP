@@ -18,6 +18,8 @@ export interface UIMessages {
   nav: {
     pricing: string;
     history: string;
+    docs: string;
+    planning: string;
   };
   // Landing page
   landing: {
@@ -67,8 +69,10 @@ export interface UIMessages {
     ideaDocHint: string;
     ideaDocTemplatePlaceholder: string;
     ideaSubmit: string;
+    analysisPreview: string;
     inputSimple: string;
     inputDoc: string;
+    inputPlanning: string;
     sectionLabel: string;          // "섹션" / "Section"
     charCount: (n: string) => string; // "1,234자" / "1,234 chars"
     documentAttached: string;      // "[기획서 첨부됨]" / "[Document attached]"
@@ -161,6 +165,48 @@ export interface UIMessages {
     title: string;
     body: (companyName: string) => string;
     branding: string;
+  };
+  // Planning mode
+  planning: {
+    title: string;
+    subtitle: string;
+    modeBmc: string;
+    modeServicePlan: string;
+    modeBoth: string;
+    bmcPlaceholder: string;
+    planPlaceholder: string;
+    bothPlaceholder: string;
+    errorTitle: string;
+    newPlan: string;
+    savedPlans: string;
+    saveAndAnalyze: string;
+    analysisReady: string;
+    canvasTabBmc: string;
+    canvasTabPlan: string;
+    entriesEmpty: string;
+  };
+  // Interactive analysis chat
+  analysis: {
+    progress: string;
+    sectionsDone: (completed: number, total: number) => string;
+    generating: (title: string) => string;
+    commenting: string;
+    welcome: (name: string, count: number, mode: 'idea' | 'company') => string;
+    sectionError: (title: string, error: string) => string;
+    resuming: (title: string) => string;
+    resume: string;
+    stop: string;
+    pausedPlaceholder: string;
+    defaultPlaceholder: string;
+    goBack: string;
+    ch01Company: string;
+    ch02Company: string;
+    ch03Company: string;
+    ch04Company: string;
+    ch01Idea: string;
+    ch02Idea: string;
+    ch03Idea: string;
+    ch04Idea: string;
   };
   // Metadata
   meta: {

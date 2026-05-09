@@ -292,7 +292,6 @@ export default function NewReportPage() {
   }
 
   async function handleCompanySubmit(companyName: string) {
-    // Interactive analysis mode — show conversational chat instead of batch generation
     setInteractiveConfig({ mode: 'company', subjectName: companyName });
   }
 
@@ -306,7 +305,6 @@ export default function NewReportPage() {
       ? `${ui.reportNew.documentAttached} ${ideaDocument.trim().slice(0, 200)}`
       : ideaDescription.trim();
 
-    // Interactive analysis mode
     setInteractiveConfig({
       mode: 'idea',
       subjectName: ideaName.trim(),

@@ -39,4 +39,34 @@ test-results/
 # Root-level misc docs (not project code)
 /SHOPGUARD-ACTION-PLAN.md
 /test-api.py
+docs/papers/*.pdf
+
+# Tooling caches & ephemeral artifacts
+.code-review-graph/
+.code-review-graphignore
+.superpowers/
+docs/superpowers/
+references/
+
+# Source PDFs and their auto-extracted image directories (large, non-code)
+docs/*.pdf
+docs/재무 101 handout_연습/
+docs/재무_기업가치/
+docs/ideation/
+
+# Embedded vendor repos (not git submodules — keep them local-only)
+projects/bizscope/submodules/
+
+# Security — never commit these
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*-credentials.json
+*-secret*.json
+.env*.local
+.env.production
+.env.development
+secrets/
 

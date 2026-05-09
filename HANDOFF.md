@@ -1,96 +1,122 @@
-# HANDOFF — BizScope (2026-03-30 세션 2)
+# HANDOFF — BizScope (2026-04-13 세션)
 
-## 이번 세션 완료: P0~P5 전체 완료 + Vercel 배포
+## Goal
+BizScope 기업/아이디어 분석을 **대화형 PPT 생성 모드**로 전환.
+왼쪽에 PPT 섹션 콘텐츠 + 오른쪽에 채팅 사이드바. AI가 섹션을 순차 생성하면서 유저와 대화, 피드백 반영 후 재생성 가능.
 
-### 완료 항목
+## Current Progress (이번 세션 완료)
 
-| # | 항목 | 변경 파일 | 핵심 |
-|---|------|----------|------|
-| P0 | 브레인스토밍 사용자↔AI | route.ts | 멀티모델 태그 삭제 → 3라운드 프롬프트 기반 (Landscape/Devil's Advocate/Synthesis) |
-| P1 | extractBmcBlocks 노이즈 | PlanningChat.tsx | `NOISE_RE` 정규식으로 진행 메시지 필터링 |
-| P2 | 서비스기획 8단계 대화형 | route.ts, PlanningChat.tsx, planning/page.tsx, report/new/page.tsx | 프롬프트 상세화 + extractPlanFromA2UI + PlanStageList 실시간 |
-| P3 | Claude 플러그인 E2E | (변경 없음) | 53도구, initialize/tools/list/ping/web-search/auth 전부 통과 |
-| P4 | SSE 토큰 스트리밍 | claude.ts, route.ts, PlanningChat.tsx | streamChat() async generator + send('token') + 점진적 UI |
-| P5 | Vercel 배포 | — | bizscope-theta.vercel.app + bizscope-rho.vercel.app 200 OK |
+### 1. Qwen 프로바이더 추가
+- **파일**: `src/lib/claude.ts`
+- Provider union에 `'qwen'` 추가
+- `getOpenAICompatBaseURL()` 헬퍼로 xai/qwen baseURL 통합
+- 엔드포인트: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1` (국제 계정)
+- 우선순위: Anthropic > OpenAI > xAI > **Qwen** > Gemini
+- generateSection, generateChat, streamChat, getAllProviders, callProvider 모두 `case 'qwen'` 추가
 
-### 테스트
-- 127개 전부 통과 (24파일)
-- 빌드 성공 (Next.js 15.5.14)
-- Vercel 프로덕션 배포 성공
+### 2. 회사 목록 추가
+- **파일**: `src/components/ui/CompanyInput.tsx`, `src/lib/finance.ts`
+- 헬프데스크: Zendesk, Freshworks, ServiceNow, HubSpot
+- 디지털트윈: Siemens, PTC, Ansys, Bentley Systems, Autodesk, Unity, 3D Systems
+- 한글/영문 티커 매핑 추가
 
----
+### 3. 대화형 분석 모드 (핵심 변경)
+- **`src/modules/analysis-chat/useAnalysisFlow.ts`** — 전면 재작성
+  - 섹션 순차 자동 생성 (멈추지 않고 계속 진행)
+  - 유저가 메시지 보내면 `pausedRef=true`로 일시정지
+  - "다음", "ㅇㅇ", "ok" 등 감지 → 재개
+  - 피드백은 `feedbackRef`에 축적 → 다음 재생성 시 userFeedback으로 전달
+  - `regenerateSection()` — 현재 섹션을 피드백 반영하여 재생성
 
-## 다음 세션 TODO
+- **`src/modules/analysis-chat/AnalysisChat.tsx`** — 3컬럼 레이아웃
+  - 왼쪽 사이드바 (220px): `AnalysisCanvas` (섹션 nav + 진행률)
+  - 센터 (flex-1): `SectionRenderer`로 PPT 콘텐츠 렌더링
+  - 오른쪽 사이드바 (320px): 채팅 메시지 + react-markdown 렌더링
 
-### P6: 멀티모델 브레인스토밍 (brainstorm-mcp API mode)
-- `src/lib/brainstorm.ts` + `/api/brainstorm/route.ts` — 이미 코드 존재
-- PlanningChat.tsx에 brainstorm SSE 핸들러도 존재 (dead code)
-- 필요: AI가 기획 중 특정 결정에서 멀티모델 토론 트리거
-- 조건: API 키 2개 이상 (OPENAI + GEMINI 등)
-- brainstorm-mcp submodule 참조: `submodules/brainstorm-mcp/`
+- **`src/app/api/section/[type]/route.ts`** — `userFeedback` 파라미터 추가
+  - 피드백 텍스트를 research에 주입: `## User Feedback (incorporate this into the analysis)`
 
-### i18n 잔여
-- `/pricing/success` 페이지 일부 한국어 하드코딩
-- 키 찾기 UI 한국어 하드코딩
+- **`src/app/report/new/page.tsx`**
+  - `handleCompanySubmit` → `setInteractiveConfig` (대화형 모드 진입)
+  - `handleIdeaSubmit` → 동일
 
-### rate limit Redis 전환
-- 현재 in-memory Map — 서버리스에서 인스턴스별 리셋
-- Upstash Redis로 전환 필요
+### 4. JSON 파싱 수리
+- **파일**: `src/frameworks/parse-json.ts`
+- `repairJSON()` 함수 추가: trailing comma, 잘린 JSON, 문자열 내 개행 수리
+- Qwen의 불완전한 JSON 출력 대응
 
-### BIZSCOPE_API_KEY legacy fallback 제거
-- `isLegacyEnvKey()` — 마이그레이션 완료 후 제거
+### 5. 기타
+- `vitest.config.ts` — Vitest 4.x `environmentMatchGlobs` 제거 (빌드 에러 수정)
+- `ChatInput.tsx` — 하드코딩 검정 배경(`#1c1b1d`) 제거 → Tailwind 테마 색상
+- `react-markdown` + `remark-gfm` 설치 — 채팅 마크다운 렌더링
+- i18n `ko.ts` — placeholder 변경: "피드백을 입력하거나, '다음'을 입력하세요"
 
----
+### 6. Vercel 환경변수 추가
+- `QWEN_API_KEY` (production)
+- `EXA_API_KEY` (production) — 웹 검색용
+- `BRAVE_API_KEY` (production) — 검색 백업
+- 기존 `GOOGLE_GEMINI_API_KEY`는 Vercel에 없었음 (로컬만)
 
-## Architecture Key Points
+## What Worked
+- Qwen OpenAI 호환 API가 잘 동작 (국제 엔드포인트 필수: `dashscope-intl`)
+- `repairJSON()`으로 Qwen의 불안정한 JSON 출력 90% 이상 복구
+- `useAnalysisFlow` 자동 진행 + 유저 메시지 시 일시정지 패턴
+- `SectionRenderer`를 `AnalysisChat`에서 직접 사용 — PPT 콘텐츠 정상 렌더링
 
-### 토큰 스트리밍 파이프라인
+## What Didn't Work
+- `dashscope.aliyuncs.com` (중국 엔드포인트) → 401 에러. 반드시 `dashscope-intl` 사용
+- react-markdown v10에서 `className` prop 제거됨 → div로 감싸야 함
+- Vercel에 검색 API 키 없으면 AI 학습 데이터만 사용 → 2024년까지만 나옴
+- 자동 멈춤(auto-pause) 매 섹션 → 유저가 "계속 돌아가야 하는데" 불만 → 자동 진행으로 변경
+
+## Next Steps (우선순위 순)
+
+### 1. 왼쪽 사이드바에 18p/72p 모드 토글 복원 (긴급)
+- `ReportViewer.tsx` lines 124-139에 compact/expanded 토글 있음
+- `AnalysisChat.tsx` 왼쪽 사이드바에 동일 토글 추가 필요
+- compact = 섹션당 1페이지 (18p), expanded = 섹션당 서브페이지 (72p)
+- `generateCompactPages()` / `generateExpandedPages()` from `src/lib/pages.ts`
+- SectionRenderer의 `subPage` prop으로 제어 (현재 `-1`로 전체 표시)
+
+### 2. 피드백 기반 섹션 재생성 테스트
+- `regenerateSection()` 함수는 구현됨
+- UI에 "재생성" 버튼도 있음 (control bar, isPaused일 때)
+- 실제 피드백 → 재생성 → 내용 변경 확인 필요
+
+### 3. Planning 모드(/planning)에서도 ChatInput 검정 배경 수정
+- `ChatInput.tsx`는 공유 컴포넌트 — 이미 수정했으나 `/planning` 페이지에서도 확인 필요
+
+### 4. 기존 TODO (이전 세션)
+- P6: 멀티모델 브레인스토밍 (brainstorm-mcp API mode)
+- i18n: success 페이지 + 키 찾기 한국어 → i18n
+- rate limit: in-memory → Redis
+- BIZSCOPE_API_KEY legacy fallback 제거
+
+## Key Files Changed This Session
 ```
-claude.ts: streamChat() → async generator (Anthropic/OpenAI/xAI/Gemini)
-route.ts:  for await → send('token', chunk) → 완료 → parseResponse() → send('text') + send('a2ui')
-client:    consumeSSE onToken → filter+replace 점진적 업데이트 → done → A2UI 캔버스 반영
+src/lib/claude.ts                          — Qwen provider + getOpenAICompatBaseURL
+src/components/ui/CompanyInput.tsx          — 회사 11개 추가
+src/lib/finance.ts                         — 티커 매핑 추가
+src/modules/analysis-chat/useAnalysisFlow.ts — 전면 재작성 (자동 진행 + pause/resume)
+src/modules/analysis-chat/AnalysisChat.tsx  — 3컬럼 레이아웃 (nav + PPT + chat)
+src/app/api/section/[type]/route.ts        — userFeedback 파라미터 + resolveAuth
+src/app/report/new/page.tsx                — handleCompanySubmit/handleIdeaSubmit → interactive
+src/frameworks/parse-json.ts               — repairJSON()
+src/modules/planning-chat/ChatInput.tsx    — 검정 배경 제거
+src/i18n/ko.ts                             — placeholder 변경
+vitest.config.ts                           — environmentMatchGlobs 제거
 ```
 
-### A2UI 이중 추출
-```
-텍스트: extractBmcBlocks() / extractPlanStages() — 헤딩 매칭 + NOISE_RE 필터
-A2UI:  extractBmcFromA2UI() / extractPlanFromA2UI() — 컴포넌트 매칭
-merge: { ...fromText, ...fromA2UI } — A2UI 우선
-```
-
-### 브레인스토밍 (사용자↔AI)
-```
-트리거: 어려운 결정 or "브레인스토밍/토론" 명시
-Round 1: Landscape — 옵션별 장단점 + "어떤 쪽이 끌리세요?"
-Round 2: Devil's Advocate — 선호 약점 도전
-Round 3: Synthesis — A2UI Card (Recommendation / Tradeoffs / Open Question)
-→ BMC/서비스기획 복귀
-```
-
-### 서비스기획 8단계
-```
-BMC 9블록 완료 → "서비스기획 8단계 시작합니다"
-1. Executive Summary (프로젝트 개요)
-2. Conceptual Framework (컨셉 프레임워크)
-3. Design & Content (디자인 & 컨텐츠 전략)
-4. Technical Architecture (기술 아키텍처)
-5. Development Roadmap (개발 로드맵)
-6. Marketing & Community (마케팅 & 커뮤니티)
-7. Post-Launch (출시 후 & 진화)
-8. Legal & Ethical (법률 & 윤리)
-→ StageCard A2UI + PlanStageList 실시간 업데이트
-```
-
-## 빌드/실행
+## Build/Deploy
 ```bash
-pnpm --filter @wmcp/bizscope dev       # localhost:3000
-pnpm --filter @wmcp/bizscope test      # 127 tests (24 files)
-pnpm --filter @wmcp/bizscope build     # 프로덕션 빌드
-vercel --prod --scope clickaround8-4495s-projects  # 배포
+pnpm --filter @wmcp/bizscope dev          # localhost:3000
+pnpm --filter @wmcp/bizscope build        # 프로덕션 빌드
+vercel deploy --prod                       # 배포 (bizscope-theta.vercel.app)
 ```
 
-## 메모리
-- `memory/bizscope/overview.md` — 전체 개요 업데이트 (2026-03-30)
-- `memory/bizscope/planning-mode.md` — P0~P5 완료 기록 (2026-03-30)
-- `memory/bizscope/deployment.md` — URL 2개 + 53도구 MCP (2026-03-30)
-- `memory/MEMORY.md` — 인덱스 업데이트됨
+## Vercel Production Env Vars
+```
+QWEN_API_KEY       — DashScope 국제 (dashscope-intl.aliyuncs.com)
+EXA_API_KEY        — Exa AI 검색
+BRAVE_API_KEY      — Brave 검색 (백업)
+```

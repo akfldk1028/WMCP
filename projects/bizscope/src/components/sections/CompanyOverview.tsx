@@ -1,4 +1,5 @@
 import type { CompanyOverviewData } from '@/frameworks/types';
+import { formatAmount, formatCount } from '@/lib/format';
 
 interface Props {
   data: CompanyOverviewData;
@@ -11,8 +12,8 @@ export default function CompanyOverview({ data, subPage }: Props) {
   const stats = [
     { label: '설립', value: data.founded },
     { label: '본사', value: data.headquarters },
-    { label: '임직원', value: data.employees },
-    { label: '매출', value: data.revenue },
+    { label: '임직원', value: data.employees ? formatCount(data.employees) : undefined },
+    { label: '매출', value: data.revenue ? formatAmount(data.revenue) : undefined },
   ].filter((s) => s.value);
 
   return (

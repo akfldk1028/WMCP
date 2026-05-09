@@ -1,4 +1,5 @@
 import type { GrowthStrategyData } from '@/frameworks/types';
+import { formatAmount } from '@/lib/format';
 
 interface Props {
   data: GrowthStrategyData;
@@ -67,7 +68,7 @@ export default function GrowthStrategy({ data, subPage }: Props) {
                 <div className="mt-3 grid grid-cols-3 gap-4 text-xs text-muted-foreground">
                   <div>
                     <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">비용</span>
-                    <p className="mt-0.5">{s.cost}</p>
+                    <p className="mt-0.5">{formatAmount(s.cost)}</p>
                   </div>
                   <div>
                     <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">기대 효과</span>

@@ -1,4 +1,5 @@
 import type { KPIPerformanceData } from '@/frameworks/types';
+import { formatKpiValue } from '@/lib/format';
 
 interface Props {
   data: KPIPerformanceData;
@@ -20,7 +21,7 @@ export default function KPIPerformance({ data, subPage }: Props) {
             {data.kpis.map((kpi, i) => (
               <div key={i} className="rounded-xl border p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/70">{kpi.metric}</p>
-                <p className="mt-2 text-2xl font-bold tracking-tight">{kpi.value}</p>
+                <p className="mt-2 text-2xl font-bold tracking-tight">{formatKpiValue(kpi.metric, kpi.value)}</p>
                 <div className="mt-1 flex items-center gap-1">
                   <span className={`text-sm font-bold ${trendColor(kpi.trend)}`}>{trendIcon(kpi.trend)}</span>
                   {kpi.benchmark && <span className="text-xs text-muted-foreground">벤치마크: {kpi.benchmark}</span>}

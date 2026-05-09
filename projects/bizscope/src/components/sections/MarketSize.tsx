@@ -1,4 +1,5 @@
 import type { MarketSizeData, MarketSizeEntry } from '@/frameworks/types';
+import { formatAmount, formatPercent } from '@/lib/format';
 
 interface Props {
   data: MarketSizeData;
@@ -13,7 +14,7 @@ function FunnelBar({ label, entry, width }: { label: string; entry: MarketSizeEn
       </div>
       <div className="flex-1">
         <div className="rounded border bg-muted/30 px-4 py-3" style={{ width }}>
-          <p className="text-lg font-bold tracking-tight">{entry.value}</p>
+          <p className="text-lg font-bold tracking-tight">{formatAmount(entry.value)}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">{entry.description}</p>
         </div>
       </div>
@@ -44,7 +45,7 @@ export default function MarketSize({ data, subPage }: Props) {
                 연간 성장률
               </h4>
               <p className="mt-2 text-xl font-bold tracking-tight text-indigo-600">
-                {data.growthRate}
+                {formatPercent(data.growthRate)}
               </p>
             </div>
           )}

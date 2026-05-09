@@ -13,6 +13,14 @@ const CHECKOUT_URLS = {
   proAnnual: 'https://clickaround.lemonsqueezy.com/checkout/buy/b6ab7191-2259-4e20-892a-ef4d04321dd1',
 };
 
+/** Generate checkout URL with session param for key delivery. */
+function buildCheckoutUrl(baseUrl: string): string {
+  const session = crypto.randomUUID();
+  const successUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/pricing/success?session=${session}`;
+  const sep = baseUrl.includes('?') ? '&' : '?';
+  return `${baseUrl}${sep}checkout[custom][session]=${session}&checkout[success_url]=${encodeURIComponent(successUrl)}`;
+}
+
 export default function PricingPage() {
   const { t } = useLocale();
   const { ui } = t;
@@ -22,6 +30,11 @@ export default function PricingPage() {
   const [keyInput, setKeyInput] = useState('');
   const [keyStatus, setKeyStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
   const [keyInfo, setKeyInfo] = useState<{ plan: string; credits: number } | null>(null);
+
+  // Key lookup state
+  const [lookupEmail, setLookupEmail] = useState('');
+  const [lookupStatus, setLookupStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [lookupResults, setLookupResults] = useState<Array<{ maskedKey: string; plan: string; credits: number }>>([]);
 
   const existingKey = typeof window !== 'undefined' ? getLicenseKey() : null;
 
@@ -46,6 +59,28 @@ export default function PricingPage() {
       }
     } catch {
       setKeyStatus('invalid');
+    }
+  }
+
+  async function handleLookup(e: React.FormEvent) {
+    e.preventDefault();
+    if (!lookupEmail.trim()) return;
+    setLookupStatus('loading');
+    try {
+      const res = await fetch('/api/license/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: lookupEmail.trim() }),
+      });
+      if (!res.ok) {
+        setLookupStatus('error');
+        return;
+      }
+      const data = await res.json();
+      setLookupResults(data.keys ?? []);
+      setLookupStatus('done');
+    } catch {
+      setLookupStatus('error');
     }
   }
 
@@ -155,15 +190,14 @@ export default function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <a
-                href={billing === 'annual' ? CHECKOUT_URLS.proAnnual : CHECKOUT_URLS.proMonthly}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => window.open(buildCheckoutUrl(billing === 'annual' ? CHECKOUT_URLS.proAnnual : CHECKOUT_URLS.proMonthly), '_blank')}
                 className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
               >
                 <Zap className="size-4" />
                 {p.proPlan.cta}
-              </a>
+              </button>
             </div>
           </div>
 
@@ -171,15 +205,14 @@ export default function PricingPage() {
           <div className="mt-8 rounded-xl border bg-card p-6 text-center">
             <h3 className="font-semibold">{p.perReport.name}</h3>
             <p className="mt-1 text-sm text-muted-foreground">{p.perReport.desc}</p>
-            <a
-              href={CHECKOUT_URLS.perReport}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => window.open(buildCheckoutUrl(CHECKOUT_URLS.perReport), '_blank')}
               className="mt-4 inline-flex items-center gap-1.5 rounded-lg border px-5 py-2 text-sm font-medium transition hover:bg-accent"
             >
               {p.perReport.cta}
               <ArrowRight className="size-3.5" />
-            </a>
+            </button>
           </div>
 
           {/* License key input */}
@@ -216,6 +249,51 @@ export default function PricingPage() {
             )}
             {keyStatus === 'invalid' && (
               <p className="mt-2 text-sm text-destructive">{p.licenseSection.invalidKey}</p>
+            )}
+          </div>
+
+          {/* Key lookup by email */}
+          <div className="mt-6 rounded-xl border bg-muted/30 p-6">
+            <h3 className="font-semibold">키 찾기</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              결제 시 사용한 이메일로 키를 조회합니다.
+            </p>
+            <form onSubmit={handleLookup} className="mt-4 flex gap-2">
+              <input
+                type="email"
+                value={lookupEmail}
+                onChange={(e) => { setLookupEmail(e.target.value); setLookupStatus('idle'); }}
+                placeholder="you@example.com"
+                className="flex-1 rounded-lg border bg-background px-4 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+              />
+              <button
+                type="submit"
+                disabled={lookupStatus === 'loading' || !lookupEmail.trim()}
+                className="rounded-lg bg-foreground px-5 py-2.5 text-sm font-medium text-background transition hover:bg-foreground/90 disabled:opacity-50"
+              >
+                {lookupStatus === 'loading' ? '조회 중...' : '조회'}
+              </button>
+            </form>
+            {lookupStatus === 'done' && lookupResults.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {lookupResults.map((k, i) => (
+                  <div key={i} className="flex items-center justify-between rounded-lg border bg-background px-3 py-2 text-sm">
+                    <code className="font-mono text-xs">{k.maskedKey}</code>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
+                      {k.plan === 'pro' ? 'Pro' : `${k.credits}건`}
+                    </span>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground">
+                  전체 키는 결제 완료 페이지에서만 확인할 수 있습니다. 키를 분실한 경우 support@bizscope.ai로 문의하세요.
+                </p>
+              </div>
+            )}
+            {lookupStatus === 'done' && lookupResults.length === 0 && (
+              <p className="mt-2 text-sm text-muted-foreground">해당 이메일로 등록된 키가 없습니다.</p>
+            )}
+            {lookupStatus === 'error' && (
+              <p className="mt-2 text-sm text-destructive">조회에 실패했습니다. 잠시 후 다시 시도하세요.</p>
             )}
           </div>
         </div>

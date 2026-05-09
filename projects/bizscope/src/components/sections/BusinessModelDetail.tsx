@@ -1,4 +1,5 @@
 import type { BusinessModelDetailData } from '@/frameworks/types';
+import { formatPercent } from '@/lib/format';
 
 interface Props {
   data: BusinessModelDetailData;
@@ -63,7 +64,7 @@ export default function BusinessModelDetail({ data, subPage }: Props) {
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{r.name}</span>
                       {r.percentage && (
-                        <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600">{r.percentage}</span>
+                        <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600">{formatPercent(r.percentage)}</span>
                       )}
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">{r.description}</p>

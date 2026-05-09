@@ -54,6 +54,29 @@ const TICKER_MAP: Record<string, string> = {
   'alphabet': 'GOOGL',
   'amazon': 'AMZN',
   'meta': 'META',
+  // Helpdesk
+  'zendesk': 'ZEN',
+  '젠데스크': 'ZEN',
+  'freshworks': 'FRSH',
+  '프레시웍스': 'FRSH',
+  'servicenow': 'NOW',
+  '서비스나우': 'NOW',
+  'hubspot': 'HUBS',
+  '허브스팟': 'HUBS',
+  // Digital Twin
+  'siemens': 'SIEGY',
+  '지멘스': 'SIEGY',
+  'ptc': 'PTC',
+  'ansys': 'ANSS',
+  '앤시스': 'ANSS',
+  'bentley systems': 'BSY',
+  '벤틀리시스템즈': 'BSY',
+  'autodesk': 'ADSK',
+  '오토데스크': 'ADSK',
+  'unity technologies': 'U',
+  'unity': 'U',
+  '유니티': 'U',
+  '3d systems': 'DDD',
 };
 
 function formatNumber(num: number | null | undefined, currency = 'USD'): string {

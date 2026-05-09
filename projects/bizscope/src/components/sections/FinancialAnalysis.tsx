@@ -1,6 +1,7 @@
 'use client';
 
 import type { FinancialAnalysisData } from '@/frameworks/types';
+import { formatAmount, formatKpiValue, formatPercent } from '@/lib/format';
 import dynamic from 'next/dynamic';
 
 const IncomeChart = dynamic(() => import('@/components/charts/IncomeChart'), { ssr: false });
@@ -10,17 +11,19 @@ interface Props {
   subPage?: number;
 }
 
-/** Try to parse a currency string like "약 258.9조원" or "$161.4B" into a number */
-function parseAmount(s: string): number | null {
-  if (!s) return null;
-  const clean = s.replace(/[^0-9.\-조억백만TBMK]/g, '');
+/** Try to parse a currency value like "약 258.9조원" or "$161.4B" or a raw number into a number */
+function parseAmount(s: unknown): number | null {
+  if (s == null || s === '') return null;
+  if (typeof s === 'number') return Number.isFinite(s) ? s : null;
+  const str = String(s);
+  const clean = str.replace(/[^0-9.\-조억백만TBMK]/g, '');
   const num = parseFloat(clean.replace(/[^0-9.\-]/g, ''));
   if (isNaN(num)) return null;
-  if (s.includes('조')) return num * 1e12;
-  if (s.includes('억')) return num * 1e8;
-  if (s.includes('T')) return num * 1e12;
-  if (s.includes('B')) return num * 1e9;
-  if (s.includes('M')) return num * 1e6;
+  if (str.includes('조')) return num * 1e12;
+  if (str.includes('억')) return num * 1e8;
+  if (str.includes('T')) return num * 1e12;
+  if (str.includes('B')) return num * 1e9;
+  if (str.includes('M')) return num * 1e6;
   return num;
 }
 
@@ -69,19 +72,19 @@ export default function FinancialAnalysis({ data, subPage }: Props) {
                     <tr className="border-b">
                       <td className="py-2.5 pr-4 font-medium">매출</td>
                       {data.incomeStatement.map((row) => (
-                        <td key={row.year} className="py-2.5 pr-4 tabular-nums">{row.revenue}</td>
+                        <td key={row.year} className="py-2.5 pr-4 tabular-nums">{formatAmount(row.revenue)}</td>
                       ))}
                     </tr>
                     <tr className="border-b">
                       <td className="py-2.5 pr-4 font-medium">영업이익</td>
                       {data.incomeStatement.map((row) => (
-                        <td key={row.year} className="py-2.5 pr-4 tabular-nums">{row.operatingProfit}</td>
+                        <td key={row.year} className="py-2.5 pr-4 tabular-nums">{formatAmount(row.operatingProfit)}</td>
                       ))}
                     </tr>
                     <tr>
                       <td className="py-2.5 pr-4 font-medium">당기순이익</td>
                       {data.incomeStatement.map((row) => (
-                        <td key={row.year} className="py-2.5 pr-4 tabular-nums">{row.netIncome}</td>
+                        <td key={row.year} className="py-2.5 pr-4 tabular-nums">{formatAmount(row.netIncome)}</td>
                       ))}
                     </tr>
                   </tbody>
@@ -97,8 +100,8 @@ export default function FinancialAnalysis({ data, subPage }: Props) {
                   <div key={i} className="flex items-center justify-between py-2.5">
                     <span className="text-sm font-medium">{c.category}</span>
                     <div className="flex items-center gap-3">
-                      {c.amount && <span className="text-sm tabular-nums">{c.amount}</span>}
-                      {c.percentage && <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums">{c.percentage}</span>}
+                      {c.amount && <span className="text-sm tabular-nums">{formatAmount(c.amount)}</span>}
+                      {c.percentage && <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums">{formatPercent(c.percentage)}</span>}
                     </div>
                   </div>
                 ))}
@@ -121,7 +124,7 @@ export default function FinancialAnalysis({ data, subPage }: Props) {
                   <div key={i} className="py-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">{ind.metric}</span>
-                      <span className="text-sm font-bold tabular-nums text-indigo-600">{ind.value}</span>
+                      <span className="text-sm font-bold tabular-nums text-indigo-600">{formatKpiValue(ind.metric, ind.value)}</span>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">{ind.interpretation}</p>
                   </div>

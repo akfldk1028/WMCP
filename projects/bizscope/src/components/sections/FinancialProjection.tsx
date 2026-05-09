@@ -1,4 +1,5 @@
 import type { FinancialProjectionData } from '@/frameworks/types';
+import { formatAmount, formatCount, formatKpiValue, formatPercent } from '@/lib/format';
 
 interface Props {
   data: FinancialProjectionData;
@@ -33,13 +34,13 @@ export default function FinancialProjection({ data, subPage }: Props) {
             {data.yearly.map((y, i) => (
               <div key={i} className="grid grid-cols-[80px_1fr_1fr_1fr_1fr] gap-4 py-3">
                 <span className="font-bold">{y.year}</span>
-                <span className="text-indigo-600">{y.revenue}</span>
-                <span className="text-rose-500">{y.cost}</span>
-                <span className={y.profit.startsWith('-') ? 'text-rose-500' : 'text-emerald-600'}>
-                  {y.profit}
+                <span className="text-indigo-600">{formatAmount(y.revenue)}</span>
+                <span className="text-rose-500">{formatAmount(y.cost)}</span>
+                <span className={String(y.profit).startsWith('-') ? 'text-rose-500' : 'text-emerald-600'}>
+                  {formatAmount(y.profit)}
                 </span>
                 {y.users !== undefined && (
-                  <span className="text-muted-foreground">{y.users}</span>
+                  <span className="text-muted-foreground">{formatCount(y.users)}</span>
                 )}
               </div>
             ))}
@@ -60,9 +61,9 @@ export default function FinancialProjection({ data, subPage }: Props) {
                 {data.keyMetrics.map((m, i) => (
                   <div key={i} className="grid grid-cols-4 gap-4 py-3">
                     <span className="font-medium">{m.metric}</span>
-                    <span className="text-muted-foreground">{m.year1}</span>
-                    <span className="text-muted-foreground">{m.year2}</span>
-                    <span className="text-indigo-600">{m.year3}</span>
+                    <span className="text-muted-foreground">{formatKpiValue(m.metric, m.year1)}</span>
+                    <span className="text-muted-foreground">{formatKpiValue(m.metric, m.year2)}</span>
+                    <span className="text-indigo-600">{formatKpiValue(m.metric, m.year3)}</span>
                   </div>
                 ))}
               </div>
@@ -83,16 +84,16 @@ export default function FinancialProjection({ data, subPage }: Props) {
               return (
                 <div key={sc.scenario} className={`rounded-xl border p-5 ${style.border}`}>
                   <p className={`text-xs font-bold uppercase ${style.color}`}>{style.label}</p>
-                  <p className="mt-1 text-xs text-muted-foreground/70">확률: {sc.probability}</p>
+                  <p className="mt-1 text-xs text-muted-foreground/70">확률: {formatPercent(sc.probability)}</p>
                   <div className="mt-4 space-y-2">
                     <div>
                       <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">3년차 매출</span>
-                      <p className="mt-0.5 text-lg font-bold">{sc.year3Revenue}</p>
+                      <p className="mt-0.5 text-lg font-bold">{formatAmount(sc.year3Revenue)}</p>
                     </div>
                     <div>
                       <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">3년차 수익</span>
-                      <p className={`mt-0.5 text-lg font-bold ${sc.year3Profit.startsWith('-') ? 'text-rose-500' : 'text-emerald-600'}`}>
-                        {sc.year3Profit}
+                      <p className={`mt-0.5 text-lg font-bold ${String(sc.year3Profit).startsWith('-') ? 'text-rose-500' : 'text-emerald-600'}`}>
+                        {formatAmount(sc.year3Profit)}
                       </p>
                     </div>
                   </div>
@@ -121,7 +122,7 @@ export default function FinancialProjection({ data, subPage }: Props) {
                     <h4 className="font-semibold">{fp.stage}</h4>
                     <span className="text-xs text-muted-foreground">{fp.timing}</span>
                   </div>
-                  <span className="ml-auto text-lg font-bold text-indigo-600">{fp.amount}</span>
+                  <span className="ml-auto text-lg font-bold text-indigo-600">{formatAmount(fp.amount)}</span>
                 </div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <div>

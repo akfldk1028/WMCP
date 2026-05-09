@@ -1,4 +1,5 @@
 import type { GoToMarketData } from '@/frameworks/types';
+import { formatAmount } from '@/lib/format';
 
 interface Props {
   data: GoToMarketData;
@@ -33,7 +34,7 @@ export default function GoToMarket({ data, subPage }: Props) {
               <div key={i} className="grid grid-cols-[1fr_2fr_80px_72px] gap-4 py-3">
                 <span className="font-medium">{ch.channel}</span>
                 <span className="text-muted-foreground">{ch.strategy}</span>
-                <span className="text-muted-foreground">{ch.cost}</span>
+                <span className="text-muted-foreground">{formatAmount(ch.cost)}</span>
                 <span className={`text-xs font-bold uppercase ${PRI_COLOR[ch.priority] ?? ''}`}>
                   {ch.priority}
                 </span>

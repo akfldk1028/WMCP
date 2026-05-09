@@ -1,4 +1,5 @@
 import type { CompetitorScanData } from '@/frameworks/types';
+import { formatAmount, formatCount } from '@/lib/format';
 
 interface Props {
   data: CompetitorScanData;
@@ -18,10 +19,10 @@ export default function CompetitorScan({ data, subPage }: Props) {
               <div className="flex items-baseline gap-3">
                 <h4 className="text-sm font-bold">{comp.name}</h4>
                 {comp.funding && (
-                  <span className="text-xs text-muted-foreground">Funding: {comp.funding}</span>
+                  <span className="text-xs text-muted-foreground">Funding: {formatAmount(comp.funding)}</span>
                 )}
                 {comp.users && (
-                  <span className="text-xs text-muted-foreground">Users: {comp.users}</span>
+                  <span className="text-xs text-muted-foreground">Users: {formatCount(comp.users)}</span>
                 )}
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{comp.description}</p>

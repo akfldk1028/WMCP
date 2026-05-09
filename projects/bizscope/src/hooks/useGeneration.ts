@@ -144,6 +144,7 @@ export function useGeneration() {
     const ctx: PipelineContext = {
       companyName: displayName,
       ...(ideaInput ? { ideaInput } : {}),
+      ...(ideaInput?.planningData ? { planningData: ideaInput.planningData } : {}),
     };
 
     try {

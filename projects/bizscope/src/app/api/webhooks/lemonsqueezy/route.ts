@@ -4,6 +4,7 @@ import {
   revokeBySubscription,
   addCredits,
   generateLicenseKey,
+  completeCheckoutSession,
 } from '@/lib/kv';
 import type { BsaiPlan } from '@/lib/kv';
 
@@ -86,15 +87,19 @@ export async function POST(request: Request) {
   const variantName = String(attrs.variant_name || '');
   const orderId = String(attrs.order_number || attrs.order_id || data?.id || '');
 
-  // Custom data may contain a license key for credit top-ups
+  // Custom data may contain a license key for credit top-ups or checkout session
   const customData = (meta?.custom_data ?? attrs?.custom_data) as Record<string, string> | undefined;
   const existingKey = customData?.license_key;
+  const checkoutSession = customData?.session;
 
   switch (eventName) {
     case 'subscription_created':
     case 'subscription_resumed': {
       const licenseKey = generateLicenseKey();
       await provisionKey(licenseKey, 'pro', email, subscriptionId);
+      if (checkoutSession) {
+        await completeCheckoutSession(checkoutSession, licenseKey, 'pro');
+      }
       console.log(`[bsai:webhook] Pro key for ${email}: ${licenseKey.slice(0, 12)}...`);
       return NextResponse.json({ ok: true, plan: 'pro' });
     }
@@ -111,6 +116,9 @@ export async function POST(request: Request) {
       const licenseKey = generateLicenseKey();
       const plan = resolvePlan(variantName);
       await provisionKey(licenseKey, plan, email, subscriptionId);
+      if (checkoutSession) {
+        await completeCheckoutSession(checkoutSession, licenseKey, plan);
+      }
       console.log(`[bsai:webhook] Updated to ${plan} for ${email}: ${licenseKey.slice(0, 12)}...`);
       return NextResponse.json({ ok: true, plan });
     }
@@ -134,6 +142,9 @@ export async function POST(request: Request) {
       const credits = parseCredits(variantName);
       const licenseKey = existingKey || generateLicenseKey();
       await addCredits(licenseKey, credits, email, orderId);
+      if (checkoutSession) {
+        await completeCheckoutSession(checkoutSession, licenseKey, 'credits');
+      }
       console.log(`[bsai:webhook] +${credits} credits for ${email}: ${licenseKey.slice(0, 12)}...`);
       return NextResponse.json({ ok: true, plan: 'credits', credits });
     }

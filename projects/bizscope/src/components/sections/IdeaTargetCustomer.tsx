@@ -1,4 +1,5 @@
 import type { IdeaTargetCustomerData } from '@/frameworks/types';
+import { formatAmount } from '@/lib/format';
 
 interface Props {
   data: IdeaTargetCustomerData;
@@ -140,7 +141,7 @@ export default function IdeaTargetCustomer({ data, subPage }: Props) {
             {data.willingnessAnalysis.map((w, i) => (
               <div key={i} className="grid grid-cols-[1fr_1fr_1fr_2fr] gap-4 py-3">
                 <span className="font-medium">{w.segment}</span>
-                <span className="text-indigo-600">{w.priceRange}</span>
+                <span className="text-indigo-600">{formatAmount(w.priceRange)}</span>
                 <span className="text-muted-foreground">{w.paymentModel}</span>
                 <span className="text-muted-foreground">{w.reasoning}</span>
               </div>

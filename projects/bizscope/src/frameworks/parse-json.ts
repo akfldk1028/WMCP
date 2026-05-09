@@ -1,3 +1,56 @@
+/** Attempt basic JSON repair for common LLM issues */
+function repairJSON(raw: string): string {
+  let s = raw.trim();
+  // Remove trailing text after the last } or ]
+  const lastBrace = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']'));
+  if (lastBrace > 0) s = s.slice(0, lastBrace + 1);
+  // Fix trailing commas: ,} → } and ,] → ]
+  s = s.replace(/,\s*([}\]])/g, '$1');
+  // Fix unescaped newlines/tabs inside strings
+  s = s.replace(/(?<=:\s*"[^"]*)\n(?=[^"]*")/g, '\\n');
+  s = s.replace(/(?<=:\s*"[^"]*)\t(?=[^"]*")/g, '\\t');
+  // Fix unescaped control characters inside strings
+  s = s.replace(/[\x00-\x1f]/g, (ch) => {
+    if (ch === '\n' || ch === '\r' || ch === '\t') return ch;
+    return `\\u${ch.charCodeAt(0).toString(16).padStart(4, '0')}`;
+  });
+  return s;
+}
+
+/** More aggressive JSON repair: try to fix truncated/malformed output */
+function aggressiveRepairJSON(raw: string): string {
+  let s = repairJSON(raw);
+  // Close unclosed strings: find last unclosed quote
+  let inString = false;
+  let lastQuoteIdx = -1;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '\\') { i++; continue; }
+    if (s[i] === '"') { inString = !inString; lastQuoteIdx = i; }
+  }
+  if (inString && lastQuoteIdx > 0) {
+    // Truncated inside a string value — close it and close all brackets
+    s = s.slice(0, lastQuoteIdx) + '"';
+  }
+  // Count unclosed brackets and close them
+  let braces = 0;
+  let brackets = 0;
+  let inStr = false;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '\\' && inStr) { i++; continue; }
+    if (s[i] === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (s[i] === '{') braces++;
+    else if (s[i] === '}') braces--;
+    else if (s[i] === '[') brackets++;
+    else if (s[i] === ']') brackets--;
+  }
+  // Remove trailing comma before closing
+  s = s.replace(/,\s*$/, '');
+  for (let i = 0; i < brackets; i++) s += ']';
+  for (let i = 0; i < braces; i++) s += '}';
+  return s;
+}
+
 /** Extract JSON from an AI response that may contain markdown code fences. */
 export function extractJSON<T>(raw: string): T {
   // Strip BOM if present
@@ -52,7 +105,20 @@ export function extractJSON<T>(raw: string): T {
     }
   }
 
-  // 3) Last resort: try parsing the whole trimmed input
+  // 3) Try with JSON repair (trailing commas, etc.)
+  const slice = input.slice(startIdx !== -1 ? startIdx : 0);
+  const repaired = repairJSON(slice);
+  try {
+    return JSON.parse(repaired) as T;
+  } catch { /* fall through */ }
+
+  // 3.5) Aggressive repair (unclosed strings/brackets)
+  const aggressive = aggressiveRepairJSON(slice);
+  try {
+    return JSON.parse(aggressive) as T;
+  } catch { /* fall through */ }
+
+  // 4) Last resort: try parsing the whole trimmed input
   try {
     return JSON.parse(input.trim()) as T;
   } catch (err) {

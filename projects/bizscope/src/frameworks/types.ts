@@ -65,6 +65,8 @@ export interface IdeaInput {
   targetMarket?: string;
   /** Full markdown document (기획서) — when provided, AI parses this instead of short description */
   document?: string;
+  /** Pre-mapped planning data from BMC/service-planning bridge (keyed by section type) */
+  planningData?: Record<string, Record<string, unknown>>;
 }
 
 export interface Report {
@@ -968,4 +970,6 @@ export interface PipelineContext {
   ideaReferenceCase?: IdeaReferenceCaseData;
   actionPlan?: ActionPlanData;
   scoreCard?: ScoreCard;
+  /** Planning data from BMC/service-planning bridge (mapped per section type) */
+  planningData?: Record<string, Record<string, unknown>>;
 }

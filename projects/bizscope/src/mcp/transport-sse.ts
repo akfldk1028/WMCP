@@ -11,6 +11,7 @@
  */
 
 import { handleMCPRequest } from './server';
+import { resolveAuth, isLegacyEnvKey, unauthorizedResponse } from '@/lib/auth';
 
 interface Session {
   writer: WritableStreamDefaultWriter<string>;
@@ -32,27 +33,20 @@ function pruneExpired(): void {
   }
 }
 
-/** Check Bearer token auth. Returns error Response or null if OK. */
-function checkAuth(request: Request): Response | null {
-  const apiKey = process.env.BIZSCOPE_API_KEY;
-  if (!apiKey) return null; // no key configured = open access
-
-  const auth = request.headers.get('authorization');
-  if (auth !== `Bearer ${apiKey}`) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-  return null;
+/** Check auth: per-user bsai_xxx key (paid only) or legacy BIZSCOPE_API_KEY env. */
+async function checkAuth(request: Request): Promise<Response | null> {
+  const auth = await resolveAuth(request);
+  if (auth.plan !== 'free') return null;
+  if (isLegacyEnvKey(request)) return null;
+  return unauthorizedResponse('MCP requires a paid API key. Get one at /pricing');
 }
 
 /**
  * Handle GET -- establish SSE connection.
  * Returns a streaming Response with `text/event-stream` content type.
  */
-export function handleSSEGet(request: Request): Response {
-  const authError = checkAuth(request);
+export async function handleSSEGet(request: Request): Promise<Response> {
+  const authError = await checkAuth(request);
   if (authError) return authError;
 
   pruneExpired();
@@ -94,7 +88,7 @@ export function handleSSEGet(request: Request): Response {
  * Handle POST -- receive JSON-RPC message, process, push response via SSE.
  */
 export async function handleSSEPost(request: Request): Promise<Response> {
-  const authError = checkAuth(request);
+  const authError = await checkAuth(request);
   if (authError) return authError;
 
   const url = new URL(request.url);

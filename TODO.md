@@ -1,4 +1,36 @@
 # ShopGuard TODO (2026-03-03)
+● CGB에 쓸만한 것 3개 
+
+y: "knowall-ai mcp-neo4j-agent-memory knowledge
+                                                                                   
+  1. InfraNodus MCP Server — 가장 유용                                              
+                                                 
+  - https://github.com/infranodus/mcp-server-infranodus                             
+  - 그래프의 "구조적 빈틈(structural holes)"을 찾아서 새 아이디어 질문 생성     
+  - CGB 그래프에 노드가 쌓이면 → InfraNodus에 넘겨서 "이 그래프에서 아직 연결 안 된 
+  개념 조합" 발견 → 새 Idea 노드로                                                  
+  - Knowledge Distance 논문의 실질적 구현체. 우리가 BFS로 novelty 재는 것보다 훨씬  
+  정교함                                                                            
+  - 단점: 유료 SaaS (API 호출 과금)                                                 
+                                                                                    
+  2. brainstorm-mcp — 멀티모델 디베이트                                             
+                                                                                    
+  - https://github.com/spranab/brainstorm-mcp                                       
+  - TypeScript, Claude가 GPT + DeepSeek + Ollama에게 같은 주제를 던져서 다중 모델이 
+  토론                                                                              
+  - 75초에 $0.07, 단일 모델보다 다양한 관점                                         
+  - CGB 통합: Topic 넣으면 → 토론 결과를 Idea 노드들로 저장 + GENERATED_BY 엣지에
+  모델명 태깅
+  - 장점: TypeScript라 바로 통합 가능
+
+  3. branch-thinking-mcp — 병렬 사고 분기
+
+  - https://github.com/ssdeanx/branch-thinking-mcp
+  - 생각의 병렬 분기 + 시맨틱 교차 참조 + 점수 기반 정렬
+  - 내부 모델이 CGB 그래프 스키마(노드+엣지+점수)와 거의 1:1 매핑
+  - CGB 통합: 분기별로 Idea 노드, 교차 참조가 SIMILAR_TO 엣지
+
+  나머지 — 참고용
 
 ## DONE (이번 세션)
 

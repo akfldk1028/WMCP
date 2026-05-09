@@ -35,6 +35,19 @@ const NASDAQ_COMPANIES = [
   { ticker: 'PYPL', name: 'PayPal', nameKr: '페이팔' },
   { ticker: 'SQ', name: 'Block (Square)', nameKr: '블록' },
   { ticker: 'SHOP', name: 'Shopify', nameKr: '쇼피파이' },
+  // Helpdesk / Customer Service
+  { ticker: 'ZEN', name: 'Zendesk', nameKr: '젠데스크' },
+  { ticker: 'FRSH', name: 'Freshworks', nameKr: '프레시웍스' },
+  { ticker: 'NOW', name: 'ServiceNow', nameKr: '서비스나우' },
+  { ticker: 'HUBS', name: 'HubSpot', nameKr: '허브스팟' },
+  // Digital Twin / Industrial Tech
+  { ticker: 'SIEGY', name: 'Siemens', nameKr: '지멘스' },
+  { ticker: 'PTC', name: 'PTC', nameKr: 'PTC' },
+  { ticker: 'ANSS', name: 'Ansys', nameKr: '앤시스' },
+  { ticker: 'BSY', name: 'Bentley Systems', nameKr: '벤틀리시스템즈' },
+  { ticker: 'ADSK', name: 'Autodesk', nameKr: '오토데스크' },
+  { ticker: 'U', name: 'Unity Technologies', nameKr: '유니티' },
+  { ticker: 'DDD', name: '3D Systems', nameKr: '3D시스템즈' },
 ];
 
 const KR_COMPANIES = [

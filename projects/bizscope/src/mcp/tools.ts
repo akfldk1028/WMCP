@@ -1,5 +1,10 @@
 import type { SectionType, PipelineContext, SectionData, IdeaInput } from '@/frameworks/types';
+import { runBrainstorm, quickBrainstorm, getAvailableModels } from '@/lib/brainstorm';
 import { CONTEXT_KEYS, checkDependencies } from '@/frameworks/shared';
+import { generateSection } from '@/lib/claude';
+import { bmcGenerateTool, bmcUpdateTool, getBmcSystemPrompt, getCompletionPercentage as getBmcCompletion, type BmcData } from '@/modules/bmc';
+import { planStageTools, planStatusTool, getPlanningSystemPrompt, getStagePrompt, getPlanCompletionPercentage as getPlanCompletion, type PlanStage, type ServicePlanData } from '@/modules/service-planning';
+import { planToAnalysisTool, mapPlanningToAnalysis } from '@/modules/planning-bridge';
 
 const RESEARCH_MAX_LENGTH = 15_000;
 
@@ -363,6 +368,115 @@ export const MCP_TOOLS: MCPToolDef[] = [
       const { getStockHistory } = await import('@/lib/finance');
       const data = await getStockHistory(args.companyName as string);
       return { stockHistory: data };
+    },
+  },
+
+  // === Planning tools (12) ===
+
+  {
+    ...bmcGenerateTool,
+    async execute(args) {
+      const systemPrompt = getBmcSystemPrompt();
+      const userMessage = `Generate a complete Business Model Canvas for the following idea. Output each of the 9 blocks with 3-5 concise entries each.\n\nIdea: ${args.ideaName}\nDescription: ${args.ideaDescription}${args.research ? `\n\nResearch context:\n${(args.research as string).slice(0, 15_000)}` : ''}`;
+      const text = await generateSection(systemPrompt, userMessage);
+      return { content: text };
+    },
+  },
+  {
+    ...bmcUpdateTool,
+    async execute(args) {
+      return { block: args.block, entries: args.entries, notes: args.notes, mode: args.mode ?? 'replace' };
+    },
+  },
+  ...planStageTools.map((tool) => ({
+    ...tool,
+    async execute(args: Record<string, unknown>) {
+      const stage = tool.name.replace('bizscope-plan-', '') as PlanStage;
+      const systemPrompt = getPlanningSystemPrompt();
+      const stagePrompt = getStagePrompt(
+        stage,
+        args.previousStages as Partial<Record<string, { sections: Record<string, unknown> }>> | undefined,
+      );
+      const userMessage = `${stagePrompt}\n\nIdea: ${args.ideaName}\nDescription: ${args.ideaDescription}${args.research ? `\n\nResearch:\n${(args.research as string).slice(0, 15_000)}` : ''}`;
+      const text = await generateSection(systemPrompt, userMessage);
+      return { stage, content: text };
+    },
+  })),
+  {
+    ...planStatusTool,
+    async execute(args: Record<string, unknown>) {
+      const bmcPct = args.bmcData ? getBmcCompletion(args.bmcData as BmcData) : 0;
+      const planPct = args.planData ? getPlanCompletion(args.planData as ServicePlanData) : 0;
+      const overall = Math.round(((bmcPct + planPct) / 2) * 10) / 10;
+      return { bmcCompletion: bmcPct, planCompletion: planPct, overall };
+    },
+  },
+  {
+    ...planToAnalysisTool,
+    async execute(args: Record<string, unknown>) {
+      const mapped = mapPlanningToAnalysis(args.bmcData as BmcData, args.planData as ServicePlanData);
+      return { mappedSections: mapped, sectionCount: Object.keys(mapped).length };
+    },
+  },
+  // --- Brainstorm tools (multi-model debate) ---
+  {
+    name: 'bizscope-brainstorm',
+    description: 'Run a multi-model brainstorm debate on a topic. Multiple AI models discuss in rounds, then synthesize a verdict. Use for architecture decisions, strategy evaluation, or any topic needing diverse perspectives.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        topic: { type: 'string', description: 'The topic or question to brainstorm about' },
+        context: { type: 'string', description: 'Optional context (e.g. current BMC data, previous analysis results)' },
+        rounds: { type: 'number', description: 'Number of debate rounds (default: 2, max: 4)' },
+      },
+      required: ['topic'],
+    },
+    async execute(args: Record<string, unknown>) {
+      const topic = args.topic as string;
+      const context = args.context as string | undefined;
+      const rounds = Math.min(Math.max(Number(args.rounds) || 2, 1), 4);
+      const result = await runBrainstorm(topic, { rounds, context });
+      return {
+        synthesis: result.synthesis,
+        modelCount: result.modelCount,
+        roundCount: result.rounds.length,
+        durationMs: result.totalDurationMs,
+        rounds: result.rounds.map((round) =>
+          round.map((r) => ({ model: r.modelId, content: r.content.slice(0, 2000), error: r.error })),
+        ),
+      };
+    },
+  },
+  {
+    name: 'bizscope-brainstorm-quick',
+    description: 'Get quick parallel opinions from all available AI models on a topic. Single round, no debate — faster than full brainstorm. Use for quick sanity checks or getting diverse viewpoints.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        topic: { type: 'string', description: 'The topic or question' },
+        context: { type: 'string', description: 'Optional context' },
+      },
+      required: ['topic'],
+    },
+    async execute(args: Record<string, unknown>) {
+      const result = await quickBrainstorm(args.topic as string, args.context as string | undefined);
+      return { opinions: result.opinions, modelCount: result.modelCount };
+    },
+  },
+  {
+    name: 'bizscope-brainstorm-models',
+    description: 'List available AI models for brainstorming. Shows which providers are configured.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {},
+      required: [],
+    },
+    async execute() {
+      const models = getAvailableModels();
+      return {
+        models: models.map((m) => ({ id: m.id, provider: m.provider, model: m.modelId })),
+        count: models.length,
+      };
     },
   },
 ];
