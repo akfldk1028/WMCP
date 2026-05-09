@@ -127,7 +127,16 @@ const FORCES_SEED: Record<Category, FiveForces> = {
   },
 };
 
-const MEGA_TRENDS: { title: string; body: string; tone: 'tail' | 'head'; relevant: Category[] }[] = [
+type Region = EnvironmentInput['region'];
+
+const MEGA_TRENDS: {
+  title: string;
+  body: string;
+  tone: 'tail' | 'head';
+  relevant: Category[];
+  /** Regions where this trend is salient. `undefined` = both. */
+  regions?: Region[];
+}[] = [
   {
     title: '바이브 코딩 폭발',
     body: '비전공자도 AI 도구로 풀스택 앱 출시. 공급 폭증 → 차별화·증빙·신뢰가 결정 요인.',
@@ -158,7 +167,55 @@ const MEGA_TRENDS: { title: string; body: string; tone: 'tail' | 'head'; relevan
     tone: 'head',
     relevant: ['app', 'content', 'commerce'],
   },
+  // Region-specific trends.
+  {
+    title: '국내 인앱결제법·플랫폼법 수혜',
+    body: '한국은 인앱결제 우회·자체 결제 허용 흐름. 결제 수수료 30% → 협상 가능. 단, 광고/콘텐츠 규제 강화도 동시.',
+    tone: 'tail',
+    relevant: ['app', 'content', 'commerce'],
+    regions: ['kr'],
+  },
+  {
+    title: 'EU AI Act 글로벌 표준화',
+    body: '글로벌 출시 시 고위험 AI 시스템은 투명성·로깅·평가 의무. 컴플라이언스 비용 발생.',
+    tone: 'head',
+    relevant: ['saas', 'agent'],
+    regions: ['global'],
+  },
+  {
+    title: '글로벌 SaaS 가격 압축',
+    body: '글로벌 진출 시 PPP 기반 가격 차등 + LATAM·인도 시장 폭발. 단가는 내려가지만 사용자 풀이 10배.',
+    tone: 'tail',
+    relevant: ['saas', 'agent', 'content'],
+    regions: ['global'],
+  },
 ];
+
+/**
+ * Stage-of-life headwinds — pre-launch과 5년 이상은 전혀 다른 판이다.
+ * 슬라이드의 정형 PEST에는 없지만, 메이커 자가진단에선 큰 신호.
+ */
+function ageStageTrends(ageYears: number): { title: string; body: string; tone: 'tail' | 'head' }[] {
+  if (ageYears <= 0) {
+    return [
+      {
+        title: '출시 전 — 신뢰 자산 0',
+        body: '인지도·후기·증빙이 모두 비어있는 상태. 첫 100명의 코호트 데이터를 빠르게 만드는 것이 모든 분석보다 우선.',
+        tone: 'head',
+      },
+    ];
+  }
+  if (ageYears >= 5) {
+    return [
+      {
+        title: '5년+ — 레거시 부채 누적',
+        body: '초기 의사결정의 흔적이 코드·고객·계약에 굳어있음. 신규 진입자가 「깨끗한 상태로 다시 시작」 우위를 잡음.',
+        tone: 'head',
+      },
+    ];
+  }
+  return [];
+}
 
 const clamp = (n: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, n));
 
@@ -185,16 +242,21 @@ export function analyzeEnvironment(input: EnvironmentInput): EnvironmentResult {
       adjusted.supplierPower.score) /
     5;
 
-  const megaTrends = MEGA_TRENDS.filter((t) => t.relevant.includes(input.category)).map(({ title, body, tone }) => ({ title, body, tone }));
+  const baseTrends = MEGA_TRENDS.filter(
+    (t) => t.relevant.includes(input.category) && (!t.regions || t.regions.includes(input.region)),
+  ).map(({ title, body, tone }) => ({ title, body, tone }));
+
+  const megaTrends = [...baseTrends, ...ageStageTrends(input.ageYears)];
 
   const tailwinds = pest.filter((p) => p.signal > 0).length;
   const headwinds = pest.filter((p) => p.signal < 0).length;
+  const regionLabel = input.region === 'kr' ? '국내' : '글로벌';
   const summary =
     adjusted.pressure >= 4
-      ? `시장 압력 ${adjusted.pressure.toFixed(1)}/5 — 매우 빡빡한 환경. 차별화 축 1개로는 부족.`
+      ? `${regionLabel} 시장 압력 ${adjusted.pressure.toFixed(1)}/5 — 매우 빡빡한 환경. 차별화 축 1개로는 부족.`
       : adjusted.pressure >= 3
-        ? `시장 압력 ${adjusted.pressure.toFixed(1)}/5 — 평균 이상. ${tailwinds}개 호재로 ${headwinds}개 역풍 상쇄 가능.`
-        : `시장 압력 ${adjusted.pressure.toFixed(1)}/5 — 상대적으로 좋음. 호재 ${tailwinds}개 활용 권장.`;
+        ? `${regionLabel} 시장 압력 ${adjusted.pressure.toFixed(1)}/5 — 평균 이상. ${tailwinds}개 호재로 ${headwinds}개 역풍 상쇄 가능.`
+        : `${regionLabel} 시장 압력 ${adjusted.pressure.toFixed(1)}/5 — 상대적으로 좋음. 호재 ${tailwinds}개 활용 권장.`;
 
   return { pest, forces: adjusted, megaTrends, summary };
 }

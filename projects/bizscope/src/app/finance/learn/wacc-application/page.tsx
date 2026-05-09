@@ -44,9 +44,12 @@ export default function WaccApplicationPage() {
     return flowsPv - npv2AtA;
   }, [npv2AtA]);
 
-  const adjustedFlows = [{ t: 0, cf: -investAdjusted }, { t: 1, cf: 700 }, { t: 2, cf: 600 }, { t: 3, cf: 400 }];
-  const npvAdjusted = useMemo(() => npv(0.12, adjustedFlows), [investAdjusted]);
-  const irrAdjusted = useMemo(() => irr(adjustedFlows), [investAdjusted]);
+  const adjustedFlows = useMemo(
+    () => [{ t: 0, cf: -investAdjusted }, { t: 1, cf: 700 }, { t: 2, cf: 600 }, { t: 3, cf: 400 }],
+    [investAdjusted],
+  );
+  const npvAdjusted = useMemo(() => npv(0.12, adjustedFlows), [adjustedFlows]);
+  const irrAdjusted = useMemo(() => irr(adjustedFlows), [adjustedFlows]);
 
   return (
     <ChapterShell meta={META}>

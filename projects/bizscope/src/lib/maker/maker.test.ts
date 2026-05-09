@@ -63,6 +63,71 @@ describe('analyzeEnvironment', () => {
     expect(agent.megaTrends.some((t) => t.title.includes('에이전트'))).toBe(true);
     expect(commerce.megaTrends.some((t) => t.title.includes('에이전트'))).toBe(false);
   });
+
+  it('region toggles change the summary label', () => {
+    const kr = analyzeEnvironment({
+      category: 'saas',
+      region: 'kr',
+      competitorDensity: 3,
+      regulatoryRisk: 3,
+      ageYears: 1,
+    });
+    const global = analyzeEnvironment({
+      category: 'saas',
+      region: 'global',
+      competitorDensity: 3,
+      regulatoryRisk: 3,
+      ageYears: 1,
+    });
+    expect(kr.summary).toContain('국내');
+    expect(global.summary).toContain('글로벌');
+  });
+
+  it('region-specific mega-trends are gated by both category and region', () => {
+    const krApp = analyzeEnvironment({
+      category: 'app',
+      region: 'kr',
+      competitorDensity: 3,
+      regulatoryRisk: 3,
+      ageYears: 1,
+    });
+    const globalApp = analyzeEnvironment({
+      category: 'app',
+      region: 'global',
+      competitorDensity: 3,
+      regulatoryRisk: 3,
+      ageYears: 1,
+    });
+    const globalAgent = analyzeEnvironment({
+      category: 'agent',
+      region: 'global',
+      competitorDensity: 3,
+      regulatoryRisk: 3,
+      ageYears: 1,
+    });
+    expect(krApp.megaTrends.some((t) => t.title.includes('인앱결제법'))).toBe(true);
+    expect(globalApp.megaTrends.some((t) => t.title.includes('인앱결제법'))).toBe(false);
+    expect(globalAgent.megaTrends.some((t) => t.title.includes('EU AI Act'))).toBe(true);
+  });
+
+  it('age 0 (pre-launch) and age 5+ inject stage-specific trends', () => {
+    const prelaunch = analyzeEnvironment({
+      category: 'saas',
+      region: 'kr',
+      competitorDensity: 3,
+      regulatoryRisk: 3,
+      ageYears: 0,
+    });
+    const legacy = analyzeEnvironment({
+      category: 'saas',
+      region: 'kr',
+      competitorDensity: 3,
+      regulatoryRisk: 3,
+      ageYears: 6,
+    });
+    expect(prelaunch.megaTrends.some((t) => t.title.includes('출시 전'))).toBe(true);
+    expect(legacy.megaTrends.some((t) => t.title.includes('5년+'))).toBe(true);
+  });
 });
 
 describe('synthesizeStrategy', () => {

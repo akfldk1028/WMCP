@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { Body, CashflowTable, Callout, Formula, Headline, NumberInput, Stat } from '@/modules/finance-learn/primitives';
-import { cagr, formatKrwCompact, npv, terminalValue, wacc } from '@/lib/finance/corp';
+import { Body, CashflowTable, Callout, Formula, NumberInput, Stat } from '@/modules/finance-learn/primitives';
+import { cagr, formatKrwCompact, terminalValue, wacc } from '@/lib/finance/corp';
 
 /* Slide 18 — 서강사 financials (단위: 억). */
 const SGSA = {
@@ -31,7 +31,11 @@ const SGSA = {
   },
 };
 
+/* 슬라이드 18은 「현재 / 1년후 / 2년후」 표기지만, DCF 할인 흐름에서는 「1년차 / 2년차 / 3년차」로 본다.
+ * 손익·재무상태표 표시는 원본 표기를 유지하고, FCF/PV 표만 「N년차」로 라벨링.
+ */
 const COLS = ['현재', '1년후', '2년후'];
+const PROJ_COLS = ['1년차', '2년차', '3년차'];
 
 export default function SgsaWorkshop() {
   const [shares, setShares] = useState(1_000_000);
@@ -57,18 +61,23 @@ export default function SgsaWorkshop() {
   });
   const yr2Wacc = waccOverride ?? waccByYear[2].wacc;
 
-  /* Slide 20 — FCF의 PV 합. 강의에서 FCF = EBIT 가정 (감가/△WC/CAPEX 무시) */
+  /* Slide 20 — FCF의 PV 합. 강의에서 FCF = EBIT 가정 (감가/△WC/CAPEX 무시).
+   * 데이터 컬럼은 「현재 / 1년후 / 2년후」지만 강의의 PV 200.5는 1/2/3년차로 할인한 값
+   * (현재 시점부터 한 해씩 미래로 흘러간다고 보는 표준 DCF 관행).
+   * 따라서 인덱스 t에 대해 (t+1) 거듭제곱으로 할인.
+   */
   const fcfNominal = SGSA.income.영업익;
-  const pvFcfYear = fcfNominal.map((cf, t) => cf / Math.pow(1 + yr2Wacc, t));
+  const pvFcfYear = fcfNominal.map((cf, t) => cf / Math.pow(1 + yr2Wacc, t + 1));
   const sumPv = pvFcfYear.reduce((a, b) => a + b, 0);
 
   /* Slide 21 — Terminal Value
    * CAGR = (FCF2/FCF0)^(1/2) − 1
-   * FCF3 = FCF2 × (1+CAGR)
-   * TV = FCF3 / (WACC − g) (g≥WACC면 WACC만 사용)
+   * FCF4 = FCF2 × (1+CAGR)² (강의는 「3년차 FCF를 CAGR로 추정」 = 인덱스 t+1 기준 4년차)
+   * TV = FCF4 / (WACC − g) (g≥WACC면 WACC만 사용)
+   * PV(TV) = TV / (1+WACC)^N where N = projection 마지막 해(=3)
    */
   const g = cagr(fcfNominal[0], fcfNominal[2], 2);
-  const fcfNext = fcfNominal[2] * (1 + g);
+  const fcfNext = fcfNominal[2] * Math.pow(1 + g, 2);
   const tv = useMemo(
     () => terminalValue({ method: 'growing-perpetuity', fcfNext, waccRate: yr2Wacc, growth: g }),
     [fcfNext, yr2Wacc, g],
@@ -126,7 +135,7 @@ export default function SgsaWorkshop() {
         <CashflowTable
           columns={COLS}
           rows={[
-            { label: 'Re (≈ROE)', cells: waccByYear.map((w) => `${(w.weightE === 0 ? 0 : (SGSA.income.순이익[waccByYear.indexOf(w)] / SGSA.balance.자본[waccByYear.indexOf(w)]) * 100).toFixed(2)}%`) },
+            { label: 'Re (≈ROE)', cells: COLS.map((_, i) => `${((SGSA.income.순이익[i] / SGSA.balance.자본[i]) * 100).toFixed(2)}%`) },
             { label: 'Rd (이자율)', cells: COLS.map((_, i) => `${((SGSA.income.이자[i] / SGSA.balance.부채[i]) * 100).toFixed(2)}%`) },
             { label: 't', cells: COLS.map((_, i) => {
               const pre = SGSA.income.영업익[i] - SGSA.income.이자[i];
@@ -153,7 +162,8 @@ export default function SgsaWorkshop() {
         <h2 className="text-base font-bold">3단계 — FCF의 PV 합 (slide 20)</h2>
         <Formula>FCF ≈ EBIT 가정 — 감가상각 / △WC / CAPEX 단순화</Formula>
         <CashflowTable
-          columns={COLS}
+          caption="원본 슬라이드의 「현재/1년후/2년후」를 DCF 표기인 「1/2/3년차」로 환산"
+          columns={PROJ_COLS}
           rows={[
             { label: 'FCF (= 영업익)', cells: fcfNominal.map((n) => n.toLocaleString('ko-KR')) },
             { label: `PV @ WACC ${(yr2Wacc * 100).toFixed(2)}%`, cells: pvFcfYear.map((n) => n.toFixed(2)) },

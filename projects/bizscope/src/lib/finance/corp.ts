@@ -120,28 +120,33 @@ export interface TerminalInput {
 /**
  * Terminal value — six of the eight methods listed in slide 16 of
  * 재무_기업가치 (the two "Others" approaches are case-specific and not modeled).
+ *
+ * Returns NaN (not 0 or Infinity) when the inputs are mathematically invalid
+ * (e.g. WACC ≤ 0). Caller-side `formatKrwCompact` renders NaN as `—`, which
+ * is safer for a maker-tool than silently lying with a finite-but-wrong number.
  */
 export function terminalValue(input: TerminalInput): number {
   const { method } = input;
   switch (method) {
     case 'growing-perpetuity': {
       const { fcfNext = 0, waccRate = 0.1, growth = 0 } = input;
+      if (waccRate <= 0) return Number.NaN;
       if (waccRate <= growth) return fcfNext / waccRate;
       return fcfNext / (waccRate - growth);
     }
     case 'value-driver': {
       const { noplat = 0, waccRate = 0.1, growth = 0, roic = 0.1 } = input;
-      if (roic <= 0 || waccRate <= growth) return 0;
+      if (waccRate <= 0 || roic <= 0 || waccRate <= growth) return Number.NaN;
       return (noplat * (1 - growth / roic)) / (waccRate - growth);
     }
     case 'convergence': {
       const { noplat = 0, waccRate = 0.1 } = input;
-      if (waccRate <= 0) return 0;
+      if (waccRate <= 0) return Number.NaN;
       return noplat / waccRate;
     }
     case 'aggressive': {
       const { noplat = 0, waccRate = 0.1, growth = 0 } = input;
-      if (waccRate <= growth) return 0;
+      if (waccRate <= 0 || waccRate <= growth) return Number.NaN;
       return noplat / (waccRate - growth);
     }
     case 'pe-multiple': {
@@ -187,11 +192,11 @@ export function evEbitdaValuation(ebitda: number, peer: number, netDebt: number)
 /** Format KRW in Korean units (만 / 억 / 조). Mirrors lib/finance/valuation:formatKrw. */
 export function formatKrwCompact(n: number): string {
   if (!Number.isFinite(n)) return '—';
-  const abs = Math.abs(n);
-  if (abs === 0) return '0원';
-  if (abs >= 1e12) return `${(n / 1e12).toFixed(2)}조원`;
-  if (abs >= 1e8) return `${(n / 1e8).toFixed(2)}억원`;
-  if (abs >= 1e4) return `${(n / 1e4).toFixed(0)}만원`;
+  if (n < 0) return `−${formatKrwCompact(-n)}`;
+  if (n === 0) return '0원';
+  if (n >= 1e12) return `${(n / 1e12).toFixed(2)}조원`;
+  if (n >= 1e8) return `${(n / 1e8).toFixed(2)}억원`;
+  if (n >= 1e4) return `${(n / 1e4).toFixed(0)}만원`;
   return `${Math.round(n).toLocaleString('ko-KR')}원`;
 }
 

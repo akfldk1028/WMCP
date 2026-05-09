@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Activity, AlertTriangle, ArrowRight, CheckCircle2, Info, Save } from 'lucide-react';
-import { type Category, type ValuationInput, formatKrw, valuate } from '@/lib/finance/valuation';
+import { type Category, type ValuationInput, formatKrw, safeParseValuationInput, valuate } from '@/lib/finance/valuation';
 
 const STORAGE_KEY = 'bizscope:finance:lastValuation';
 
@@ -74,8 +74,7 @@ export default function ValuatePage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as ValuationInput;
-        setInput({ ...DEFAULT_INPUT, ...parsed });
+        setInput(safeParseValuationInput(JSON.parse(raw), DEFAULT_INPUT));
       }
     } catch {
       /* ignore — bad JSON in localStorage shouldn't break the page */

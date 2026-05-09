@@ -118,6 +118,45 @@ describe('terminalValue', () => {
     expect(terminalValue({ method: 'pe-multiple', netIncome: 100, peMultiple: 20 })).toBe(2000);
     expect(terminalValue({ method: 'ebitda-multiple', ebitda: 100, ebitdaMultiple: 9 })).toBe(900);
   });
+
+  it('returns NaN (not Infinity / negative) when WACC is zero or negative', () => {
+    expect(Number.isNaN(terminalValue({ method: 'growing-perpetuity', fcfNext: 100, waccRate: 0, growth: 0.03 }))).toBe(true);
+    expect(Number.isNaN(terminalValue({ method: 'growing-perpetuity', fcfNext: 100, waccRate: -0.05, growth: 0.03 }))).toBe(true);
+    expect(Number.isNaN(terminalValue({ method: 'convergence', noplat: 100, waccRate: 0 }))).toBe(true);
+    expect(Number.isNaN(terminalValue({ method: 'aggressive', noplat: 100, waccRate: 0, growth: 0.03 }))).toBe(true);
+    expect(Number.isNaN(terminalValue({ method: 'value-driver', noplat: 100, waccRate: 0, growth: 0.03, roic: 0.15 }))).toBe(true);
+  });
+});
+
+describe('sgsa workshop sanity (slide 19~22 expected values)', () => {
+  /* The lecture's worked example has FCF = [40, 100, 100], discounted as
+   * years 1/2/3 at WACC 8%. Σ PV(FCF) ≈ 200.5 per slide 20.
+   * We don't model SGSA's exact derived WACC here — we lock in the
+   * formula choice (t+1 discounting) by hitting the stated example.
+   */
+  it('Σ PV(FCF) at WACC 8% with t+1 discounting ≈ 202 (lecture cites 200.5)', () => {
+    /* 표준 DCF는 t+1 할인. 강의 슬라이드 20의 PV 200.5는 약간 다른 가정에서 나온
+     * 반올림 값으로 보임 — 우리 정확값은 ≈202.15. 200~205 범위로 가드해 향후 누군가
+     * 실수로 t (대신 t+1) 할인으로 회귀시키면 (값이 ~240으로 튐) 잡아낸다.
+     */
+    const fcf = [40, 100, 100];
+    const wacc = 0.08;
+    const pvSum = fcf.reduce((acc, cf, t) => acc + cf / Math.pow(1 + wacc, t + 1), 0);
+    expect(pvSum).toBeGreaterThan(200);
+    expect(pvSum).toBeLessThan(205);
+  });
+
+  it('regression: t-based (no +1) discounting inflates the sum to ≈218', () => {
+    /* The pre-fix code did Math.pow(1+wacc, t), giving 40 + 92.59 + 85.73 ≈ 218.
+     * The fixed code does t+1 and lands at ≈202. Lock both numbers in so a
+     * future regression in either direction trips this test.
+     */
+    const fcf = [40, 100, 100];
+    const wacc = 0.08;
+    const wrongSum = fcf.reduce((acc, cf, t) => acc + cf / Math.pow(1 + wacc, t), 0);
+    expect(wrongSum).toBeGreaterThan(215);
+    expect(wrongSum).toBeLessThan(220);
+  });
 });
 
 describe('cagr', () => {

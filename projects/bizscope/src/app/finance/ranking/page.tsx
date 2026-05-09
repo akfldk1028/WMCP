@@ -3,9 +3,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Crown, ListOrdered, Medal, Trophy } from 'lucide-react';
-import { type ValuationInput, formatKrw, valuate } from '@/lib/finance/valuation';
+import { formatKrw, safeParseValuationInput, valuate } from '@/lib/finance/valuation';
 
 const STORAGE_KEY = 'bizscope:finance:lastValuation';
+
+const RANKING_FALLBACK = {
+  category: 'saas' as const,
+  mau: 0,
+  mrr: 0,
+  monthlyChurn: 0,
+  cac: 0,
+  arpu: 0,
+  monthlyGrowth: 0,
+  grossMargin: 0,
+};
 
 interface Bench {
   name: string;
@@ -41,9 +52,11 @@ export default function RankingPage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
-      const parsed = JSON.parse(raw) as ValuationInput;
-      const v = valuate(parsed);
-      setMe({ estimate: v.range.mid, category: parsed.category, arr: v.arr });
+      const safe = safeParseValuationInput(JSON.parse(raw), RANKING_FALLBACK);
+      if (safe.mrr <= 0) return; // No meaningful estimate yet — don't show in ranking.
+      const v = valuate(safe);
+      if (!Number.isFinite(v.range.mid) || v.range.mid <= 0) return;
+      setMe({ estimate: v.range.mid, category: safe.category, arr: v.arr });
     } catch {
       /* ignore */
     }

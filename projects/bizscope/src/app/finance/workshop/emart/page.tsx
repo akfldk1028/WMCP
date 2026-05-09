@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { Body, CashflowTable, Callout, Formula, Headline, NumberInput, Stat } from '@/modules/finance-learn/primitives';
+import { CashflowTable, Callout, Formula, NumberInput, Stat } from '@/modules/finance-learn/primitives';
 import { cagr, formatKrwCompact, terminalValue } from '@/lib/finance/corp';
 
 /* Slide 23 — FCF 추정 (단위: 십억) */

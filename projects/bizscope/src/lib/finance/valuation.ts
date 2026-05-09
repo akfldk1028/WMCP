@@ -210,3 +210,31 @@ export function formatKrw(n: number): string {
   if (abs >= 1e4) return `${(n / 1e4).toFixed(0)}만원`;
   return `${Math.round(n).toLocaleString('ko-KR')}원`;
 }
+
+const VALID_CATEGORIES: Category[] = ['saas', 'app', 'content', 'commerce', 'agent'];
+
+/**
+ * Coerce arbitrary parsed JSON (typically from localStorage written by an
+ * older build, another tab, or a curious user via DevTools) into a clean
+ * ValuationInput. Anything missing or non-numeric falls back to safe defaults.
+ * Treat this as the only legitimate way to hydrate input from untrusted JSON.
+ */
+export function safeParseValuationInput(raw: unknown, fallback: ValuationInput): ValuationInput {
+  if (!raw || typeof raw !== 'object') return fallback;
+  const obj = raw as Record<string, unknown>;
+  const num = (v: unknown, def: number): number => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : def;
+  };
+  const cat = obj.category;
+  return {
+    category: VALID_CATEGORIES.includes(cat as Category) ? (cat as Category) : fallback.category,
+    mau: num(obj.mau, fallback.mau),
+    mrr: num(obj.mrr, fallback.mrr),
+    monthlyChurn: num(obj.monthlyChurn, fallback.monthlyChurn),
+    cac: num(obj.cac, fallback.cac),
+    arpu: num(obj.arpu, fallback.arpu),
+    monthlyGrowth: num(obj.monthlyGrowth, fallback.monthlyGrowth),
+    grossMargin: num(obj.grossMargin, fallback.grossMargin),
+  };
+}
