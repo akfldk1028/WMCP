@@ -39,6 +39,9 @@ export default async function LandingPage() {
             {ui.appName}
           </span>
           <nav className="flex items-center gap-4">
+            <Link href="/finance" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">
+              Finance
+            </Link>
             <Link href="/docs" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">
               {nav.docs}
             </Link>
