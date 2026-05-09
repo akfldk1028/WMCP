@@ -80,7 +80,7 @@ const TEMPLATES: Record<TowsQuadrant, { titleTpl: string; bodyTpl: string }> = {
 const fill = (tpl: string, vars: Record<string, string>): string =>
   tpl.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
 
-function pickTopN<T>(arr: T[], n: number): T[] {
+function firstN<T>(arr: T[], n: number): T[] {
   return arr.slice(0, n);
 }
 
@@ -108,8 +108,8 @@ export function synthesizeStrategy(input: StrategyInput): StrategyResult {
   const stage = STAGE_FOCUS[input.stage];
 
   const tows: TowsOption[] = [];
-  pickTopN(input.strengths, 2).forEach((s) =>
-    pickTopN(input.opportunities, 2).forEach((o) => {
+  firstN(input.strengths, 2).forEach((s) =>
+    firstN(input.opportunities, 2).forEach((o) => {
       tows.push({
         quadrant: 'SO',
         title: fill(TEMPLATES.SO.titleTpl, { s, o }),
@@ -120,8 +120,8 @@ export function synthesizeStrategy(input: StrategyInput): StrategyResult {
       });
     }),
   );
-  pickTopN(input.weaknesses, 2).forEach((w) =>
-    pickTopN(input.opportunities, 2).forEach((o) => {
+  firstN(input.weaknesses, 2).forEach((w) =>
+    firstN(input.opportunities, 2).forEach((o) => {
       tows.push({
         quadrant: 'WO',
         title: fill(TEMPLATES.WO.titleTpl, { w, o }),
@@ -132,8 +132,8 @@ export function synthesizeStrategy(input: StrategyInput): StrategyResult {
       });
     }),
   );
-  pickTopN(input.strengths, 2).forEach((s) =>
-    pickTopN(input.threats, 2).forEach((t) => {
+  firstN(input.strengths, 2).forEach((s) =>
+    firstN(input.threats, 2).forEach((t) => {
       tows.push({
         quadrant: 'ST',
         title: fill(TEMPLATES.ST.titleTpl, { s, t }),
@@ -144,8 +144,8 @@ export function synthesizeStrategy(input: StrategyInput): StrategyResult {
       });
     }),
   );
-  pickTopN(input.weaknesses, 2).forEach((w) =>
-    pickTopN(input.threats, 2).forEach((t) => {
+  firstN(input.weaknesses, 2).forEach((w) =>
+    firstN(input.threats, 2).forEach((t) => {
       tows.push({
         quadrant: 'WT',
         title: fill(TEMPLATES.WT.titleTpl, { w, t }),

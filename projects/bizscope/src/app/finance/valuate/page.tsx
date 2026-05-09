@@ -83,6 +83,15 @@ export default function ValuatePage() {
 
   const result = useMemo(() => valuate(input), [input]);
 
+  // Auto-clear the "saved" badge after 2s. Tracked via state + effect (instead
+  // of an inline setTimeout in handleSave) so unmount during the timeout is
+  // safe — no warning about setting state on an unmounted component.
+  useEffect(() => {
+    if (!saved) return;
+    const id = window.setTimeout(() => setSaved(false), 2000);
+    return () => window.clearTimeout(id);
+  }, [saved]);
+
   const update = <K extends keyof ValuationInput>(key: K, value: ValuationInput[K]) => {
     setInput((prev) => ({ ...prev, [key]: value }));
     setSaved(false);
@@ -92,7 +101,6 @@ export default function ValuatePage() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(input));
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
     } catch {
       /* localStorage may be unavailable in private mode */
     }

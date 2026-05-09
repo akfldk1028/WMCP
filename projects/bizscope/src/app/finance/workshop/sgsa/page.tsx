@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { Body, CashflowTable, Callout, Formula, NumberInput, Stat } from '@/modules/finance-learn/primitives';
+import { CashflowTable, Callout, Formula, NumberInput, Stat } from '@/modules/finance-learn/primitives';
 import { cagr, formatKrwCompact, terminalValue, wacc } from '@/lib/finance/corp';
 
 /* Slide 18 — 서강사 financials (단위: 억). */
@@ -46,19 +46,23 @@ export default function SgsaWorkshop() {
    * Rd ≈ 이자 / 부채
    * t  ≈ 세금 / 세전이익(영업익 − 이자)
    */
-  const waccByYear = COLS.map((_, i) => {
-    const Re = SGSA.income.순이익[i] / SGSA.balance.자본[i];
-    const Rd = SGSA.income.이자[i] / SGSA.balance.부채[i];
-    const preTax = SGSA.income.영업익[i] - SGSA.income.이자[i];
-    const t = preTax > 0 ? SGSA.income.세금[i] / preTax : 0;
-    return wacc({
-      E: SGSA.balance.자본[i],
-      D: SGSA.balance.부채[i],
-      Re,
-      Rd,
-      t,
-    });
-  });
+  const waccByYear = useMemo(
+    () =>
+      COLS.map((_, i) => {
+        const Re = SGSA.income.순이익[i] / SGSA.balance.자본[i];
+        const Rd = SGSA.income.이자[i] / SGSA.balance.부채[i];
+        const preTax = SGSA.income.영업익[i] - SGSA.income.이자[i];
+        const t = preTax > 0 ? SGSA.income.세금[i] / preTax : 0;
+        return wacc({
+          E: SGSA.balance.자본[i],
+          D: SGSA.balance.부채[i],
+          Re,
+          Rd,
+          t,
+        });
+      }),
+    [],
+  );
   const yr2Wacc = waccOverride ?? waccByYear[2].wacc;
 
   /* Slide 20 — FCF의 PV 합. 강의에서 FCF = EBIT 가정 (감가/△WC/CAPEX 무시).
@@ -67,8 +71,11 @@ export default function SgsaWorkshop() {
    * 따라서 인덱스 t에 대해 (t+1) 거듭제곱으로 할인.
    */
   const fcfNominal = SGSA.income.영업익;
-  const pvFcfYear = fcfNominal.map((cf, t) => cf / Math.pow(1 + yr2Wacc, t + 1));
-  const sumPv = pvFcfYear.reduce((a, b) => a + b, 0);
+  const pvFcfYear = useMemo(
+    () => fcfNominal.map((cf, t) => cf / Math.pow(1 + yr2Wacc, t + 1)),
+    [fcfNominal, yr2Wacc],
+  );
+  const sumPv = useMemo(() => pvFcfYear.reduce((a, b) => a + b, 0), [pvFcfYear]);
 
   /* Slide 21 — Terminal Value
    * CAGR = (FCF2/FCF0)^(1/2) − 1
@@ -76,19 +83,24 @@ export default function SgsaWorkshop() {
    * TV = FCF4 / (WACC − g) (g≥WACC면 WACC만 사용)
    * PV(TV) = TV / (1+WACC)^N where N = projection 마지막 해(=3)
    */
-  const g = cagr(fcfNominal[0], fcfNominal[2], 2);
-  const fcfNext = fcfNominal[2] * Math.pow(1 + g, 2);
+  const g = useMemo(() => cagr(fcfNominal[0], fcfNominal[2], 2), [fcfNominal]);
+  const fcfNext = useMemo(() => fcfNominal[2] * Math.pow(1 + g, 2), [fcfNominal, g]);
   const tv = useMemo(
     () => terminalValue({ method: 'growing-perpetuity', fcfNext, waccRate: yr2Wacc, growth: g }),
     [fcfNext, yr2Wacc, g],
   );
-  const pvTv = tv / Math.pow(1 + yr2Wacc, fcfNominal.length);
+  const pvTv = useMemo(() => tv / Math.pow(1 + yr2Wacc, fcfNominal.length), [tv, yr2Wacc, fcfNominal]);
 
-  /* Slide 22 — Equity value = Σ PV(FCF) + PV(TV) − 순부채 + 유휴자산 */
+  /* Slide 22 — Equity value = Σ PV(FCF) + PV(TV) − 순부채 + 유휴자산
+   * 단위 트래킹 주의:
+   *   sumPv, pvTv, netDebt, enterpriseValue, equityValue 전부 「억」 단위 (원본 시드가 억 기준).
+   *   sharePrice는 (equityValue × 1억) / 주식수 로 환산하면 「원/주」.
+   *   formatKrwCompact는 「원」 단위를 받으므로 표시 시 1e8 곱해 변환.
+   */
   const netDebt = SGSA.balance.부채[0] - SGSA.balance.현금[0]; // 50 − 100 = −50 (현금이 더 많음)
   const enterpriseValue = sumPv + pvTv;
   const equityValue = enterpriseValue - netDebt;
-  const sharePrice = equityValue / shares;
+  const sharePricePerShare_KRW = (equityValue * 1e8) / shares;
 
   return (
     <article className="mx-auto max-w-5xl px-6 py-10">
@@ -129,9 +141,9 @@ export default function SgsaWorkshop() {
 
       <section className="mt-10 space-y-4">
         <h2 className="text-base font-bold">2단계 — WACC 계산 (slide 19)</h2>
-        <Body>
-          <p>Re는 ROE(순이익/자본)로 대체. Rd는 이자/부채. t는 세금/세전이익.</p>
-        </Body>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Re는 ROE(순이익/자본)로 대체. Rd는 이자/부채. t는 세금/세전이익.
+        </p>
         <CashflowTable
           columns={COLS}
           rows={[
@@ -204,7 +216,7 @@ export default function SgsaWorkshop() {
         <div className="grid gap-3 sm:grid-cols-3">
           <Stat label="기업가치 EV" value={`${enterpriseValue.toFixed(2)} 억`} />
           <Stat label="주주가치 Equity" value={`${equityValue.toFixed(2)} 억`} sub="강의 예시 883.6" />
-          <Stat label="주당가치" value={`${formatKrwCompact(sharePrice * 1e8)} / 주`} />
+          <Stat label="주당가치" value={`${formatKrwCompact(sharePricePerShare_KRW)} / 주`} />
         </div>
         <NumberInput label="주식수" value={shares} onChange={setShares} step={100_000} suffix="주" />
         <Callout>

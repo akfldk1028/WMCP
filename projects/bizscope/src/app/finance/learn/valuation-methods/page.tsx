@@ -49,7 +49,7 @@ export default function ValuationMethodsPage() {
       <section className="grid gap-4 sm:grid-cols-3">
         {METHODS.map(({ icon: Icon, ...m }, i) => (
           <Link
-            key={i}
+            key={m.href}
             href={m.href}
             className="group rounded-2xl border bg-card p-5 transition hover:border-indigo-500/40"
           >

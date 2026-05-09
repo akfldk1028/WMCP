@@ -53,8 +53,8 @@ export default function DcfProcessPage() {
       </section>
 
       <section className="space-y-4">
-        {STEPS.map((s, i) => (
-          <div key={i} className="rounded-2xl border bg-card p-6">
+        {STEPS.map((s) => (
+          <div key={s.letter} className="rounded-2xl border bg-card p-6">
             <div className="flex items-start gap-4">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-base font-bold text-indigo-500">
                 {s.letter}

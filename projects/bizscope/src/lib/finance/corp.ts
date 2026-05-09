@@ -44,6 +44,9 @@ export function irr(rows: CashflowRow[], options: { lo?: number; hi?: number; to
   let fa = npv(a, rows);
   let fb = npv(b, rows);
   if (!Number.isFinite(fa) || !Number.isFinite(fb)) return Number.NaN;
+  // Handle exact-zero endpoints — rare but possible on contrived flows.
+  if (fa === 0) return a;
+  if (fb === 0) return b;
   if (fa * fb > 0) return Number.NaN;
   for (let i = 0; i < maxIter; i++) {
     const m = (a + b) / 2;

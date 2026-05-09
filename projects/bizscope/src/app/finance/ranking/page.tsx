@@ -79,7 +79,7 @@ export default function RankingPage() {
     return all.sort((a, b) => b.estimate - a.estimate);
   }, [me]);
 
-  const myRank = me ? list.findIndex((x) => 'isMe' in x && x.isMe) + 1 : null;
+  const myRank = me ? list.findIndex((x) => x.isMe) + 1 : null;
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">

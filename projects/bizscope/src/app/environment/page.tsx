@@ -161,8 +161,8 @@ export default function EnvironmentPage() {
             <div>
               <h3 className="mb-3 text-sm font-bold">PEST 분석</h3>
               <div className="grid gap-3 sm:grid-cols-2">
-                {result.pest.map((p, i) => (
-                  <article key={i} className="rounded-xl border bg-card p-4">
+                {result.pest.map((p) => (
+                  <article key={`${p.axis}-${p.headline}`} className="rounded-xl border bg-card p-4">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">
                         {p.axis} · {AXIS_LABEL[p.axis]}
@@ -184,7 +184,7 @@ export default function EnvironmentPage() {
                   return (
                     <div key={k} className="flex items-center gap-3">
                       <span className="w-32 shrink-0 text-xs font-medium">{FORCE_LABEL[k]}</span>
-                      <Bar score={f.score} />
+                      <Bar score={f.score} label={FORCE_LABEL[k]} />
                       <span className="w-8 shrink-0 text-right font-mono text-xs">{f.score.toFixed(1)}</span>
                     </div>
                   );
@@ -207,8 +207,8 @@ export default function EnvironmentPage() {
             <div>
               <h3 className="mb-3 text-sm font-bold">메가트렌드</h3>
               <div className="grid gap-3 sm:grid-cols-2">
-                {result.megaTrends.map((t, i) => (
-                  <article key={i} className="rounded-xl border bg-card p-4">
+                {result.megaTrends.map((t) => (
+                  <article key={t.title} className="rounded-xl border bg-card p-4">
                     <div className="flex items-center gap-2">
                       <Globe2 className={`size-4 ${t.tone === 'tail' ? 'text-emerald-500' : 'text-amber-500'}`} />
                       <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -286,10 +286,17 @@ function Signal({ n }: { n: number }) {
   return <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${tone}`}>{txt}</span>;
 }
 
-function Bar({ score }: { score: number }) {
+function Bar({ score, label }: { score: number; label: string }) {
   const pct = ((score - 1) / 4) * 100;
   return (
-    <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+    <div
+      role="meter"
+      aria-label={`${label} 점수`}
+      aria-valuenow={Number(score.toFixed(1))}
+      aria-valuemin={1}
+      aria-valuemax={5}
+      className="h-2 flex-1 overflow-hidden rounded-full bg-muted"
+    >
       <div
         className="h-full bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500"
         style={{ width: `${pct}%` }}

@@ -171,6 +171,26 @@ function buildSignals(input: ValuationInput, result: Omit<ValuationResult, 'sign
   if (input.grossMargin < 0.4 && input.mrr > 0) {
     out.push({ level: 'warn', message: `마진 ${(input.grossMargin * 100).toFixed(0)}% — 구조적 개선 필요` });
   }
+  // Inform users when their inputs would have produced unrealistic projections —
+  // projectFcf clamps growth to [0, 300%] silently otherwise.
+  if (result.annualGrowth > 3.0) {
+    out.push({
+      level: 'warn',
+      message: `연 성장 ${(result.annualGrowth * 100).toFixed(0)}% — 비현실적이라 추정에 300%로 제한 적용`,
+    });
+  }
+  if (input.monthlyGrowth < 0) {
+    out.push({
+      level: 'warn',
+      message: `월 성장 ${(input.monthlyGrowth * 100).toFixed(1)}% — 음수 입력. 추정치는 0%로 처리`,
+    });
+  }
+  if (input.grossMargin > 0.95) {
+    out.push({
+      level: 'warn',
+      message: `마진 ${(input.grossMargin * 100).toFixed(0)}% — 95%로 제한 적용 (비현실 캡)`,
+    });
+  }
   return out;
 }
 
