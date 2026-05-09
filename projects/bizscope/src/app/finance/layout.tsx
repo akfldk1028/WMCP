@@ -1,10 +1,11 @@
 import Link from 'next/link';
-import { ArrowLeft, Calculator, GraduationCap, ListOrdered, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Beaker, Calculator, GraduationCap, ListOrdered, TrendingUp } from 'lucide-react';
 
 const NAV = [
   { href: '/finance/valuate', label: '자가평가', icon: Calculator },
+  { href: '/finance/learn', label: '학습', icon: GraduationCap },
+  { href: '/finance/workshop', label: '워크샵', icon: Beaker },
   { href: '/finance/ranking', label: '벤치마크', icon: ListOrdered },
-  { href: '/finance/learn', label: '핵심 개념', icon: GraduationCap },
   { href: '/finance/playbook', label: '가치 증대', icon: TrendingUp },
 ];
 

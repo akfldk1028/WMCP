@@ -104,7 +104,28 @@ export default function PlaybookPage() {
         ))}
       </ol>
 
-      <div className="mt-12 rounded-2xl border bg-gradient-to-r from-rose-500/5 to-orange-500/5 p-6">
+      <section className="mt-12 rounded-2xl border bg-card p-6">
+        <h3 className="text-base font-bold">기업 경영과 재무 — 강의 마무리 4가지 질문</h3>
+        <p className="mt-2 text-xs text-muted-foreground">자료: 재무_기업가치 · slide 28 · §4 Why and How to increase valuation</p>
+        <ol className="mt-4 space-y-3 text-sm leading-relaxed text-muted-foreground">
+          <li>
+            <strong className="text-foreground">1)</strong> 시장의 평가와 기업가치 평가 방법으로 계산한 기업가치가 차이가
+            나는 이유가 무엇인가?
+          </li>
+          <li>
+            <strong className="text-foreground">2)</strong> 경영자가 기업가치를 올려야 하는 이유는 무엇인가?
+          </li>
+          <li>
+            <strong className="text-foreground">3)</strong> 기업가치를 올릴 수 있는 방법은 무엇인가?
+          </li>
+          <li>
+            <strong className="text-foreground">4)</strong> 지금까지 강의한 전략·조직·인사·회계, 그리고 재무의 연계성을
+            어떻게 봐야 할 것인가?
+          </li>
+        </ol>
+      </section>
+
+      <div className="mt-6 rounded-2xl border bg-gradient-to-r from-rose-500/5 to-orange-500/5 p-6">
         <div className="flex items-center gap-3">
           <Zap className="size-5 text-rose-500" />
           <h3 className="font-bold">한 가지만 바꿔본다면 #1 (이탈률)부터.</h3>
