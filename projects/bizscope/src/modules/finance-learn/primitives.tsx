@@ -1,4 +1,11 @@
-'use client';
+/**
+ * Server-component-friendly primitives. NO `'use client'` — every export here
+ * must remain renderable on the server so chapter pages can be RSC-rendered
+ * with only the simulator islands hydrated on the client.
+ *
+ * Interactive primitives (currently `NumberInput`) live in a separate
+ * `client-fields.tsx` file with its own `'use client'` directive.
+ */
 
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
@@ -171,46 +178,6 @@ export function Stat({ label, value, sub }: { label: string; value: string; sub?
   );
 }
 
-export function NumberInput({
-  label,
-  value,
-  onChange,
-  step = 1,
-  min,
-  max,
-  suffix,
-  hint,
-}: {
-  label: string;
-  value: number;
-  onChange: (n: number) => void;
-  step?: number;
-  min?: number;
-  max?: number;
-  suffix?: string;
-  hint?: string;
-}) {
-  return (
-    <label className="flex flex-col gap-1.5">
-      <span className="flex items-baseline justify-between text-xs font-medium text-muted-foreground">
-        <span>{label}</span>
-        {hint ? <span className="text-[10px] text-muted-foreground/70">{hint}</span> : null}
-      </span>
-      <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 focus-within:border-indigo-500">
-        <input
-          type="number"
-          value={Number.isFinite(value) ? value : 0}
-          step={step}
-          min={min}
-          max={max}
-          onChange={(e) => {
-            const raw = Number(e.target.value);
-            onChange(Number.isFinite(raw) ? raw : 0);
-          }}
-          className="w-full bg-transparent text-sm outline-none"
-        />
-        {suffix ? <span className="text-xs text-muted-foreground">{suffix}</span> : null}
-      </div>
-    </label>
-  );
-}
+// `NumberInput` moved to ./client-fields.tsx so this file stays server-pure.
+// Re-export for legacy import paths to keep working until callers migrate.
+export { NumberInput } from './client-fields';

@@ -1,16 +1,9 @@
-'use client';
-
-import { useState } from 'react';
-import { Body, CashflowTable, Callout, ChapterShell, Formula, Headline, LEARN_CHAPTERS, NumberInput, Stat } from '@/modules/finance-learn/primitives';
-import { formatKrwCompact } from '@/lib/finance/corp';
+import { CashflowTable, Callout, ChapterShell, Formula, Headline, LEARN_CHAPTERS } from '@/modules/finance-learn/primitives';
+import MarketCapSimulator from './Simulator';
 
 const META = LEARN_CHAPTERS.find((c) => c.slug === 'market-cap')!;
 
 export default function MarketCapPage() {
-  const [shares, setShares] = useState(101_278_725);
-  const [price, setPrice] = useState(20_450);
-  const cap = shares * price;
-
   return (
     <ChapterShell meta={META}>
       <section className="space-y-4">
@@ -66,14 +59,7 @@ export default function MarketCapPage() {
         />
       </section>
 
-      <section className="space-y-4 rounded-2xl border bg-card p-6">
-        <h2 className="text-base font-bold">직접 계산 — 시가총액 산출기</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <NumberInput label="주식수" value={shares} onChange={setShares} step={1_000_000} suffix="주" />
-          <NumberInput label="주가" value={price} onChange={setPrice} step={1000} suffix="원" />
-        </div>
-        <Stat label="시가총액" value={formatKrwCompact(cap)} sub={`${cap.toLocaleString('ko-KR')}원`} />
-      </section>
+      <MarketCapSimulator />
 
       <Callout tone="warn">
         <strong>한계</strong>: 비상장사는 시가가 없다. 또한 내부정보·미래 잠재력이 시장에 충분히 반영되지 않을 때 시총은
